@@ -2,9 +2,9 @@
 Contributors: webifya
 Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
-Tested up to: 6.6
+Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -29,6 +29,8 @@ Webform provides a native WordPress form-building experience:
 * Shortcode embedding
 * Nonces, capability checks, sanitization, escaping, and a spam honeypot
 
+Webform is created by Mahfuzar Rahman at Web Ninja LLC.
+
 == Installation ==
 
 1. Upload the `Webform` folder to `/wp-content/plugins/`.
@@ -38,6 +40,14 @@ Webform provides a native WordPress form-building experience:
 5. Copy the generated `[webform id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 1.2.1 =
+* Updated plugin branding for Mahfuzar Rahman and Web Ninja LLC.
+* Added complete GPL-compatible license headers.
+* Updated WordPress compatibility metadata through version 7.0.
+* Corrected field-label internationalization for WordPress.org validation.
+* Added documented extension hooks for optional add-ons and integrations.
+* Removed development-only hidden files from the distribution.
 
 = 1.2.0 =
 * Added visual conditional logic for showing fields from earlier answers.
