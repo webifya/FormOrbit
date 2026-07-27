@@ -171,6 +171,13 @@ class Webform_Public {
         if (!empty($settings['webhook_url']) && wp_http_validate_url($settings['webhook_url'])) {
             wp_safe_remote_post($settings['webhook_url'], array('timeout' => 5, 'blocking' => false, 'headers' => array('Content-Type' => 'application/json'), 'body' => wp_json_encode(array('form_id' => $form_id, 'entry_id' => $entry_id, 'form_title' => get_the_title($form_id), 'fields' => $data))));
         }
+        /**
+         * Fires after an entry is stored and core notifications are dispatched.
+         *
+         * Premium and third-party add-ons can use this hook for email marketing,
+         * payment fulfillment, automation, and CRM integrations.
+         */
+        do_action('webform_after_submission', $entry_id, $form_id, $data, $settings);
         wp_send_json_success(array('message' => $settings['success_message'] ?? __('Thanks! Your response has been submitted.', 'webform'), 'redirect_url' => !empty($settings['redirect_url']) ? $settings['redirect_url'] : ''));
     }
 
