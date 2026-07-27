@@ -1,9 +1,13 @@
 <?php
 /**
  * Plugin Name: Webform
+ * Plugin URI: https://www.webninjallc.com/
  * Description: A visual drag-and-drop, multi-step form builder for WordPress.
- * Version: 1.2.0
- * Author: Webifya
+ * Version: 1.2.1
+ * Author: Mahfuzar Rahman
+ * Author URI: https://www.webninjallc.com/
+ * License: GPLv2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: webform
  * Requires at least: 6.2
  * Requires PHP: 7.4
@@ -11,7 +15,8 @@
 
 defined('ABSPATH') || exit;
 
-define('WEBFORM_VERSION', '1.2.0');
+define('WEBFORM_VERSION', '1.2.1');
+define('WEBFORM_EDITION', 'free');
 define('WEBFORM_FILE', __FILE__);
 define('WEBFORM_PATH', plugin_dir_path(__FILE__));
 define('WEBFORM_URL', plugin_dir_url(__FILE__));
