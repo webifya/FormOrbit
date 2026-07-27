@@ -109,7 +109,7 @@ class Webform_Admin {
                     <h2><?php esc_html_e('Fields', 'webform'); ?></h2>
                     <div id="webform-palette" class="webform-palette">
                         <?php
-                        $fields = array('text' => 'Text', 'email' => 'Email', 'textarea' => 'Long text', 'select' => 'Dropdown', 'radio' => 'Radio', 'checkbox' => 'Checkbox', 'number' => 'Number', 'date' => 'Date', 'phone' => 'Phone', 'heading' => 'Heading');
+                        $fields = array('text' => 'Text', 'email' => 'Email', 'textarea' => 'Long text', 'select' => 'Dropdown', 'radio' => 'Radio', 'checkbox' => 'Checkbox', 'number' => 'Number', 'date' => 'Date', 'phone' => 'Phone', 'url' => 'Website', 'file' => 'File upload', 'consent' => 'Consent', 'heading' => 'Heading');
                         foreach ($fields as $type => $label) {
                             printf('<div class="webform-palette-item" data-type="%s"><span class="dashicons dashicons-plus-alt2"></span>%s</div>', esc_attr($type), esc_html__($label, 'webform'));
                         }
@@ -127,6 +127,9 @@ class Webform_Admin {
                     <h2><?php esc_html_e('Confirmation', 'webform'); ?></h2>
                     <label><?php esc_html_e('Success message', 'webform'); ?><textarea id="webform-success-message" rows="3"><?php echo esc_textarea(isset($settings['success_message']) ? $settings['success_message'] : __('Thanks! Your response has been submitted.', 'webform')); ?></textarea></label>
                     <label><?php esc_html_e('Notification email', 'webform'); ?><input type="email" id="webform-notification-email" value="<?php echo esc_attr(isset($settings['notification_email']) ? $settings['notification_email'] : get_option('admin_email')); ?>"></label>
+                    <label><?php esc_html_e('Submit button text', 'webform'); ?><input type="text" id="webform-submit-label" value="<?php echo esc_attr(isset($settings['submit_label']) ? $settings['submit_label'] : __('Submit', 'webform')); ?>"></label>
+                    <label><?php esc_html_e('Redirect URL (optional)', 'webform'); ?><input type="url" id="webform-redirect-url" value="<?php echo esc_attr($settings['redirect_url'] ?? ''); ?>"></label>
+                    <label><?php esc_html_e('Webhook URL (optional)', 'webform'); ?><input type="url" id="webform-webhook-url" value="<?php echo esc_attr($settings['webhook_url'] ?? ''); ?>"></label>
                 </aside>
             </div>
         </div>
@@ -196,13 +199,17 @@ class Webform_Admin {
         update_post_meta($form_id, '_webform_settings', array(
             'success_message' => sanitize_textarea_field($settings['success_message'] ?? ''),
             'notification_email' => sanitize_email($settings['notification_email'] ?? ''),
+            'submit_label' => sanitize_text_field($settings['submit_label'] ?? __('Submit', 'webform')),
+            'redirect_url' => esc_url_raw($settings['redirect_url'] ?? ''),
+            'webhook_url' => esc_url_raw($settings['webhook_url'] ?? ''),
         ));
         wp_send_json_success(array('id' => $form_id, 'message' => __('Saved', 'webform'), 'shortcode' => '[webform id="' . $form_id . '"]'));
     }
 
     private function sanitize_schema($schema) {
         $clean = array();
-        $allowed_types = array('text', 'email', 'textarea', 'select', 'radio', 'checkbox', 'number', 'date', 'phone', 'heading');
+        $allowed_types = array('text', 'email', 'textarea', 'select', 'radio', 'checkbox', 'number', 'date', 'phone', 'url', 'file', 'consent', 'heading');
+        $allowed_operators = array('equals', 'not_equals', 'contains', 'not_empty', 'empty');
         $seen_ids = array();
         foreach ($schema as $stage_index => $stage) {
             $stage_id = sanitize_key($stage['id'] ?? '');
@@ -225,6 +232,14 @@ class Webform_Admin {
                     'placeholder' => substr(sanitize_text_field($field['placeholder'] ?? ''), 0, 300),
                     'required' => !empty($field['required']),
                     'options' => array_slice(array_values(array_filter(array_map('sanitize_text_field', (array) ($field['options'] ?? array())))), 0, 100),
+                    'allowed_extensions' => preg_replace('/[^a-z0-9,\s]/', '', strtolower($field['allowed_extensions'] ?? 'jpg,jpeg,png,pdf,doc,docx')),
+                    'max_size' => min(20, max(1, absint($field['max_size'] ?? 5))),
+                    'condition' => array(
+                        'enabled' => !empty($field['condition']['enabled']),
+                        'field_id' => sanitize_key($field['condition']['field_id'] ?? ''),
+                        'operator' => in_array($field['condition']['operator'] ?? '', $allowed_operators, true) ? $field['condition']['operator'] : 'equals',
+                        'value' => sanitize_text_field($field['condition']['value'] ?? ''),
+                    ),
                 );
             }
             $clean[] = $clean_stage;
