@@ -21,6 +21,44 @@
         return $('<div>').text(value == null ? '' : value).html();
     }
 
+    function previewOptions(field, control) {
+        const options = field.options && field.options.length ? field.options : ['Option 1', 'Option 2'];
+        return options.map((option, index) => `<span class="webform-preview-choice"><i class="${control}">${control === 'radio' && index === 0 ? '<b></b>' : control === 'check' && index === 0 ? '✓' : ''}</i>${escapeHtml(option)}</span>`).join('');
+    }
+
+    function fieldPreview(field) {
+        const placeholder = escapeHtml(field.placeholder || '');
+        const option = escapeHtml((field.options || [])[0] || 'Choose an option');
+        const value = escapeHtml(field.default_value || '');
+        const previews = {
+            text: `<div class="webform-preview-control"><span>${placeholder || 'Enter text'}</span></div>`,
+            email: `<div class="webform-preview-control webform-preview-with-icon"><span class="dashicons dashicons-email-alt"></span><span>${placeholder || 'name@example.com'}</span></div>`,
+            textarea: `<div class="webform-preview-control webform-preview-textarea"><span>${placeholder || 'Enter a detailed response'}</span></div>`,
+            select: `<div class="webform-preview-control webform-preview-select"><span>${option}</span><span class="dashicons dashicons-arrow-down-alt2"></span></div>`,
+            radio: `<div class="webform-preview-choices">${previewOptions(field, 'radio')}</div>`,
+            checkbox: `<div class="webform-preview-choices">${previewOptions(field, 'check')}</div>`,
+            number: `<div class="webform-preview-control webform-preview-number"><span>${placeholder || '0'}</span><span class="webform-preview-steppers">⌃<br>⌄</span></div>`,
+            date: '<div class="webform-preview-control webform-preview-with-icon"><span>yyyy-mm-dd</span><span class="dashicons dashicons-calendar-alt"></span></div>',
+            time: '<div class="webform-preview-control webform-preview-with-icon"><span>--:-- --</span><span class="dashicons dashicons-clock"></span></div>',
+            phone: `<div class="webform-preview-control webform-preview-with-icon"><span class="dashicons dashicons-phone"></span><span>${placeholder || '(555) 123-4567'}</span></div>`,
+            url: `<div class="webform-preview-control webform-preview-with-icon"><span class="dashicons dashicons-admin-links"></span><span>${placeholder || 'https://example.com'}</span></div>`,
+            file: `<div class="webform-preview-file"><span class="webform-preview-file-button"><span class="dashicons dashicons-upload"></span>Choose file</span><span>No file chosen</span><small>${escapeHtml(field.allowed_extensions || 'jpg, png, pdf')} · up to ${Number(field.max_size || 5)} MB</small></div>`,
+            consent: `<div class="webform-preview-consent"><i class="check"></i><span>${escapeHtml(field.label || 'I agree to the terms')}</span></div>`,
+            poll: `<div class="webform-preview-choices webform-preview-poll">${previewOptions(field, 'radio')}</div>`,
+            quiz: `<div class="webform-preview-choices webform-preview-quiz">${previewOptions(field, 'radio')}<small>${Number(field.points || 1)} point${Number(field.points || 1) === 1 ? '' : 's'}</small></div>`,
+            rating: '<div class="webform-preview-rating" aria-label="Five star rating"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>',
+            slider: `<div class="webform-preview-slider"><div><span></span></div><small>${Number(field.min ?? 0)}</small><small>${Number(field.max ?? 100)}</small></div>`,
+            hidden: `<div class="webform-preview-hidden"><span class="dashicons dashicons-hidden"></span><span>Hidden value</span><code>${value || 'Not set'}</code></div>`,
+            html: `<div class="webform-preview-html"><span class="dashicons dashicons-editor-code"></span><div>${escapeHtml($('<div>').html(field.html || '').text() || 'Custom HTML content')}</div></div>`,
+            captcha: '<div class="webform-preview-captcha"><i class="check"></i><span>I’m not a robot</span><span class="webform-preview-recaptcha"><span class="dashicons dashicons-update"></span><small>reCAPTCHA</small></span></div>',
+            heading: `<div class="webform-preview-heading">${escapeHtml(field.label || 'Section heading')}</div>`,
+            calculation: `<div class="webform-preview-calculation"><strong>${Number(0).toFixed(Math.max(0, Math.min(6, Number(field.decimal_places ?? 2))))}</strong><code>${escapeHtml(field.formula || 'Formula not configured')}</code></div>`,
+            field_group: `<div class="webform-preview-group" style="--preview-columns:${Math.max(1, Math.min(4, Number(field.group_columns || 2)))}">${Array.from({ length: Math.max(1, Math.min(6, Number(field.group_count || 2))) }, (_, index) => `<span><small>Grouped field ${index + 1}</small><i></i></span>`).join('')}</div>`,
+            signature: '<div class="webform-preview-signature"><span>Sign here</span><svg viewBox="0 0 240 48" aria-hidden="true"><path d="M8 38c30-4 31-30 43-23 10 6-8 22-2 24 11 4 21-25 29-20 6 4-7 18 0 20 9 2 13-13 20-11 5 2 3 9 13 9 16 0 24-8 39-5"/></svg><small>Clear signature</small></div>'
+        };
+        return previews[field.type] || `<div class="webform-preview-control"><span>${placeholder || 'Field preview'}</span></div>`;
+    }
+
     function render() {
         if (activeStage >= schema.length) activeStage = schema.length - 1;
         $('#webform-stage-tabs').html(schema.map((stage, i) =>
@@ -42,12 +80,12 @@
     }
 
     function fieldCard(field) {
-        const options = (field.options || []).map(option => `<span>${escapeHtml(option)}</span>`).join('');
-        return `<div class="webform-field-card ${field.id === selectedId ? 'is-selected' : ''}" data-id="${field.id}">
+        const typeName = (defaults[field.type] || field.type || 'Field').replace(' question', '');
+        return `<div class="webform-field-card webform-field-card-${escapeHtml(field.type)} ${field.id === selectedId ? 'is-selected' : ''}" data-id="${field.id}">
             <span class="dashicons dashicons-menu webform-drag"></span>
             <div class="webform-field-preview"><strong>${escapeHtml(field.label)}${field.required ? ' <em>*</em>' : ''}</strong>
-            ${['select','radio','checkbox','poll','quiz'].includes(field.type) ? `<div class="webform-option-preview">${options}</div>` : field.type === 'heading' ? '' : `<div class="webform-input-preview">${escapeHtml(field.placeholder || '')}</div>`}</div>
-            <span class="webform-type">${escapeHtml(field.type)}</span>
+            ${fieldPreview(field)}</div>
+            <span class="webform-type">${escapeHtml(typeName)}</span>
             <button class="webform-remove-field" title="Remove">×</button>
         </div>`;
     }
