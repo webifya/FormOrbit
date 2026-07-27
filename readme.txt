@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.7.0
+Stable tag: 1.7.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -48,6 +48,13 @@ Webform is created by Mahfuzar Rahman at Web Ninja LLC.
 5. Copy the generated `[webform id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 1.7.1 =
+* Redesigned the reCAPTCHA settings screen and corrected checkbox sizing.
+* Added Google Cloud reCAPTCHA checkbox support using Enterprise assessments.
+* Kept classic and migrated v2 SiteVerify compatibility for existing keys.
+* Added Site Key, Cloud project, restricted API key, and expected-action controls.
+* Added Pro integration cards to the locked Pro feature section.
 
 = 1.7.0 =
 * Replaced the permanent field sidebar with a spacious, icon-based Add Field picker.
@@ -121,4 +128,4 @@ Webform is created by Mahfuzar Rahman at Web Ninja LLC.
 
 == External services ==
 
-When Google reCAPTCHA is enabled, form pages load Google's reCAPTCHA script and submission verification data is sent to Google's siteverify API. Site owners are responsible for disclosing this service in their privacy policy and complying with Google's terms and privacy policy.
+When Google reCAPTCHA is enabled, form pages load Google's reCAPTCHA script. Classic or migrated v2 submissions are sent to Google's SiteVerify API. Google Cloud mode sends the response token, configured site key and action, visitor IP address, and browser user agent to the reCAPTCHA Enterprise assessments API. Site owners are responsible for disclosing this service in their privacy policy and complying with Google's terms, privacy policy, quotas, and billing requirements.
