@@ -27,7 +27,7 @@
             `<button class="webform-stage-tab ${i === activeStage ? 'is-active' : ''}" data-stage="${i}"><span>${escapeHtml(stage.title)}</span><span class="dashicons dashicons-edit webform-edit-stage" title="Rename stage"></span>${schema.length > 1 ? '<span class="webform-remove-stage" title="Remove stage">×</span>' : ''}</button>`
         ).join(''));
         const fields = schema[activeStage].fields || [];
-        $('#webform-canvas').html(fields.length ? fields.map(fieldCard).join('') : '<div class="webform-drop-empty"><span class="dashicons dashicons-move"></span><strong>Drop fields here</strong><small>Or click a field in the left panel</small></div>');
+        $('#webform-canvas').html(fields.length ? fields.map(fieldCard).join('') : '<div class="webform-drop-empty"><span class="dashicons dashicons-layout"></span><strong>Start building your form</strong><small>Add a field, then drag it into the order you want.</small><button type="button" class="button button-primary webform-open-field-picker"><span class="dashicons dashicons-plus-alt2"></span>Add your first field</button></div>');
         $('#webform-canvas').sortable({
             items: '.webform-field-card',
             handle: '.webform-drag',
@@ -106,7 +106,19 @@
         $('.webform-property-tabs button[data-panel="field"]').trigger('click');
     }
 
-    $(document).on('click', '.webform-palette-item', function () { addField($(this).data('type')); });
+    function openFieldPicker() {
+        $('#webform-field-picker').addClass('is-open').attr('aria-hidden', 'false');
+        $('body').addClass('webform-picker-open');
+        window.setTimeout(function () { $('#webform-field-picker .webform-palette-item').first().trigger('focus'); }, 50);
+    }
+    function closeFieldPicker() {
+        $('#webform-field-picker').removeClass('is-open').attr('aria-hidden', 'true');
+        $('body').removeClass('webform-picker-open');
+    }
+    $(document).on('click', '.webform-open-field-picker', openFieldPicker);
+    $(document).on('click', '.webform-field-picker-close, .webform-field-picker-backdrop', closeFieldPicker);
+    $(document).on('keydown', function (event) { if (event.key === 'Escape') closeFieldPicker(); });
+    $(document).on('click', '.webform-palette-item', function () { addField($(this).data('type')); closeFieldPicker(); });
     $(document).on('click', '.webform-field-card', function (event) {
         if ($(event.target).closest('.webform-remove-field').length) return;
         selectedId = $(this).data('id');
