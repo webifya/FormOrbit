@@ -25,6 +25,7 @@ class Webform_Admin {
         );
         add_submenu_page('webform', __('All Forms', 'webform'), __('All Forms', 'webform'), 'manage_options', 'webform', array($this, 'forms_page'));
         add_submenu_page('webform', __('Add New', 'webform'), __('Add New', 'webform'), 'manage_options', 'webform-builder', array($this, 'builder_page'));
+        add_submenu_page('webform', __('Form Templates', 'webform'), __('Templates', 'webform'), 'manage_options', 'webform-templates', array($this, 'templates_page'));
         add_submenu_page('webform', __('Entries', 'webform'), __('Entries', 'webform'), 'manage_options', 'webform-entries', array($this, 'entries_page'));
         if (!$this->is_pro_active()) {
             add_submenu_page('webform', __('Webform Pro', 'webform'), __('Upgrade to Pro', 'webform'), 'manage_options', 'webform-pro', array($this, 'pro_page'));
@@ -93,6 +94,11 @@ class Webform_Admin {
             $form_id = 0;
         }
         $schema = $form ? get_post_meta($form_id, '_webform_schema', true) : '';
+        $template_key = isset($_GET['template']) ? sanitize_key(wp_unslash($_GET['template'])) : '';
+        if (!$form && $template_key) {
+            $templates = $this->free_templates();
+            $schema = isset($templates[$template_key]) ? $templates[$template_key]['schema'] : '';
+        }
         $settings = $form ? get_post_meta($form_id, '_webform_settings', true) : array();
         ?>
         <div class="wrap webform-wrap webform-builder-wrap">
@@ -125,6 +131,8 @@ class Webform_Admin {
                             'url' => __('Website', 'webform'),
                             'file' => __('File upload', 'webform'),
                             'consent' => __('Consent', 'webform'),
+                            'poll' => __('Poll', 'webform'),
+                            'quiz' => __('Quiz question', 'webform'),
                             'heading' => __('Heading', 'webform'),
                         ));
                         foreach ($fields as $type => $label) {
@@ -239,7 +247,7 @@ class Webform_Admin {
 
     private function sanitize_schema($schema) {
         $clean = array();
-        $allowed_types = apply_filters('webform_allowed_field_types', array('text', 'email', 'textarea', 'select', 'radio', 'checkbox', 'number', 'date', 'phone', 'url', 'file', 'consent', 'heading'));
+        $allowed_types = apply_filters('webform_allowed_field_types', array('text', 'email', 'textarea', 'select', 'radio', 'checkbox', 'number', 'date', 'phone', 'url', 'file', 'consent', 'poll', 'quiz', 'heading'));
         $allowed_operators = array('equals', 'not_equals', 'contains', 'not_empty', 'empty');
         $seen_ids = array();
         foreach ($schema as $stage_index => $stage) {
@@ -265,6 +273,8 @@ class Webform_Admin {
                     'options' => array_slice(array_values(array_filter(array_map('sanitize_text_field', (array) ($field['options'] ?? array())))), 0, 100),
                     'allowed_extensions' => preg_replace('/[^a-z0-9,\s]/', '', strtolower($field['allowed_extensions'] ?? 'jpg,jpeg,png,pdf,doc,docx')),
                     'max_size' => min(20, max(1, absint($field['max_size'] ?? 5))),
+                    'correct_answer' => sanitize_text_field($field['correct_answer'] ?? ''),
+                    'points' => min(100, max(1, absint($field['points'] ?? 1))),
                     'condition' => array(
                         'enabled' => !empty($field['condition']['enabled']),
                         'field_id' => sanitize_key($field['condition']['field_id'] ?? ''),
@@ -349,6 +359,45 @@ class Webform_Admin {
         return preg_match('/^[=+\-@]/', $value) ? "'" . $value : $value;
     }
 
+    public function templates_page() {
+        if (!current_user_can('manage_options')) return;
+        ?>
+        <div class="wrap webform-wrap">
+            <div class="webform-page-head"><div><h1><?php esc_html_e('Free Form Templates', 'webform'); ?></h1><p><?php esc_html_e('Start with a complete form, then customize every field and stage.', 'webform'); ?></p></div></div>
+            <div class="webform-template-grid">
+                <div class="webform-template-card"><span class="dashicons dashicons-plus-alt2"></span><h2><?php esc_html_e('Blank Form', 'webform'); ?></h2><p><?php esc_html_e('Start with an empty stage.', 'webform'); ?></p><a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=webform-builder')); ?>"><?php esc_html_e('Create', 'webform'); ?></a></div>
+                <?php foreach ($this->free_templates() as $key => $template) : ?>
+                    <div class="webform-template-card"><span class="dashicons <?php echo esc_attr($template['icon']); ?>"></span><h2><?php echo esc_html($template['name']); ?></h2><p><?php echo esc_html($template['description']); ?></p><a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=webform-builder&template=' . $key)); ?>"><?php esc_html_e('Use template', 'webform'); ?></a></div>
+                <?php endforeach; ?>
+                <?php if (!$this->is_pro_active()) : ?><div class="webform-template-card webform-template-pro"><span class="webform-pro-badge"><?php esc_html_e('PRO', 'webform'); ?></span><h2><?php esc_html_e('20 Premium Templates', 'webform'); ?></h2><p><?php esc_html_e('Payments, lead generation, bookings, applications, orders, onboarding, and advanced business workflows.', 'webform'); ?></p><a class="button" href="<?php echo esc_url($this->upgrade_url('templates')); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Explore Pro', 'webform'); ?></a></div><?php endif; ?>
+            </div>
+        </div>
+        <?php
+    }
+
+    private function free_templates() {
+        return array(
+            'contact' => array('name' => __('Contact Form', 'webform'), 'description' => __('Name, email, phone, and message.', 'webform'), 'icon' => 'dashicons-email-alt', 'schema' => array($this->template_stage(__('Contact Us', 'webform'), array($this->template_field('name', 'text', __('Name', 'webform'), true), $this->template_field('email', 'email', __('Email', 'webform'), true), $this->template_field('phone', 'phone', __('Phone', 'webform')), $this->template_field('message', 'textarea', __('Message', 'webform'), true))))),
+            'feedback' => array('name' => __('Customer Feedback', 'webform'), 'description' => __('Satisfaction poll and written feedback.', 'webform'), 'icon' => 'dashicons-format-chat', 'schema' => array($this->template_stage(__('Your Feedback', 'webform'), array($this->template_field('satisfaction', 'poll', __('How satisfied are you?', 'webform'), true, array(__('Very satisfied', 'webform'), __('Satisfied', 'webform'), __('Neutral', 'webform'), __('Dissatisfied', 'webform'))), $this->template_field('feedback', 'textarea', __('What can we improve?', 'webform')))))),
+            'job-application' => array('name' => __('Job Application', 'webform'), 'description' => __('Applicant details, role, résumé, and consent.', 'webform'), 'icon' => 'dashicons-businessperson', 'schema' => array($this->template_stage(__('Applicant Details', 'webform'), array($this->template_field('name', 'text', __('Full name', 'webform'), true), $this->template_field('email', 'email', __('Email', 'webform'), true), $this->template_field('role', 'select', __('Position', 'webform'), true, array(__('Developer', 'webform'), __('Designer', 'webform'), __('Marketing', 'webform'))))), $this->template_stage(__('Application', 'webform'), array($this->template_field('resume', 'file', __('Résumé', 'webform'), true), $this->template_field('cover', 'textarea', __('Cover letter', 'webform')), $this->template_field('consent', 'consent', __('I consent to the processing of my application.', 'webform'), true))))),
+            'event-registration' => array('name' => __('Event Registration', 'webform'), 'description' => __('Attendee information and session choice.', 'webform'), 'icon' => 'dashicons-calendar-alt', 'schema' => array($this->template_stage(__('Registration', 'webform'), array($this->template_field('name', 'text', __('Attendee name', 'webform'), true), $this->template_field('email', 'email', __('Email', 'webform'), true), $this->template_field('session', 'radio', __('Preferred session', 'webform'), true, array(__('Morning', 'webform'), __('Afternoon', 'webform'))), $this->template_field('notes', 'textarea', __('Accessibility or dietary needs', 'webform')))))),
+            'quote-request' => array('name' => __('Request a Quote', 'webform'), 'description' => __('Project type, budget, timing, and requirements.', 'webform'), 'icon' => 'dashicons-money-alt', 'schema' => array($this->template_stage(__('Project', 'webform'), array($this->template_field('service', 'select', __('Service needed', 'webform'), true, array(__('Website', 'webform'), __('Ecommerce', 'webform'), __('Marketing', 'webform'), __('Other', 'webform'))), $this->template_field('budget', 'select', __('Budget range', 'webform'), true, array(__('Under $1,000', 'webform'), __('$1,000–$5,000', 'webform'), __('$5,000+', 'webform'))), $this->template_field('details', 'textarea', __('Project details', 'webform'), true))), $this->template_stage(__('Contact', 'webform'), array($this->template_field('name', 'text', __('Name', 'webform'), true), $this->template_field('email', 'email', __('Email', 'webform'), true))))),
+            'newsletter' => array('name' => __('Newsletter Signup', 'webform'), 'description' => __('Simple email subscription with consent.', 'webform'), 'icon' => 'dashicons-megaphone', 'schema' => array($this->template_stage(__('Stay Updated', 'webform'), array($this->template_field('name', 'text', __('Name', 'webform')), $this->template_field('email', 'email', __('Email', 'webform'), true), $this->template_field('consent', 'consent', __('I agree to receive email updates.', 'webform'), true))))),
+            'support-request' => array('name' => __('Support Request', 'webform'), 'description' => __('Issue details, priority, and attachment.', 'webform'), 'icon' => 'dashicons-sos', 'schema' => array($this->template_stage(__('Support Ticket', 'webform'), array($this->template_field('email', 'email', __('Email', 'webform'), true), $this->template_field('priority', 'select', __('Priority', 'webform'), true, array(__('Low', 'webform'), __('Normal', 'webform'), __('Urgent', 'webform'))), $this->template_field('issue', 'textarea', __('Describe the issue', 'webform'), true), $this->template_field('attachment', 'file', __('Screenshot or document', 'webform')))))),
+            'survey' => array('name' => __('Product Survey', 'webform'), 'description' => __('Three quick polls with an open comment.', 'webform'), 'icon' => 'dashicons-chart-bar', 'schema' => array($this->template_stage(__('Product Survey', 'webform'), array($this->template_field('ease', 'poll', __('How easy is the product to use?', 'webform'), true, array('1', '2', '3', '4', '5')), $this->template_field('recommend', 'poll', __('Would you recommend it?', 'webform'), true, array(__('Yes', 'webform'), __('Maybe', 'webform'), __('No', 'webform'))), $this->template_field('favorite', 'textarea', __('What is your favorite feature?', 'webform')))))),
+            'quiz' => array('name' => __('Simple Knowledge Quiz', 'webform'), 'description' => __('A ready-to-edit scored three-question quiz.', 'webform'), 'icon' => 'dashicons-welcome-learn-more', 'schema' => array($this->template_stage(__('Quick Quiz', 'webform'), array($this->template_field('q1', 'quiz', __('What is the capital of France?', 'webform'), true, array(__('Paris', 'webform'), __('Rome', 'webform'), __('Madrid', 'webform')), __('Paris', 'webform')), $this->template_field('q2', 'quiz', __('How many days are in a leap year?', 'webform'), true, array('365', '366', '367'), '366'), $this->template_field('q3', 'quiz', __('Which planet is known as the Red Planet?', 'webform'), true, array(__('Mars', 'webform'), __('Venus', 'webform'), __('Jupiter', 'webform')), __('Mars', 'webform')))))),
+            'volunteer' => array('name' => __('Volunteer Registration', 'webform'), 'description' => __('Availability, interests, and contact details.', 'webform'), 'icon' => 'dashicons-groups', 'schema' => array($this->template_stage(__('Volunteer With Us', 'webform'), array($this->template_field('name', 'text', __('Name', 'webform'), true), $this->template_field('email', 'email', __('Email', 'webform'), true), $this->template_field('interests', 'checkbox', __('Areas of interest', 'webform'), true, array(__('Events', 'webform'), __('Fundraising', 'webform'), __('Community outreach', 'webform'))), $this->template_field('availability', 'textarea', __('Availability', 'webform')))))),
+        );
+    }
+
+    private function template_stage($title, $fields) {
+        return array('id' => 'stage_' . wp_generate_password(8, false, false), 'title' => $title, 'fields' => $fields);
+    }
+
+    private function template_field($id, $type, $label, $required = false, $options = array(), $correct_answer = '') {
+        return array('id' => $id . '_' . wp_generate_password(6, false, false), 'type' => $type, 'label' => $label, 'placeholder' => '', 'required' => $required, 'options' => $options, 'allowed_extensions' => 'jpg,jpeg,png,pdf,doc,docx', 'max_size' => 5, 'correct_answer' => $correct_answer, 'points' => 1, 'condition' => array('enabled' => false, 'field_id' => '', 'operator' => 'equals', 'value' => ''));
+    }
+
     public function pro_page() {
         if (!current_user_can('manage_options')) return;
         $features = array(
@@ -356,6 +405,7 @@ class Webform_Admin {
             __('Mailchimp, Brevo, ActiveCampaign, and ConvertKit', 'webform'),
             __('Zapier and advanced webhook automation', 'webform'),
             __('CRM integrations and lead routing', 'webform'),
+            __('20 additional premium form templates', 'webform'),
             __('Calculated fields and order forms', 'webform'),
             __('Electronic signatures and PDF documents', 'webform'),
             __('Advanced spam protection and priority support', 'webform'),
