@@ -27,7 +27,9 @@ class Webform_Public {
         wp_enqueue_style('webform-public', WEBFORM_URL . 'assets/css/public.css', array(), WEBFORM_VERSION);
         wp_enqueue_script('webform-public', WEBFORM_URL . 'assets/js/public.js', array(), WEBFORM_VERSION, true);
         if ($this->google_recaptcha_enabled() && $this->schema_has_type($schema, 'captcha')) {
-            wp_enqueue_script('google-recaptcha', 'https://www.google.com/recaptcha/api.js', array(), null, true);
+            $recaptcha = $this->recaptcha_settings();
+            $script_url = $recaptcha['recaptcha_mode'] === 'enterprise' ? 'https://www.google.com/recaptcha/enterprise.js' : 'https://www.google.com/recaptcha/api.js';
+            wp_enqueue_script('google-recaptcha', $script_url, array(), null, true);
         }
         wp_localize_script('webform-public', 'WebformPublic', array('ajaxUrl' => admin_url('admin-ajax.php')));
         ob_start();
@@ -119,7 +121,8 @@ class Webform_Public {
         if ($field['type'] === 'captcha') {
             $global_settings = (array) get_option('webform_global_settings', array());
             if ($this->google_recaptcha_enabled()) {
-                echo '<div class="webform-field webform-field-captcha"><div class="g-recaptcha" data-sitekey="' . esc_attr($global_settings['recaptcha_site_key']) . '"></div><span class="webform-error" id="' . esc_attr($describedby) . '"></span></div>';
+                $action_attr = ($global_settings['recaptcha_mode'] ?? 'enterprise') === 'enterprise' ? ' data-action="' . esc_attr($global_settings['recaptcha_action'] ?? 'WEBFORM_SUBMIT') . '"' : '';
+                echo '<div class="webform-field webform-field-captcha"' . $condition_attr . '><div class="g-recaptcha" data-sitekey="' . esc_attr($global_settings['recaptcha_site_key']) . '"' . $action_attr . '></div><span class="webform-error" id="' . esc_attr($describedby) . '"></span></div>';
                 return;
             }
             $first = wp_rand(2, 9);
@@ -359,14 +362,24 @@ class Webform_Public {
     }
 
     private function valid_captcha($field_id, $value) {
-        $settings = (array) get_option('webform_global_settings', array());
-        if (!empty($settings['recaptcha_enabled']) && !empty($settings['recaptcha_secret_key'])) {
+        $settings = $this->recaptcha_settings();
+        if ($this->google_recaptcha_enabled()) {
             $response_token = sanitize_text_field(wp_unslash($_POST['g-recaptcha-response'] ?? ''));
             if (!$response_token) return false;
-            $response = wp_safe_remote_post('https://www.google.com/recaptcha/api/siteverify', array('timeout' => 10, 'body' => array('secret' => $settings['recaptcha_secret_key'], 'response' => $response_token, 'remoteip' => $this->client_ip())));
+            if ($settings['recaptcha_mode'] === 'enterprise') {
+                $endpoint = add_query_arg('key', $settings['recaptcha_api_key'], 'https://recaptchaenterprise.googleapis.com/v1/projects/' . rawurlencode($settings['recaptcha_project_id']) . '/assessments');
+                $response = wp_safe_remote_post($endpoint, array('timeout' => 10, 'headers' => array('Content-Type' => 'application/json; charset=utf-8'), 'body' => wp_json_encode(array('event' => array('token' => $response_token, 'siteKey' => $settings['recaptcha_site_key'], 'userAgent' => sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'] ?? '')), 'userIpAddress' => $this->client_ip(), 'expectedAction' => $settings['recaptcha_action'])))));
+            } else {
+                $response = wp_safe_remote_post('https://www.google.com/recaptcha/api/siteverify', array('timeout' => 10, 'body' => array('secret' => $settings['recaptcha_secret_key'], 'response' => $response_token, 'remoteip' => $this->client_ip())));
+            }
             if (is_wp_error($response)) return false;
             $body = json_decode(wp_remote_retrieve_body($response), true);
-            return !empty($body['success']);
+            if ($settings['recaptcha_mode'] === 'enterprise') {
+                $properties = (array) ($body['tokenProperties'] ?? array());
+                $valid_action = !empty($properties['action']) && hash_equals($settings['recaptcha_action'], (string) $properties['action']);
+                return !empty($properties['valid']) && $valid_action && $this->valid_recaptcha_hostname($properties['hostname'] ?? '');
+            }
+            return !empty($body['success']) && $this->valid_recaptcha_hostname($body['hostname'] ?? '');
         }
         $tokens = isset($_POST['captcha_tokens']) && is_array($_POST['captcha_tokens']) ? wp_unslash($_POST['captcha_tokens']) : array();
         $token = isset($tokens[$field_id]) ? sanitize_text_field($tokens[$field_id]) : '';
@@ -389,7 +402,19 @@ class Webform_Public {
     }
 
     private function google_recaptcha_enabled() {
-        $settings = (array) get_option('webform_global_settings', array());
-        return !empty($settings['recaptcha_enabled']) && !empty($settings['recaptcha_site_key']) && !empty($settings['recaptcha_secret_key']);
+        $settings = $this->recaptcha_settings();
+        if (empty($settings['recaptcha_enabled']) || empty($settings['recaptcha_site_key'])) return false;
+        if ($settings['recaptcha_mode'] === 'enterprise') return !empty($settings['recaptcha_project_id']) && !empty($settings['recaptcha_api_key']) && !empty($settings['recaptcha_action']);
+        return !empty($settings['recaptcha_secret_key']);
+    }
+
+    private function recaptcha_settings() {
+        return wp_parse_args((array) get_option('webform_global_settings', array()), array('recaptcha_enabled' => false, 'recaptcha_mode' => 'classic', 'recaptcha_site_key' => '', 'recaptcha_secret_key' => '', 'recaptcha_project_id' => '', 'recaptcha_api_key' => '', 'recaptcha_action' => 'WEBFORM_SUBMIT'));
+    }
+
+    private function valid_recaptcha_hostname($hostname) {
+        $expected = strtolower((string) wp_parse_url(home_url(), PHP_URL_HOST));
+        $actual = strtolower((string) $hostname);
+        return $actual !== '' && ($actual === $expected || preg_replace('/^www\\./', '', $actual) === preg_replace('/^www\\./', '', $expected));
     }
 }
