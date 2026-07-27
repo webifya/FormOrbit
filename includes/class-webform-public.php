@@ -230,12 +230,14 @@ class Webform_Public {
          * payment fulfillment, automation, and CRM integrations.
          */
         do_action('webform_after_submission', $entry_id, $form_id, $data, $settings);
-        wp_send_json_success(array(
+        $response = array(
             'message' => $settings['success_message'] ?? __('Thanks! Your response has been submitted.', 'webform'),
             'redirect_url' => !empty($settings['redirect_url']) ? $settings['redirect_url'] : '',
             'quiz' => $quiz_total ? array('score' => $quiz_score, 'total' => $quiz_total) : null,
             'polls' => $poll_results,
-        ));
+        );
+        $response = apply_filters('webform_submission_response', $response, $entry_id, $form_id, $data, $settings);
+        wp_send_json_success($response);
     }
 
     private function condition_passes($condition, $posted) {
