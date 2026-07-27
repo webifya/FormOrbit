@@ -103,6 +103,7 @@
         selectedId = field.id;
         dirty = true;
         render();
+        $('.webform-property-tabs button[data-panel="field"]').trigger('click');
     }
 
     $(document).on('click', '.webform-palette-item', function () { addField($(this).data('type')); });
@@ -110,6 +111,7 @@
         if ($(event.target).closest('.webform-remove-field').length) return;
         selectedId = $(this).data('id');
         render();
+        $('.webform-property-tabs button[data-panel="field"]').trigger('click');
     });
     $(document).on('click', '.webform-remove-field', function () {
         const id = $(this).closest('.webform-field-card').data('id');
@@ -211,6 +213,12 @@
     $(document).on('click', '.webform-template-close,.webform-template-choice[href=\"#\"]', function (event) {
         event.preventDefault();
         $('#webform-template-modal').fadeOut(150);
+    });
+    $(document).on('click', '.webform-property-tabs button', function () {
+        const panel = $(this).data('panel');
+        $('.webform-property-tabs button').removeClass('is-active');
+        $(this).addClass('is-active');
+        $('.webform-property-panel').removeClass('is-active').filter(`[data-panel="${panel}"]`).addClass('is-active');
     });
     window.addEventListener('beforeunload', function (event) {
         if (!dirty) return;
