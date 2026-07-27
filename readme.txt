@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,6 +21,8 @@ Webform provides a native WordPress form-building experience:
 * AJAX submission without page reload
 * WordPress-native entry storage and admin entry browser
 * Email notifications
+* Entry filtering, pagination, deletion, and CSV export
+* One-click form duplication
 * Shortcode embedding
 * Nonces, capability checks, sanitization, escaping, and a spam honeypot
 
@@ -33,6 +35,14 @@ Webform provides a native WordPress form-building experience:
 5. Copy the generated `[webform id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 1.1.0 =
+* Added entry filtering, pagination, deletion, and safe CSV export.
+* Added one-click form duplication and unsaved-change protection.
+* Prevented duplicate labels from overwriting submission data.
+* Strengthened option validation, schema limits, field identifiers, and rate limiting.
+* Improved multi-step accessibility and checkbox validation.
+* Added backward compatibility for existing v1.0 submission data.
 
 = 1.0.0 =
 * Initial release.
