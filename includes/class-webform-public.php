@@ -65,13 +65,14 @@ class Webform_Public {
         $describedby = $id . '-error';
         $condition = !empty($field['condition']['enabled']) ? $field['condition'] : array();
         $condition_attr = $condition ? ' data-condition="' . esc_attr(wp_json_encode($condition)) . '"' : '';
-        if (in_array($field['type'], array('radio', 'checkbox'), true)) {
+        if (in_array($field['type'], array('radio', 'checkbox', 'poll', 'quiz'), true)) {
+            $input_type = $field['type'] === 'checkbox' ? 'checkbox' : 'radio';
             ?>
             <fieldset class="webform-field webform-field-<?php echo esc_attr($field['type']); ?>"<?php echo $condition_attr; ?>>
                 <legend><?php echo esc_html($field['label']); ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></legend>
                 <div class="webform-choices" <?php echo $field['type'] === 'checkbox' && $required ? 'data-required="true"' : ''; ?>>
                     <?php foreach ($field['options'] as $index => $option) : $option_id = $id . '-' . $index; ?>
-                        <label for="<?php echo esc_attr($option_id); ?>"><input id="<?php echo esc_attr($option_id); ?>" type="<?php echo esc_attr($field['type']); ?>" name="<?php echo esc_attr($name . ($field['type'] === 'checkbox' ? '[]' : '')); ?>" value="<?php echo esc_attr($option); ?>" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $field['type'] === 'radio' && $required && $index === 0 ? ' required' : ''; ?>> <?php echo esc_html($option); ?></label>
+                        <label for="<?php echo esc_attr($option_id); ?>"><input id="<?php echo esc_attr($option_id); ?>" type="<?php echo esc_attr($input_type); ?>" name="<?php echo esc_attr($name . ($input_type === 'checkbox' ? '[]' : '')); ?>" value="<?php echo esc_attr($option); ?>" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $input_type === 'radio' && $required && $index === 0 ? ' required' : ''; ?>> <?php echo esc_html($option); ?></label>
                     <?php endforeach; ?>
                 </div>
                 <span class="webform-error" id="<?php echo esc_attr($describedby); ?>"></span>
@@ -139,6 +140,9 @@ class Webform_Public {
         $data = array();
         $errors = array();
         $uploaded_urls = array();
+        $quiz_score = 0;
+        $quiz_total = 0;
+        $poll_answers = array();
         foreach ($schema as $stage) {
             foreach ($stage['fields'] as $field) {
                 if ($field['type'] === 'heading') continue;
@@ -152,12 +156,19 @@ class Webform_Public {
                     $errors[$field['id']] = __('Enter a valid email address.', 'webform');
                 } elseif ($field['type'] === 'url' && $value && !wp_http_validate_url($value)) {
                     $errors[$field['id']] = __('Enter a valid URL.', 'webform');
-                } elseif (in_array($field['type'], array('select', 'radio'), true) && $value && !in_array($value, $field['options'], true)) {
+                } elseif (in_array($field['type'], array('select', 'radio', 'poll', 'quiz'), true) && $value && !in_array($value, $field['options'], true)) {
                     $errors[$field['id']] = __('Select a valid option.', 'webform');
                 } elseif ($field['type'] === 'checkbox' && array_diff((array) $value, $field['options'])) {
                     $errors[$field['id']] = __('Select valid options.', 'webform');
                 }
                 $data[$field['id']] = array('label' => $field['label'], 'value' => $value);
+                if ($field['type'] === 'quiz') {
+                    $points = max(1, absint($field['points'] ?? 1));
+                    $quiz_total += $points;
+                    if ($value !== '' && hash_equals((string) ($field['correct_answer'] ?? ''), (string) $value)) $quiz_score += $points;
+                } elseif ($field['type'] === 'poll' && $value !== '') {
+                    $poll_answers[$field['id']] = array('label' => $field['label'], 'value' => $value, 'options' => $field['options']);
+                }
             }
         }
         if ($errors) {
@@ -192,6 +203,18 @@ class Webform_Public {
         }
         update_post_meta($entry_id, '_webform_form_id', $form_id);
         update_post_meta($entry_id, '_webform_data', $data);
+        if ($quiz_total) update_post_meta($entry_id, '_webform_quiz_score', array('score' => $quiz_score, 'total' => $quiz_total));
+        $poll_results = array();
+        foreach ($poll_answers as $field_id => $answer) {
+            $meta_key = '_webform_poll_' . sanitize_key($field_id);
+            $counts = (array) get_post_meta($form_id, $meta_key, true);
+            foreach ($answer['options'] as $option) {
+                if (!isset($counts[$option])) $counts[$option] = 0;
+            }
+            $counts[$answer['value']] = isset($counts[$answer['value']]) ? absint($counts[$answer['value']]) + 1 : 1;
+            update_post_meta($form_id, $meta_key, $counts);
+            $poll_results[] = array('label' => $answer['label'], 'counts' => $counts);
+        }
         if (!empty($settings['notification_email']) && is_email($settings['notification_email'])) {
             $lines = array();
             foreach ($data as $item) $lines[] = $item['label'] . ': ' . (is_array($item['value']) ? implode(', ', $item['value']) : $item['value']);
@@ -207,7 +230,12 @@ class Webform_Public {
          * payment fulfillment, automation, and CRM integrations.
          */
         do_action('webform_after_submission', $entry_id, $form_id, $data, $settings);
-        wp_send_json_success(array('message' => $settings['success_message'] ?? __('Thanks! Your response has been submitted.', 'webform'), 'redirect_url' => !empty($settings['redirect_url']) ? $settings['redirect_url'] : ''));
+        wp_send_json_success(array(
+            'message' => $settings['success_message'] ?? __('Thanks! Your response has been submitted.', 'webform'),
+            'redirect_url' => !empty($settings['redirect_url']) ? $settings['redirect_url'] : '',
+            'quiz' => $quiz_total ? array('score' => $quiz_score, 'total' => $quiz_total) : null,
+            'polls' => $poll_results,
+        ));
     }
 
     private function condition_passes($condition, $posted) {
