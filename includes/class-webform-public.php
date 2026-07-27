@@ -20,6 +20,10 @@ class Webform_Public {
         if (!$schema) {
             return '';
         }
+        $availability_error = $this->availability_error($form_id, $settings);
+        if ($availability_error) {
+            return '<div class="webform-public webform-closed" role="status">' . esc_html($availability_error) . '</div>';
+        }
         wp_enqueue_style('webform-public', WEBFORM_URL . 'assets/css/public.css', array(), WEBFORM_VERSION);
         wp_enqueue_script('webform-public', WEBFORM_URL . 'assets/js/public.js', array(), WEBFORM_VERSION, true);
         wp_localize_script('webform-public', 'WebformPublic', array('ajaxUrl' => admin_url('admin-ajax.php')));
@@ -31,6 +35,7 @@ class Webform_Public {
                 <input type="hidden" name="action" value="webform_submit">
                 <input type="hidden" name="form_id" value="<?php echo esc_attr($form_id); ?>">
                 <input type="hidden" name="nonce" value="<?php echo esc_attr(wp_create_nonce('webform_submit_' . $form_id)); ?>">
+                <input type="hidden" name="started_at" value="<?php echo esc_attr(time()); ?>">
                 <input type="text" name="website" class="webform-honeypot" tabindex="-1" autocomplete="off">
                 <?php foreach ($schema as $stage_index => $stage) : ?>
                     <section class="webform-stage <?php echo $stage_index === 0 ? 'is-active' : ''; ?>" data-stage="<?php echo esc_attr($stage_index); ?>" <?php echo $stage_index === 0 ? '' : 'hidden'; ?>>
@@ -110,6 +115,10 @@ class Webform_Public {
         if (!empty($_POST['website'])) {
             wp_send_json_success(array('message' => __('Thanks! Your response has been submitted.', 'webform')));
         }
+        $started_at = isset($_POST['started_at']) ? absint($_POST['started_at']) : 0;
+        if (!$started_at || time() - $started_at < 2) {
+            wp_send_json_success(array('message' => __('Thanks! Your response has been submitted.', 'webform')));
+        }
         $rate_key = 'webform_rate_' . md5($form_id . '|' . $this->client_ip());
         $rate_count = (int) get_transient($rate_key);
         $rate_limit = max(1, (int) apply_filters('webform_rate_limit', 20, $form_id));
@@ -121,23 +130,21 @@ class Webform_Public {
         if (!$schema || get_post_status($form_id) !== 'publish') {
             wp_send_json_error(array('message' => __('This form is unavailable.', 'webform')), 404);
         }
+        $settings = get_post_meta($form_id, '_webform_settings', true);
+        $availability_error = $this->availability_error($form_id, $settings);
+        if ($availability_error) {
+            wp_send_json_error(array('message' => $availability_error), 403);
+        }
         $posted = isset($_POST['fields']) && is_array($_POST['fields']) ? wp_unslash($_POST['fields']) : array();
         $data = array();
         $errors = array();
+        $uploaded_urls = array();
         foreach ($schema as $stage) {
             foreach ($stage['fields'] as $field) {
                 if ($field['type'] === 'heading') continue;
                 if (!$this->condition_passes($field['condition'] ?? array(), $posted)) continue;
                 $value = $posted[$field['id']] ?? '';
-                if ($field['type'] === 'file') {
-                    $upload = $this->handle_upload($field);
-                    if (is_wp_error($upload)) {
-                        $errors[$field['id']] = $upload->get_error_message();
-                        $value = '';
-                    } else {
-                        $value = $upload;
-                    }
-                }
+                if ($field['type'] === 'file') $value = !empty($_FILES['fields']['name'][$field['id']]) ? '__pending_upload__' : '';
                 $value = is_array($value) ? array_slice(array_map('sanitize_text_field', $value), 0, 100) : substr(sanitize_textarea_field($value), 0, 10000);
                 if (!empty($field['required']) && (empty($value) && $value !== '0')) {
                     $errors[$field['id']] = sprintf(__('%s is required.', 'webform'), $field['label']);
@@ -156,13 +163,35 @@ class Webform_Public {
         if ($errors) {
             wp_send_json_error(array('message' => __('Please correct the highlighted fields.', 'webform'), 'errors' => $errors), 422);
         }
+        // Upload only after every non-file field passes, preventing orphaned
+        // files when another field causes validation to fail.
+        foreach ($schema as $stage) {
+            foreach ($stage['fields'] as $field) {
+                if ($field['type'] !== 'file' || !$this->condition_passes($field['condition'] ?? array(), $posted)) continue;
+                $upload = $this->handle_upload($field);
+                if (is_wp_error($upload)) {
+                    $errors[$field['id']] = $upload->get_error_message();
+                    continue;
+                }
+                if ($upload) $uploaded_urls[] = $upload;
+                $data[$field['id']] = array('label' => $field['label'], 'value' => $upload);
+            }
+        }
+        if ($errors) {
+            foreach ($uploaded_urls as $uploaded_url) {
+                $uploads = wp_get_upload_dir();
+                if (strpos($uploaded_url, $uploads['baseurl']) === 0) {
+                    wp_delete_file($uploads['basedir'] . substr($uploaded_url, strlen($uploads['baseurl'])));
+                }
+            }
+            wp_send_json_error(array('message' => __('Please correct the highlighted fields.', 'webform'), 'errors' => $errors), 422);
+        }
         $entry_id = wp_insert_post(array('post_type' => 'webform_entry', 'post_status' => 'private', 'post_title' => sprintf(__('Submission for %s', 'webform'), get_the_title($form_id))));
         if (!$entry_id || is_wp_error($entry_id)) {
             wp_send_json_error(array('message' => __('We could not save your submission. Please try again.', 'webform')), 500);
         }
         update_post_meta($entry_id, '_webform_form_id', $form_id);
         update_post_meta($entry_id, '_webform_data', $data);
-        $settings = get_post_meta($form_id, '_webform_settings', true);
         if (!empty($settings['notification_email']) && is_email($settings['notification_email'])) {
             $lines = array();
             foreach ($data as $item) $lines[] = $item['label'] . ': ' . (is_array($item['value']) ? implode(', ', $item['value']) : $item['value']);
@@ -204,6 +233,7 @@ class Webform_Public {
             'error' => absint($_FILES['fields']['error'][$field['id']]),
             'size' => absint($_FILES['fields']['size'][$field['id']]),
         );
+        if ($file['error'] !== UPLOAD_ERR_OK) return new WP_Error('upload_error', __('The file could not be uploaded.', 'webform'));
         if ($file['size'] > absint($field['max_size']) * MB_IN_BYTES) return new WP_Error('file_size', __('The uploaded file is too large.', 'webform'));
         $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
         $allowed = array_filter(array_map('trim', explode(',', $field['allowed_extensions'])));
@@ -211,6 +241,28 @@ class Webform_Public {
         require_once ABSPATH . 'wp-admin/includes/file.php';
         $uploaded = wp_handle_upload($file, array('test_form' => false));
         return !empty($uploaded['error']) ? new WP_Error('upload_error', $uploaded['error']) : esc_url_raw($uploaded['url']);
+    }
+
+    private function availability_error($form_id, $settings) {
+        if (!empty($settings['require_login']) && !is_user_logged_in()) {
+            return __('You must be logged in to submit this form.', 'webform');
+        }
+        $limit = absint($settings['submission_limit'] ?? 0);
+        if ($limit) {
+            $query = new WP_Query(array(
+                'post_type' => 'webform_entry',
+                'post_status' => 'private',
+                'posts_per_page' => 1,
+                'fields' => 'ids',
+                'no_found_rows' => false,
+                'meta_key' => '_webform_form_id',
+                'meta_value' => $form_id,
+            ));
+            if ($query->found_posts >= $limit) {
+                return !empty($settings['closed_message']) ? $settings['closed_message'] : __('This form is currently unavailable.', 'webform');
+            }
+        }
+        return '';
     }
 
     private function client_ip() {
