@@ -8,6 +8,9 @@ class Webform_Admin {
         add_action('admin_enqueue_scripts', array($this, 'assets'));
         add_action('wp_ajax_webform_save_form', array($this, 'save_form'));
         add_action('wp_ajax_webform_delete_form', array($this, 'delete_form'));
+        add_action('admin_post_webform_duplicate_form', array($this, 'duplicate_form'));
+        add_action('admin_post_webform_export_entries', array($this, 'export_entries'));
+        add_action('admin_post_webform_delete_entry', array($this, 'delete_entry'));
     }
 
     public function menu() {
@@ -61,7 +64,7 @@ class Webform_Admin {
                             <td><code>[webform id="<?php echo esc_attr($form->ID); ?>"]</code></td>
                             <td><?php echo esc_html($this->entry_count($form->ID)); ?></td>
                             <td><?php echo esc_html(get_the_modified_date('', $form)); ?></td>
-                            <td class="webform-row-actions"><a href="<?php echo esc_url(admin_url('admin.php?page=webform-builder&form_id=' . $form->ID)); ?>"><?php esc_html_e('Edit', 'webform'); ?></a> <button class="button-link-delete webform-delete" data-id="<?php echo esc_attr($form->ID); ?>"><?php esc_html_e('Delete', 'webform'); ?></button></td>
+                            <td class="webform-row-actions"><a href="<?php echo esc_url(admin_url('admin.php?page=webform-builder&form_id=' . $form->ID)); ?>"><?php esc_html_e('Edit', 'webform'); ?></a> <a href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=webform_duplicate_form&form_id=' . $form->ID), 'webform_duplicate_' . $form->ID)); ?>"><?php esc_html_e('Duplicate', 'webform'); ?></a> <button class="button-link-delete webform-delete" data-id="<?php echo esc_attr($form->ID); ?>"><?php esc_html_e('Delete', 'webform'); ?></button></td>
                         </tr>
                     <?php endforeach; ?>
                     </tbody></table>
@@ -134,15 +137,27 @@ class Webform_Admin {
         if (!current_user_can('manage_options')) {
             return;
         }
-        $entries = get_posts(array('post_type' => 'webform_entry', 'post_status' => 'private', 'posts_per_page' => 100, 'orderby' => 'date', 'order' => 'DESC'));
+        $form_filter = isset($_GET['form_id']) ? absint($_GET['form_id']) : 0;
+        $paged = max(1, isset($_GET['paged']) ? absint($_GET['paged']) : 1);
+        $args = array('post_type' => 'webform_entry', 'post_status' => 'private', 'posts_per_page' => 25, 'paged' => $paged, 'orderby' => 'date', 'order' => 'DESC');
+        if ($form_filter) {
+            $args['meta_key'] = '_webform_form_id';
+            $args['meta_value'] = $form_filter;
+        }
+        $query = new WP_Query($args);
+        $entries = $query->posts;
+        $forms = get_posts(array('post_type' => 'webform_form', 'post_status' => 'publish', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC'));
         ?>
-        <div class="wrap webform-wrap"><div class="webform-page-head"><div><h1><?php esc_html_e('Entries', 'webform'); ?></h1><p><?php esc_html_e('The 100 most recent form submissions.', 'webform'); ?></p></div></div>
-        <div class="webform-card"><table class="widefat striped"><thead><tr><th><?php esc_html_e('Form', 'webform'); ?></th><th><?php esc_html_e('Submitted data', 'webform'); ?></th><th><?php esc_html_e('Date', 'webform'); ?></th></tr></thead><tbody>
-        <?php if (!$entries) : ?><tr><td colspan="3"><?php esc_html_e('No entries yet.', 'webform'); ?></td></tr><?php endif; ?>
+        <div class="wrap webform-wrap"><div class="webform-page-head"><div><h1><?php esc_html_e('Entries', 'webform'); ?></h1><p><?php esc_html_e('Review, filter, export, or remove submissions.', 'webform'); ?></p></div>
+        <a class="button" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=webform_export_entries&form_id=' . $form_filter), 'webform_export_entries')); ?>"><?php esc_html_e('Export CSV', 'webform'); ?></a></div>
+        <form method="get" class="webform-entry-filter"><input type="hidden" name="page" value="webform-entries"><select name="form_id"><option value="0"><?php esc_html_e('All forms', 'webform'); ?></option><?php foreach ($forms as $form) : ?><option value="<?php echo esc_attr($form->ID); ?>" <?php selected($form_filter, $form->ID); ?>><?php echo esc_html($form->post_title); ?></option><?php endforeach; ?></select><button class="button"><?php esc_html_e('Filter', 'webform'); ?></button></form>
+        <div class="webform-card"><table class="widefat striped"><thead><tr><th><?php esc_html_e('Form', 'webform'); ?></th><th><?php esc_html_e('Submitted data', 'webform'); ?></th><th><?php esc_html_e('Date', 'webform'); ?></th><th></th></tr></thead><tbody>
+        <?php if (!$entries) : ?><tr><td colspan="4"><?php esc_html_e('No entries yet.', 'webform'); ?></td></tr><?php endif; ?>
         <?php foreach ($entries as $entry) : $data = get_post_meta($entry->ID, '_webform_data', true); $form_id = get_post_meta($entry->ID, '_webform_form_id', true); ?>
-            <tr><td><?php echo esc_html(get_the_title($form_id)); ?></td><td><?php foreach ((array) $data as $key => $value) : ?><div><strong><?php echo esc_html($key); ?>:</strong> <?php echo esc_html(is_array($value) ? implode(', ', $value) : $value); ?></div><?php endforeach; ?></td><td><?php echo esc_html(get_the_date('', $entry)); ?></td></tr>
+            <tr><td><?php echo esc_html(get_the_title($form_id)); ?></td><td><?php foreach ((array) $data as $key => $item) : $item = is_array($item) && isset($item['label']) ? $item : array('label' => $key, 'value' => $item); ?><div><strong><?php echo esc_html($item['label']); ?>:</strong> <?php echo esc_html(is_array($item['value']) ? implode(', ', $item['value']) : $item['value']); ?></div><?php endforeach; ?></td><td><?php echo esc_html(get_the_date('', $entry)); ?></td><td><a class="button-link-delete" onclick="return confirm('<?php echo esc_js(__('Permanently delete this entry?', 'webform')); ?>')" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=webform_delete_entry&entry_id=' . $entry->ID), 'webform_delete_entry_' . $entry->ID)); ?>"><?php esc_html_e('Delete', 'webform'); ?></a></td></tr>
         <?php endforeach; ?>
-        </tbody></table></div></div>
+        </tbody></table></div>
+        <?php echo wp_kses_post((string) paginate_links(array('base' => add_query_arg('paged', '%#%'), 'format' => '', 'current' => $paged, 'total' => $query->max_num_pages, 'type' => 'list'))); ?></div>
         <?php
     }
 
@@ -161,6 +176,9 @@ class Webform_Admin {
         $settings = json_decode($settings_json, true);
         if (!is_array($schema) || !is_array($settings)) {
             wp_send_json_error(array('message' => __('Invalid form data.', 'webform')), 400);
+        }
+        if (count($schema) > 20) {
+            wp_send_json_error(array('message' => __('A form may contain up to 20 stages.', 'webform')), 400);
         }
         $postarr = array(
             'post_title' => sanitize_text_field(isset($_POST['name']) ? wp_unslash($_POST['name']) : ''),
@@ -185,17 +203,28 @@ class Webform_Admin {
     private function sanitize_schema($schema) {
         $clean = array();
         $allowed_types = array('text', 'email', 'textarea', 'select', 'radio', 'checkbox', 'number', 'date', 'phone', 'heading');
-        foreach ($schema as $stage) {
-            $clean_stage = array('id' => sanitize_key($stage['id'] ?? ''), 'title' => sanitize_text_field($stage['title'] ?? ''), 'fields' => array());
-            foreach ((array) ($stage['fields'] ?? array()) as $field) {
+        $seen_ids = array();
+        foreach ($schema as $stage_index => $stage) {
+            $stage_id = sanitize_key($stage['id'] ?? '');
+            if (!$stage_id || isset($seen_ids[$stage_id])) {
+                $stage_id = 'stage_' . ($stage_index + 1) . '_' . wp_generate_password(6, false, false);
+            }
+            $seen_ids[$stage_id] = true;
+            $clean_stage = array('id' => $stage_id, 'title' => sanitize_text_field($stage['title'] ?? ''), 'fields' => array());
+            foreach (array_slice((array) ($stage['fields'] ?? array()), 0, 100) as $field_index => $field) {
                 $type = in_array($field['type'] ?? '', $allowed_types, true) ? $field['type'] : 'text';
+                $field_id = sanitize_key($field['id'] ?? '');
+                if (!$field_id || isset($seen_ids[$field_id])) {
+                    $field_id = 'field_' . ($stage_index + 1) . '_' . ($field_index + 1) . '_' . wp_generate_password(6, false, false);
+                }
+                $seen_ids[$field_id] = true;
                 $clean_stage['fields'][] = array(
-                    'id' => sanitize_key($field['id'] ?? ''),
+                    'id' => $field_id,
                     'type' => $type,
-                    'label' => sanitize_text_field($field['label'] ?? ''),
-                    'placeholder' => sanitize_text_field($field['placeholder'] ?? ''),
+                    'label' => substr(sanitize_text_field($field['label'] ?? ''), 0, 200),
+                    'placeholder' => substr(sanitize_text_field($field['placeholder'] ?? ''), 0, 300),
                     'required' => !empty($field['required']),
-                    'options' => array_values(array_filter(array_map('sanitize_text_field', (array) ($field['options'] ?? array())))),
+                    'options' => array_slice(array_values(array_filter(array_map('sanitize_text_field', (array) ($field['options'] ?? array())))), 0, 100),
                 );
             }
             $clean[] = $clean_stage;
@@ -214,5 +243,63 @@ class Webform_Admin {
         }
         wp_trash_post($form_id);
         wp_send_json_success();
+    }
+
+    public function duplicate_form() {
+        if (!current_user_can('manage_options')) wp_die(esc_html__('Permission denied.', 'webform'));
+        $form_id = isset($_GET['form_id']) ? absint($_GET['form_id']) : 0;
+        check_admin_referer('webform_duplicate_' . $form_id);
+        if (get_post_type($form_id) !== 'webform_form') wp_die(esc_html__('Form not found.', 'webform'));
+        $copy_id = wp_insert_post(array('post_type' => 'webform_form', 'post_status' => 'publish', 'post_title' => sprintf(__('%s (Copy)', 'webform'), get_the_title($form_id))));
+        update_post_meta($copy_id, '_webform_schema', get_post_meta($form_id, '_webform_schema', true));
+        update_post_meta($copy_id, '_webform_settings', get_post_meta($form_id, '_webform_settings', true));
+        wp_safe_redirect(admin_url('admin.php?page=webform-builder&form_id=' . $copy_id));
+        exit;
+    }
+
+    public function delete_entry() {
+        if (!current_user_can('manage_options')) wp_die(esc_html__('Permission denied.', 'webform'));
+        $entry_id = isset($_GET['entry_id']) ? absint($_GET['entry_id']) : 0;
+        check_admin_referer('webform_delete_entry_' . $entry_id);
+        if (get_post_type($entry_id) === 'webform_entry') wp_delete_post($entry_id, true);
+        wp_safe_redirect(wp_get_referer() ?: admin_url('admin.php?page=webform-entries'));
+        exit;
+    }
+
+    public function export_entries() {
+        if (!current_user_can('manage_options')) wp_die(esc_html__('Permission denied.', 'webform'));
+        check_admin_referer('webform_export_entries');
+        $form_id = isset($_GET['form_id']) ? absint($_GET['form_id']) : 0;
+        $args = array('post_type' => 'webform_entry', 'post_status' => 'private', 'posts_per_page' => -1, 'orderby' => 'date', 'order' => 'DESC');
+        if ($form_id) {
+            $args['meta_key'] = '_webform_form_id';
+            $args['meta_value'] = $form_id;
+        }
+        $entries = get_posts($args);
+        nocache_headers();
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=webform-entries-' . gmdate('Y-m-d') . '.csv');
+        $output = fopen('php://output', 'w');
+        fputcsv($output, array('Entry ID', 'Form', 'Date', 'Field', 'Value'));
+        foreach ($entries as $entry) {
+            $entry_form_id = get_post_meta($entry->ID, '_webform_form_id', true);
+            foreach ((array) get_post_meta($entry->ID, '_webform_data', true) as $key => $item) {
+                $item = is_array($item) && isset($item['label']) ? $item : array('label' => $key, 'value' => $item);
+                fputcsv($output, array(
+                    $entry->ID,
+                    $this->csv_cell(get_the_title($entry_form_id)),
+                    $entry->post_date,
+                    $this->csv_cell($item['label']),
+                    $this->csv_cell(is_array($item['value']) ? implode(', ', $item['value']) : $item['value']),
+                ));
+            }
+        }
+        fclose($output);
+        exit;
+    }
+
+    private function csv_cell($value) {
+        $value = (string) $value;
+        return preg_match('/^[=+\-@]/', $value) ? "'" . $value : $value;
     }
 }
