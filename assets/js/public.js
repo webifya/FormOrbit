@@ -103,6 +103,27 @@
                         stages.forEach(stage => stage.hidden = true);
                         message.classList.add('is-success');
                         message.textContent = response.data.message;
+                        if (response.data.quiz) {
+                            const quiz = document.createElement('strong');
+                            quiz.className = 'webform-quiz-result';
+                            quiz.textContent = `Score: ${response.data.quiz.score} / ${response.data.quiz.total}`;
+                            message.appendChild(quiz);
+                        }
+                        (response.data.polls || []).forEach(function (poll) {
+                            const result = document.createElement('div');
+                            result.className = 'webform-poll-result';
+                            const total = Object.values(poll.counts).reduce((sum, count) => sum + Number(count), 0);
+                            const title = document.createElement('strong');
+                            title.textContent = poll.label;
+                            result.appendChild(title);
+                            Object.keys(poll.counts).forEach(function (option) {
+                                const line = document.createElement('span');
+                                const percent = total ? Math.round(Number(poll.counts[option]) / total * 100) : 0;
+                                line.textContent = `${option}: ${percent}% (${poll.counts[option]})`;
+                                result.appendChild(line);
+                            });
+                            message.appendChild(result);
+                        });
                     })
                     .catch(function (error) {
                         message.classList.add('is-error');
