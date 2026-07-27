@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.4.1
+Stable tag: 1.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -32,6 +32,8 @@ Webform provides a native WordPress form-building experience:
 * Polls with live percentage results
 * Scored quizzes with configurable answers and points
 * 10 free ready-to-customize form templates
+* Time, slider, rating, hidden, HTML, CAPTCHA, and page-break tools
+* Modern, minimal, and rounded style presets with custom colors
 
 Webform is created by Mahfuzar Rahman at Web Ninja LLC.
 
@@ -44,6 +46,13 @@ Webform is created by Mahfuzar Rahman at Web Ninja LLC.
 5. Copy the generated `[webform id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 1.5.0 =
+* Added visible stage rename controls.
+* Added an automatic template chooser when creating a new form.
+* Added time, slider, rating, hidden, safe HTML, math CAPTCHA, and page-break tools.
+* Added Modern, Minimal, and Rounded presets with configurable colors.
+* Added extension APIs for Pro calculations, grouped layouts, and signatures.
 
 = 1.4.1 =
 * Added a filtered submission response for licensed payment and automation add-ons.
