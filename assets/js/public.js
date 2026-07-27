@@ -74,6 +74,12 @@
             });
             form.addEventListener('input', applyConditions);
             form.addEventListener('change', applyConditions);
+            form.addEventListener('input', function (event) {
+                if (event.target.type === 'range') {
+                    const output = event.target.parentElement.querySelector('.webform-slider-value');
+                    if (output) output.value = event.target.value;
+                }
+            });
 
             form.addEventListener('submit', function (event) {
                 event.preventDefault();
