@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -29,6 +29,9 @@ Webform provides a native WordPress form-building experience:
 * Shortcode embedding
 * Nonces, capability checks, sanitization, escaping, and a spam honeypot
 * Login requirements and total submission limits
+* Polls with live percentage results
+* Scored quizzes with configurable answers and points
+* 10 free ready-to-customize form templates
 
 Webform is created by Mahfuzar Rahman at Web Ninja LLC.
 
@@ -41,6 +44,14 @@ Webform is created by Mahfuzar Rahman at Web Ninja LLC.
 5. Copy the generated `[webform id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 1.4.0 =
+* Changed the author URI to Mahfuzar Rahman's WordPress.org profile.
+* Added poll fields with live aggregate results after submission.
+* Added scored quiz questions with configurable correct answers and points.
+* Added 10 free starter templates plus a blank-form option.
+* Added a template library page and one-click template loading.
+* Updated the Pro offer to include 20 additional premium templates.
 
 = 1.3.0 =
 * Added an optional Webform Pro offer at $19.99/year with a transparent feature list.
