@@ -29,7 +29,8 @@ class Webform_Public {
         wp_localize_script('webform-public', 'WebformPublic', array('ajaxUrl' => admin_url('admin-ajax.php')));
         ob_start();
         ?>
-        <div class="webform-public" data-form-id="<?php echo esc_attr($form_id); ?>">
+        <?php $preset = in_array($settings['style_preset'] ?? '', array('modern', 'minimal', 'rounded'), true) ? $settings['style_preset'] : 'modern'; ?>
+        <div class="webform-public webform-style-<?php echo esc_attr($preset); ?>" style="--wf-accent:<?php echo esc_attr($settings['accent_color'] ?? '#6c4bd4'); ?>;--wf-button-text:<?php echo esc_attr($settings['button_text_color'] ?? '#ffffff'); ?>" data-form-id="<?php echo esc_attr($form_id); ?>">
             <?php if (count($schema) > 1) : ?><div class="webform-progress" role="progressbar" aria-valuemin="1" aria-valuemax="<?php echo esc_attr(count($schema)); ?>" aria-valuenow="1"><div class="webform-progress-bar"></div></div><ol class="webform-steps"><?php foreach ($schema as $index => $stage) : ?><li class="<?php echo $index === 0 ? 'is-active' : ''; ?>" <?php echo $index === 0 ? 'aria-current="step"' : ''; ?>><?php echo esc_html($stage['title']); ?></li><?php endforeach; ?></ol><?php endif; ?>
             <form novalidate enctype="multipart/form-data">
                 <input type="hidden" name="action" value="webform_submit">
@@ -57,6 +58,29 @@ class Webform_Public {
     private function render_field($field) {
         $id = 'webform-' . $field['id'];
         $name = 'fields[' . $field['id'] . ']';
+        $custom_html = apply_filters('webform_custom_field_html', '', $field, $id, $name);
+        if ($custom_html !== '') {
+            echo wp_kses($custom_html, array(
+                'div' => array('class' => true, 'data-*' => true),
+                'fieldset' => array('class' => true),
+                'legend' => array(),
+                'label' => array('for' => true),
+                'input' => array('id' => true, 'class' => true, 'type' => true, 'name' => true, 'value' => true, 'readonly' => true, 'required' => true, 'data-*' => true),
+                'canvas' => array('id' => true, 'class' => true, 'width' => true, 'height' => true, 'data-*' => true),
+                'button' => array('type' => true, 'class' => true),
+                'span' => array('class' => true, 'id' => true),
+                'small' => array(),
+            ));
+            return;
+        }
+        if ($field['type'] === 'hidden') {
+            echo '<input type="hidden" name="' . esc_attr($name) . '" value="' . esc_attr($field['default_value']) . '">';
+            return;
+        }
+        if ($field['type'] === 'html') {
+            echo '<div class="webform-html">' . wp_kses_post($field['html']) . '</div>';
+            return;
+        }
         if ($field['type'] === 'heading') {
             echo '<h3 class="webform-heading">' . esc_html($field['label']) . '</h3>';
             return;
@@ -89,6 +113,27 @@ class Webform_Public {
             <?php
             return;
         }
+        if ($field['type'] === 'captcha') {
+            $first = wp_rand(2, 9);
+            $second = wp_rand(1, 9);
+            $answer = $first + $second;
+            $token = base64_encode($first . ':' . $second . ':' . wp_create_nonce('webform_captcha_' . $field['id'] . '_' . $answer));
+            ?>
+            <div class="webform-field webform-field-captcha"<?php echo $condition_attr; ?>>
+                <label for="<?php echo esc_attr($id); ?>"><?php echo esc_html(sprintf(__('%1$d + %2$d = ?', 'webform'), $first, $second)); ?> <span aria-hidden="true">*</span></label>
+                <input type="number" id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" required>
+                <input type="hidden" name="captcha_tokens[<?php echo esc_attr($field['id']); ?>]" value="<?php echo esc_attr($token); ?>">
+                <span class="webform-error" id="<?php echo esc_attr($describedby); ?>"></span>
+            </div>
+            <?php
+            return;
+        }
+        if ($field['type'] === 'rating') {
+            ?>
+            <fieldset class="webform-field webform-field-rating"<?php echo $condition_attr; ?>><legend><?php echo esc_html($field['label']); ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></legend><div class="webform-rating"><?php for ($rating = 5; $rating >= 1; $rating--) : ?><input id="<?php echo esc_attr($id . '-' . $rating); ?>" type="radio" name="<?php echo esc_attr($name); ?>" value="<?php echo esc_attr($rating); ?>" <?php echo $required && $rating === 1 ? 'required' : ''; ?>><label for="<?php echo esc_attr($id . '-' . $rating); ?>" aria-label="<?php echo esc_attr(sprintf(__('%d stars', 'webform'), $rating)); ?>">★</label><?php endfor; ?></div><span class="webform-error" id="<?php echo esc_attr($describedby); ?>"></span></fieldset>
+            <?php
+            return;
+        }
         ?>
         <div class="webform-field webform-field-<?php echo esc_attr($field['type']); ?>"<?php echo $condition_attr; ?>>
             <label for="<?php echo esc_attr($id); ?>"><?php echo esc_html($field['label']); ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></label>
@@ -99,8 +144,10 @@ class Webform_Public {
             <?php elseif ($field['type'] === 'file') : ?>
                 <input type="file" id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" accept="<?php echo esc_attr(implode(',', array_map(function ($ext) { return '.' . trim($ext); }, explode(',', $field['allowed_extensions'])))); ?>" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $required; ?>>
                 <small><?php echo esc_html(sprintf(__('Allowed: %1$s. Maximum: %2$d MB.', 'webform'), $field['allowed_extensions'], $field['max_size'])); ?></small>
+            <?php elseif ($field['type'] === 'slider') : ?>
+                <input type="range" id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" min="<?php echo esc_attr($field['min']); ?>" max="<?php echo esc_attr($field['max']); ?>" step="<?php echo esc_attr($field['step']); ?>" value="<?php echo esc_attr($field['min']); ?>"<?php echo $required; ?>><output class="webform-slider-value"><?php echo esc_html($field['min']); ?></output>
             <?php else : ?>
-                <?php $type = in_array($field['type'], array('email', 'number', 'date', 'url'), true) ? $field['type'] : ($field['type'] === 'phone' ? 'tel' : 'text'); ?>
+                <?php $type = in_array($field['type'], array('email', 'number', 'date', 'time', 'url'), true) ? $field['type'] : ($field['type'] === 'phone' ? 'tel' : 'text'); ?>
                 <input type="<?php echo esc_attr($type); ?>" id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" <?php echo in_array($type, array('text', 'email', 'tel'), true) ? 'maxlength="1000"' : ''; ?> aria-describedby="<?php echo esc_attr($describedby); ?>" placeholder="<?php echo esc_attr($field['placeholder']); ?>"<?php echo $required; ?>>
             <?php endif; ?>
             <span class="webform-error" id="<?php echo esc_attr($describedby); ?>"></span>
@@ -145,10 +192,11 @@ class Webform_Public {
         $poll_answers = array();
         foreach ($schema as $stage) {
             foreach ($stage['fields'] as $field) {
-                if ($field['type'] === 'heading') continue;
+                if (in_array($field['type'], array('heading', 'html'), true) || !apply_filters('webform_process_field', true, $field, $form_id)) continue;
                 if (!$this->condition_passes($field['condition'] ?? array(), $posted)) continue;
                 $value = $posted[$field['id']] ?? '';
                 if ($field['type'] === 'file') $value = !empty($_FILES['fields']['name'][$field['id']]) ? '__pending_upload__' : '';
+                $value = apply_filters('webform_raw_submission_value', $value, $field, $form_id, $posted);
                 $value = is_array($value) ? array_slice(array_map('sanitize_text_field', $value), 0, 100) : substr(sanitize_textarea_field($value), 0, 10000);
                 if (!empty($field['required']) && (empty($value) && $value !== '0')) {
                     $errors[$field['id']] = sprintf(__('%s is required.', 'webform'), $field['label']);
@@ -160,7 +208,13 @@ class Webform_Public {
                     $errors[$field['id']] = __('Select a valid option.', 'webform');
                 } elseif ($field['type'] === 'checkbox' && array_diff((array) $value, $field['options'])) {
                     $errors[$field['id']] = __('Select valid options.', 'webform');
+                } elseif ($field['type'] === 'captcha' && !$this->valid_captcha($field['id'], $value)) {
+                    $errors[$field['id']] = __('The security answer is incorrect.', 'webform');
+                } elseif ($field['type'] === 'rating' && $value && (!is_numeric($value) || $value < 1 || $value > 5)) {
+                    $errors[$field['id']] = __('Select a valid rating.', 'webform');
                 }
+                $custom_error = apply_filters('webform_validate_field', '', $value, $field, $form_id, $posted);
+                if ($custom_error) $errors[$field['id']] = sanitize_text_field($custom_error);
                 $data[$field['id']] = array('label' => $field['label'], 'value' => $value);
                 if ($field['type'] === 'quiz') {
                     $points = max(1, absint($field['points'] ?? 1));
@@ -293,6 +347,17 @@ class Webform_Public {
             }
         }
         return '';
+    }
+
+    private function valid_captcha($field_id, $value) {
+        $tokens = isset($_POST['captcha_tokens']) && is_array($_POST['captcha_tokens']) ? wp_unslash($_POST['captcha_tokens']) : array();
+        $token = isset($tokens[$field_id]) ? sanitize_text_field($tokens[$field_id]) : '';
+        $decoded = base64_decode($token, true);
+        if (!$decoded) return false;
+        $parts = explode(':', $decoded);
+        if (count($parts) !== 3) return false;
+        $answer = absint($parts[0]) + absint($parts[1]);
+        return absint($value) === $answer && wp_verify_nonce($parts[2], 'webform_captcha_' . $field_id . '_' . $answer);
     }
 
     private function client_ip() {
