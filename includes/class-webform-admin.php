@@ -109,9 +109,23 @@ class Webform_Admin {
                     <h2><?php esc_html_e('Fields', 'webform'); ?></h2>
                     <div id="webform-palette" class="webform-palette">
                         <?php
-                        $fields = array('text' => 'Text', 'email' => 'Email', 'textarea' => 'Long text', 'select' => 'Dropdown', 'radio' => 'Radio', 'checkbox' => 'Checkbox', 'number' => 'Number', 'date' => 'Date', 'phone' => 'Phone', 'url' => 'Website', 'file' => 'File upload', 'consent' => 'Consent', 'heading' => 'Heading');
+                        $fields = apply_filters('webform_field_palette', array(
+                            'text' => __('Text', 'webform'),
+                            'email' => __('Email', 'webform'),
+                            'textarea' => __('Long text', 'webform'),
+                            'select' => __('Dropdown', 'webform'),
+                            'radio' => __('Radio', 'webform'),
+                            'checkbox' => __('Checkbox', 'webform'),
+                            'number' => __('Number', 'webform'),
+                            'date' => __('Date', 'webform'),
+                            'phone' => __('Phone', 'webform'),
+                            'url' => __('Website', 'webform'),
+                            'file' => __('File upload', 'webform'),
+                            'consent' => __('Consent', 'webform'),
+                            'heading' => __('Heading', 'webform'),
+                        ));
                         foreach ($fields as $type => $label) {
-                            printf('<div class="webform-palette-item" data-type="%s"><span class="dashicons dashicons-plus-alt2"></span>%s</div>', esc_attr($type), esc_html__($label, 'webform'));
+                            printf('<div class="webform-palette-item" data-type="%s"><span class="dashicons dashicons-plus-alt2"></span>%s</div>', esc_attr($type), esc_html($label));
                         }
                         ?>
                     </div>
@@ -208,7 +222,7 @@ class Webform_Admin {
 
     private function sanitize_schema($schema) {
         $clean = array();
-        $allowed_types = array('text', 'email', 'textarea', 'select', 'radio', 'checkbox', 'number', 'date', 'phone', 'url', 'file', 'consent', 'heading');
+        $allowed_types = apply_filters('webform_allowed_field_types', array('text', 'email', 'textarea', 'select', 'radio', 'checkbox', 'number', 'date', 'phone', 'url', 'file', 'consent', 'heading'));
         $allowed_operators = array('equals', 'not_equals', 'contains', 'not_empty', 'empty');
         $seen_ids = array();
         foreach ($schema as $stage_index => $stage) {
