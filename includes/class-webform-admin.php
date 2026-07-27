@@ -155,7 +155,7 @@ class Webform_Admin {
                         }
                         ?>
                     </div>
-                    <?php if (!$this->is_pro_active()) : ?><div class="webform-picker-pro"><div><span class="webform-pro-badge"><?php esc_html_e('RECOMMENDED PRO', 'webform'); ?></span><h3><?php esc_html_e('Build revenue and automated workflows', 'webform'); ?></h3><p><?php esc_html_e('Upgrade for calculated totals, grouped layouts, signatures, PDF notifications, hosted payments, Mailchimp, Brevo, Zapier, premium styles, and 20 business templates.', 'webform'); ?></p></div><div class="webform-pro-field-list"><div><span class="dashicons dashicons-editor-table"></span><?php esc_html_e('Calculations', 'webform'); ?></div><div><span class="dashicons dashicons-grid-view"></span><?php esc_html_e('Field groups', 'webform'); ?></div><div><span class="dashicons dashicons-edit"></span><?php esc_html_e('E-signatures', 'webform'); ?></div><div><span class="dashicons dashicons-media-document"></span><?php esc_html_e('PDF notifications', 'webform'); ?></div></div><a class="button button-primary" href="<?php echo esc_url($this->upgrade_url('field-picker')); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('See everything in Pro — $19.99/year', 'webform'); ?></a></div><?php endif; ?>
+                    <?php if (!$this->is_pro_active()) : ?><div class="webform-picker-pro"><div><span class="webform-pro-badge"><?php esc_html_e('RECOMMENDED PRO', 'webform'); ?></span><h3><?php esc_html_e('Build revenue and automated workflows', 'webform'); ?></h3><p><?php esc_html_e('Upgrade for calculated totals, grouped layouts, signatures, PDF notifications, hosted payments, email marketing, automation, premium styles, and 20 business templates.', 'webform'); ?></p></div><h4><?php esc_html_e('Pro fields', 'webform'); ?></h4><div class="webform-pro-field-list"><div><span class="dashicons dashicons-editor-table"></span><?php esc_html_e('Calculations', 'webform'); ?></div><div><span class="dashicons dashicons-grid-view"></span><?php esc_html_e('Field groups', 'webform'); ?></div><div><span class="dashicons dashicons-edit"></span><?php esc_html_e('E-signatures', 'webform'); ?></div><div><span class="dashicons dashicons-media-document"></span><?php esc_html_e('PDF notifications', 'webform'); ?></div></div><h4><?php esc_html_e('Pro integrations', 'webform'); ?></h4><div class="webform-pro-field-list webform-pro-integration-fields"><div><span class="dashicons dashicons-email"></span>Mailchimp</div><div><span class="dashicons dashicons-megaphone"></span>Brevo</div><div><span class="dashicons dashicons-randomize"></span>Zapier</div><div><span class="dashicons dashicons-money-alt"></span><?php esc_html_e('Stripe / PayPal', 'webform'); ?></div></div><a class="button button-primary" href="<?php echo esc_url($this->upgrade_url('field-picker')); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('See everything in Pro — $19.99/year', 'webform'); ?></a></div><?php endif; ?>
                     </div>
                 </aside>
                 <main class="webform-canvas-panel">
@@ -393,15 +393,18 @@ class Webform_Admin {
 
     public function settings_page() {
         if (!current_user_can('manage_options')) return;
-        $settings = wp_parse_args((array) get_option('webform_global_settings', array()), array('recaptcha_enabled' => false, 'recaptcha_site_key' => '', 'recaptcha_secret_key' => ''));
+        $stored_settings = (array) get_option('webform_global_settings', array());
+        $default_recaptcha_mode = !empty($stored_settings['recaptcha_secret_key']) ? 'classic' : 'enterprise';
+        $settings = wp_parse_args($stored_settings, array('recaptcha_enabled' => false, 'recaptcha_mode' => $default_recaptcha_mode, 'recaptcha_site_key' => '', 'recaptcha_secret_key' => '', 'recaptcha_project_id' => '', 'recaptcha_api_key' => '', 'recaptcha_action' => 'WEBFORM_SUBMIT'));
         ?>
         <div class="wrap webform-wrap"><div class="webform-page-head"><div><h1><?php esc_html_e('Webform Settings', 'webform'); ?></h1><p><?php esc_html_e('Global security and service configuration.', 'webform'); ?></p></div></div>
-        <form class="webform-settings-card" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post"><input type="hidden" name="action" value="webform_save_global_settings"><?php wp_nonce_field('webform_save_global_settings'); ?>
-            <h2><?php esc_html_e('Google reCAPTCHA v2', 'webform'); ?></h2>
-            <p><?php esc_html_e('Create Checkbox keys in the Google reCAPTCHA console, then add a CAPTCHA field to any form.', 'webform'); ?></p>
-            <label><input type="checkbox" name="recaptcha_enabled" value="1" <?php checked(!empty($settings['recaptcha_enabled'])); ?>> <?php esc_html_e('Enable Google reCAPTCHA', 'webform'); ?></label>
-            <label><?php esc_html_e('Site key', 'webform'); ?><input name="recaptcha_site_key" value="<?php echo esc_attr($settings['recaptcha_site_key']); ?>"></label>
-            <label><?php esc_html_e('Secret key', 'webform'); ?><input type="password" name="recaptcha_secret_key" value="<?php echo esc_attr($settings['recaptcha_secret_key']); ?>" autocomplete="off"></label>
+        <form class="webform-settings-card webform-recaptcha-settings" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post"><input type="hidden" name="action" value="webform_save_global_settings"><?php wp_nonce_field('webform_save_global_settings'); ?>
+            <div class="webform-settings-card-head"><span class="dashicons dashicons-shield"></span><div><h2><?php esc_html_e('Google reCAPTCHA', 'webform'); ?></h2><p><?php esc_html_e('Protect forms with a Google Cloud checkbox key or a compatible classic v2 key.', 'webform'); ?></p></div></div>
+            <label class="webform-settings-toggle"><input type="checkbox" name="recaptcha_enabled" value="1" <?php checked(!empty($settings['recaptcha_enabled'])); ?>><span><?php esc_html_e('Enable Google reCAPTCHA on CAPTCHA fields', 'webform'); ?></span></label>
+            <label><?php esc_html_e('Integration type', 'webform'); ?><select name="recaptcha_mode" id="webform-recaptcha-mode"><option value="enterprise" <?php selected($settings['recaptcha_mode'], 'enterprise'); ?>><?php esc_html_e('Google Cloud reCAPTCHA (recommended)', 'webform'); ?></option><option value="classic" <?php selected($settings['recaptcha_mode'], 'classic'); ?>><?php esc_html_e('Classic or migrated v2 compatibility', 'webform'); ?></option></select></label>
+            <label><?php esc_html_e('Site key', 'webform'); ?><input name="recaptcha_site_key" value="<?php echo esc_attr($settings['recaptcha_site_key']); ?>" autocomplete="off"><small><?php esc_html_e('This is the value used in the data-sitekey attribute Google provides.', 'webform'); ?></small></label>
+            <div class="webform-recaptcha-panel" data-mode="enterprise"><label><?php esc_html_e('Google Cloud project ID', 'webform'); ?><input name="recaptcha_project_id" value="<?php echo esc_attr($settings['recaptcha_project_id']); ?>" autocomplete="off"></label><label><?php esc_html_e('Google Cloud API key', 'webform'); ?><input type="password" name="recaptcha_api_key" value="<?php echo esc_attr($settings['recaptcha_api_key']); ?>" autocomplete="new-password"><small><?php esc_html_e('Use a restricted server API key with the reCAPTCHA Enterprise API enabled.', 'webform'); ?></small></label><label><?php esc_html_e('Expected action', 'webform'); ?><input name="recaptcha_action" value="<?php echo esc_attr($settings['recaptcha_action']); ?>" pattern="[A-Za-z0-9_/-]+"><small><?php esc_html_e('The frontend and backend must use the same action.', 'webform'); ?></small></label></div>
+            <div class="webform-recaptcha-panel" data-mode="classic"><label><?php esc_html_e('Secret key', 'webform'); ?><input type="password" name="recaptcha_secret_key" value="<?php echo esc_attr($settings['recaptcha_secret_key']); ?>" autocomplete="new-password"></label><p class="description"><?php esc_html_e('Migrated classic keys can continue using SiteVerify. New Google Cloud keys should use the recommended mode above.', 'webform'); ?></p></div>
             <button class="button button-primary"><?php esc_html_e('Save settings', 'webform'); ?></button>
         </form></div>
         <?php
@@ -412,8 +415,12 @@ class Webform_Admin {
         check_admin_referer('webform_save_global_settings');
         update_option('webform_global_settings', array(
             'recaptcha_enabled' => !empty($_POST['recaptcha_enabled']),
+            'recaptcha_mode' => in_array($_POST['recaptcha_mode'] ?? '', array('enterprise', 'classic'), true) ? sanitize_key(wp_unslash($_POST['recaptcha_mode'])) : 'enterprise',
             'recaptcha_site_key' => sanitize_text_field(wp_unslash($_POST['recaptcha_site_key'] ?? '')),
             'recaptcha_secret_key' => sanitize_text_field(wp_unslash($_POST['recaptcha_secret_key'] ?? '')),
+            'recaptcha_project_id' => sanitize_text_field(wp_unslash($_POST['recaptcha_project_id'] ?? '')),
+            'recaptcha_api_key' => sanitize_text_field(wp_unslash($_POST['recaptcha_api_key'] ?? '')),
+            'recaptcha_action' => preg_replace('/[^A-Za-z0-9_\\/-]/', '', wp_unslash($_POST['recaptcha_action'] ?? 'WEBFORM_SUBMIT')),
         ), false);
         wp_safe_redirect(admin_url('admin.php?page=webform-settings'));
         exit;
