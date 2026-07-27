@@ -43,6 +43,7 @@ class Webform_Admin {
         }
         wp_enqueue_style('webform-admin', WEBFORM_URL . 'assets/css/admin.css', array(), WEBFORM_VERSION);
         wp_enqueue_style('webform-builder-refresh', WEBFORM_URL . 'assets/css/builder-refresh.css', array('webform-admin'), WEBFORM_VERSION);
+        wp_enqueue_style('webform-field-previews', WEBFORM_URL . 'assets/css/field-previews.css', array('webform-builder-refresh'), WEBFORM_VERSION);
         wp_enqueue_script('jquery-ui-sortable');
         wp_enqueue_script('webform-admin', WEBFORM_URL . 'assets/js/admin.js', array('jquery', 'jquery-ui-sortable'), WEBFORM_VERSION, true);
         wp_localize_script('webform-admin', 'WebformAdmin', array(
