@@ -162,7 +162,16 @@
             form_id: $('#webform-id').val(),
             name: $('#webform-name').val(),
             schema: JSON.stringify(schema),
-            settings: JSON.stringify({ success_message: $('#webform-success-message').val(), notification_email: $('#webform-notification-email').val(), submit_label: $('#webform-submit-label').val(), redirect_url: $('#webform-redirect-url').val(), webhook_url: $('#webform-webhook-url').val() })
+            settings: JSON.stringify({
+                success_message: $('#webform-success-message').val(),
+                notification_email: $('#webform-notification-email').val(),
+                submit_label: $('#webform-submit-label').val(),
+                redirect_url: $('#webform-redirect-url').val(),
+                webhook_url: $('#webform-webhook-url').val(),
+                require_login: $('#webform-require-login').is(':checked'),
+                submission_limit: $('#webform-submission-limit').val(),
+                closed_message: $('#webform-closed-message').val()
+            })
         }).done(function (response) {
             if (!response.success) throw new Error(response.data && response.data.message);
             $('#webform-id').val(response.data.id);
@@ -174,7 +183,7 @@
             $('#webform-save-status').text(message);
         }).always(function () { $button.prop('disabled', false); });
     });
-    $('#webform-name,#webform-success-message,#webform-notification-email,#webform-submit-label,#webform-redirect-url,#webform-webhook-url').on('input', function () { dirty = true; });
+    $('#webform-name,#webform-success-message,#webform-notification-email,#webform-submit-label,#webform-redirect-url,#webform-webhook-url,#webform-require-login,#webform-submission-limit,#webform-closed-message').on('input change', function () { dirty = true; });
     window.addEventListener('beforeunload', function (event) {
         if (!dirty) return;
         event.preventDefault();
