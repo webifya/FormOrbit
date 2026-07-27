@@ -26,6 +26,9 @@ class Webform_Public {
         }
         wp_enqueue_style('webform-public', WEBFORM_URL . 'assets/css/public.css', array(), WEBFORM_VERSION);
         wp_enqueue_script('webform-public', WEBFORM_URL . 'assets/js/public.js', array(), WEBFORM_VERSION, true);
+        if ($this->google_recaptcha_enabled() && $this->schema_has_type($schema, 'captcha')) {
+            wp_enqueue_script('google-recaptcha', 'https://www.google.com/recaptcha/api.js', array(), null, true);
+        }
         wp_localize_script('webform-public', 'WebformPublic', array('ajaxUrl' => admin_url('admin-ajax.php')));
         ob_start();
         ?>
@@ -114,6 +117,11 @@ class Webform_Public {
             return;
         }
         if ($field['type'] === 'captcha') {
+            $global_settings = (array) get_option('webform_global_settings', array());
+            if ($this->google_recaptcha_enabled()) {
+                echo '<div class="webform-field webform-field-captcha"><div class="g-recaptcha" data-sitekey="' . esc_attr($global_settings['recaptcha_site_key']) . '"></div><span class="webform-error" id="' . esc_attr($describedby) . '"></span></div>';
+                return;
+            }
             $first = wp_rand(2, 9);
             $second = wp_rand(1, 9);
             $answer = $first + $second;
@@ -195,6 +203,7 @@ class Webform_Public {
                 if (in_array($field['type'], array('heading', 'html'), true) || !apply_filters('webform_process_field', true, $field, $form_id)) continue;
                 if (!$this->condition_passes($field['condition'] ?? array(), $posted)) continue;
                 $value = $posted[$field['id']] ?? '';
+                if ($field['type'] === 'captcha' && $this->google_recaptcha_enabled()) $value = '__recaptcha__';
                 if ($field['type'] === 'file') $value = !empty($_FILES['fields']['name'][$field['id']]) ? '__pending_upload__' : '';
                 $value = apply_filters('webform_raw_submission_value', $value, $field, $form_id, $posted);
                 $value = is_array($value) ? array_slice(array_map('sanitize_text_field', $value), 0, 100) : substr(sanitize_textarea_field($value), 0, 10000);
@@ -350,6 +359,15 @@ class Webform_Public {
     }
 
     private function valid_captcha($field_id, $value) {
+        $settings = (array) get_option('webform_global_settings', array());
+        if (!empty($settings['recaptcha_enabled']) && !empty($settings['recaptcha_secret_key'])) {
+            $response_token = sanitize_text_field(wp_unslash($_POST['g-recaptcha-response'] ?? ''));
+            if (!$response_token) return false;
+            $response = wp_safe_remote_post('https://www.google.com/recaptcha/api/siteverify', array('timeout' => 10, 'body' => array('secret' => $settings['recaptcha_secret_key'], 'response' => $response_token, 'remoteip' => $this->client_ip())));
+            if (is_wp_error($response)) return false;
+            $body = json_decode(wp_remote_retrieve_body($response), true);
+            return !empty($body['success']);
+        }
         $tokens = isset($_POST['captcha_tokens']) && is_array($_POST['captcha_tokens']) ? wp_unslash($_POST['captcha_tokens']) : array();
         $token = isset($tokens[$field_id]) ? sanitize_text_field($tokens[$field_id]) : '';
         $decoded = base64_decode($token, true);
@@ -363,5 +381,15 @@ class Webform_Public {
     private function client_ip() {
         // REMOTE_ADDR is deliberately hashed before transient storage.
         return isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : 'unknown';
+    }
+
+    private function schema_has_type($schema, $type) {
+        foreach ((array) $schema as $stage) foreach ((array) ($stage['fields'] ?? array()) as $field) if (($field['type'] ?? '') === $type) return true;
+        return false;
+    }
+
+    private function google_recaptcha_enabled() {
+        $settings = (array) get_option('webform_global_settings', array());
+        return !empty($settings['recaptcha_enabled']) && !empty($settings['recaptcha_site_key']) && !empty($settings['recaptcha_secret_key']);
     }
 }
