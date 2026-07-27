@@ -25,14 +25,14 @@ class Webform_Public {
         ob_start();
         ?>
         <div class="webform-public" data-form-id="<?php echo esc_attr($form_id); ?>">
-            <?php if (count($schema) > 1) : ?><div class="webform-progress"><div class="webform-progress-bar"></div></div><ol class="webform-steps"><?php foreach ($schema as $index => $stage) : ?><li class="<?php echo $index === 0 ? 'is-active' : ''; ?>"><?php echo esc_html($stage['title']); ?></li><?php endforeach; ?></ol><?php endif; ?>
+            <?php if (count($schema) > 1) : ?><div class="webform-progress" role="progressbar" aria-valuemin="1" aria-valuemax="<?php echo esc_attr(count($schema)); ?>" aria-valuenow="1"><div class="webform-progress-bar"></div></div><ol class="webform-steps"><?php foreach ($schema as $index => $stage) : ?><li class="<?php echo $index === 0 ? 'is-active' : ''; ?>" <?php echo $index === 0 ? 'aria-current="step"' : ''; ?>><?php echo esc_html($stage['title']); ?></li><?php endforeach; ?></ol><?php endif; ?>
             <form novalidate>
                 <input type="hidden" name="action" value="webform_submit">
                 <input type="hidden" name="form_id" value="<?php echo esc_attr($form_id); ?>">
                 <input type="hidden" name="nonce" value="<?php echo esc_attr(wp_create_nonce('webform_submit_' . $form_id)); ?>">
                 <input type="text" name="website" class="webform-honeypot" tabindex="-1" autocomplete="off">
                 <?php foreach ($schema as $stage_index => $stage) : ?>
-                    <section class="webform-stage <?php echo $stage_index === 0 ? 'is-active' : ''; ?>" data-stage="<?php echo esc_attr($stage_index); ?>">
+                    <section class="webform-stage <?php echo $stage_index === 0 ? 'is-active' : ''; ?>" data-stage="<?php echo esc_attr($stage_index); ?>" <?php echo $stage_index === 0 ? '' : 'hidden'; ?>>
                         <?php if (count($schema) > 1) : ?><h2><?php echo esc_html($stage['title']); ?></h2><?php endif; ?>
                         <?php foreach ($stage['fields'] as $field) : $this->render_field($field); endforeach; ?>
                         <div class="webform-actions">
@@ -56,22 +56,33 @@ class Webform_Public {
             return;
         }
         $required = !empty($field['required']) ? ' required' : '';
+        $describedby = $id . '-error';
+        if (in_array($field['type'], array('radio', 'checkbox'), true)) {
+            ?>
+            <fieldset class="webform-field webform-field-<?php echo esc_attr($field['type']); ?>">
+                <legend><?php echo esc_html($field['label']); ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></legend>
+                <div class="webform-choices" <?php echo $field['type'] === 'checkbox' && $required ? 'data-required="true"' : ''; ?>>
+                    <?php foreach ($field['options'] as $index => $option) : $option_id = $id . '-' . $index; ?>
+                        <label for="<?php echo esc_attr($option_id); ?>"><input id="<?php echo esc_attr($option_id); ?>" type="<?php echo esc_attr($field['type']); ?>" name="<?php echo esc_attr($name . ($field['type'] === 'checkbox' ? '[]' : '')); ?>" value="<?php echo esc_attr($option); ?>" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $field['type'] === 'radio' && $required && $index === 0 ? ' required' : ''; ?>> <?php echo esc_html($option); ?></label>
+                    <?php endforeach; ?>
+                </div>
+                <span class="webform-error" id="<?php echo esc_attr($describedby); ?>"></span>
+            </fieldset>
+            <?php
+            return;
+        }
         ?>
         <div class="webform-field webform-field-<?php echo esc_attr($field['type']); ?>">
             <label for="<?php echo esc_attr($id); ?>"><?php echo esc_html($field['label']); ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></label>
             <?php if ($field['type'] === 'textarea') : ?>
-                <textarea id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" placeholder="<?php echo esc_attr($field['placeholder']); ?>"<?php echo $required; ?>></textarea>
+                <textarea id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" maxlength="10000" aria-describedby="<?php echo esc_attr($describedby); ?>" placeholder="<?php echo esc_attr($field['placeholder']); ?>"<?php echo $required; ?>></textarea>
             <?php elseif ($field['type'] === 'select') : ?>
-                <select id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>"<?php echo $required; ?>><option value=""><?php esc_html_e('Select an option', 'webform'); ?></option><?php foreach ($field['options'] as $option) : ?><option value="<?php echo esc_attr($option); ?>"><?php echo esc_html($option); ?></option><?php endforeach; ?></select>
-            <?php elseif ($field['type'] === 'radio') : ?>
-                <div class="webform-choices"><?php foreach ($field['options'] as $index => $option) : ?><label><input type="radio" name="<?php echo esc_attr($name); ?>" value="<?php echo esc_attr($option); ?>"<?php echo $required && $index === 0 ? ' required' : ''; ?>> <?php echo esc_html($option); ?></label><?php endforeach; ?></div>
-            <?php elseif ($field['type'] === 'checkbox') : ?>
-                <div class="webform-choices"><?php foreach ($field['options'] as $index => $option) : ?><label><input type="checkbox" name="<?php echo esc_attr($name); ?>[]" value="<?php echo esc_attr($option); ?>"<?php echo $required && $index === 0 ? ' required' : ''; ?>> <?php echo esc_html($option); ?></label><?php endforeach; ?></div>
+                <select id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $required; ?>><option value=""><?php esc_html_e('Select an option', 'webform'); ?></option><?php foreach ($field['options'] as $option) : ?><option value="<?php echo esc_attr($option); ?>"><?php echo esc_html($option); ?></option><?php endforeach; ?></select>
             <?php else : ?>
                 <?php $type = in_array($field['type'], array('email', 'number', 'date'), true) ? $field['type'] : ($field['type'] === 'phone' ? 'tel' : 'text'); ?>
-                <input type="<?php echo esc_attr($type); ?>" id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" placeholder="<?php echo esc_attr($field['placeholder']); ?>"<?php echo $required; ?>>
+                <input type="<?php echo esc_attr($type); ?>" id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" <?php echo in_array($type, array('text', 'email', 'tel'), true) ? 'maxlength="1000"' : ''; ?> aria-describedby="<?php echo esc_attr($describedby); ?>" placeholder="<?php echo esc_attr($field['placeholder']); ?>"<?php echo $required; ?>>
             <?php endif; ?>
-            <span class="webform-error"></span>
+            <span class="webform-error" id="<?php echo esc_attr($describedby); ?>"></span>
         </div>
         <?php
     }
@@ -84,6 +95,13 @@ class Webform_Public {
         if (!empty($_POST['website'])) {
             wp_send_json_success(array('message' => __('Thanks! Your response has been submitted.', 'webform')));
         }
+        $rate_key = 'webform_rate_' . md5($form_id . '|' . $this->client_ip());
+        $rate_count = (int) get_transient($rate_key);
+        $rate_limit = max(1, (int) apply_filters('webform_rate_limit', 20, $form_id));
+        if ($rate_count >= $rate_limit) {
+            wp_send_json_error(array('message' => __('Too many submissions. Please wait and try again.', 'webform')), 429);
+        }
+        set_transient($rate_key, $rate_count + 1, MINUTE_IN_SECONDS * 10);
         $schema = get_post_meta($form_id, '_webform_schema', true);
         if (!$schema || get_post_status($form_id) !== 'publish') {
             wp_send_json_error(array('message' => __('This form is unavailable.', 'webform')), 404);
@@ -95,13 +113,17 @@ class Webform_Public {
             foreach ($stage['fields'] as $field) {
                 if ($field['type'] === 'heading') continue;
                 $value = $posted[$field['id']] ?? '';
-                $value = is_array($value) ? array_map('sanitize_text_field', $value) : sanitize_textarea_field($value);
+                $value = is_array($value) ? array_slice(array_map('sanitize_text_field', $value), 0, 100) : substr(sanitize_textarea_field($value), 0, 10000);
                 if (!empty($field['required']) && (empty($value) && $value !== '0')) {
                     $errors[$field['id']] = sprintf(__('%s is required.', 'webform'), $field['label']);
                 } elseif ($field['type'] === 'email' && $value && !is_email($value)) {
                     $errors[$field['id']] = __('Enter a valid email address.', 'webform');
+                } elseif (in_array($field['type'], array('select', 'radio'), true) && $value && !in_array($value, $field['options'], true)) {
+                    $errors[$field['id']] = __('Select a valid option.', 'webform');
+                } elseif ($field['type'] === 'checkbox' && array_diff((array) $value, $field['options'])) {
+                    $errors[$field['id']] = __('Select valid options.', 'webform');
                 }
-                $data[$field['label']] = $value;
+                $data[$field['id']] = array('label' => $field['label'], 'value' => $value);
             }
         }
         if ($errors) {
@@ -116,9 +138,14 @@ class Webform_Public {
         $settings = get_post_meta($form_id, '_webform_settings', true);
         if (!empty($settings['notification_email']) && is_email($settings['notification_email'])) {
             $lines = array();
-            foreach ($data as $label => $value) $lines[] = $label . ': ' . (is_array($value) ? implode(', ', $value) : $value);
+            foreach ($data as $item) $lines[] = $item['label'] . ': ' . (is_array($item['value']) ? implode(', ', $item['value']) : $item['value']);
             wp_mail($settings['notification_email'], sprintf(__('New submission: %s', 'webform'), get_the_title($form_id)), implode("\n", $lines));
         }
         wp_send_json_success(array('message' => $settings['success_message'] ?? __('Thanks! Your response has been submitted.', 'webform')));
+    }
+
+    private function client_ip() {
+        // REMOTE_ADDR is deliberately hashed before transient storage.
+        return isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : 'unknown';
     }
 }
