@@ -20,6 +20,7 @@ final class Webform {
         add_action('plugins_loaded', array($this, 'load_textdomain'));
         new Webform_Admin();
         new Webform_Public();
+        do_action('webform_loaded', $this);
     }
 
     public function load_textdomain() {
