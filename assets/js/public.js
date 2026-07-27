@@ -7,6 +7,29 @@
             const steps = Array.from(root.querySelectorAll('.webform-steps li'));
             let current = 0;
 
+            function fieldValue(id) {
+                const elements = Array.from(form.elements).filter(element => element.name === `fields[${id}]` || element.name === `fields[${id}][]`);
+                if (!elements.length) return '';
+                if (['radio', 'checkbox'].includes(elements[0].type)) return elements.filter(element => element.checked).map(element => element.value).join(', ');
+                return elements[0].value || '';
+            }
+
+            function applyConditions() {
+                root.querySelectorAll('[data-condition]').forEach(function (field) {
+                    let condition;
+                    try { condition = JSON.parse(field.dataset.condition); } catch (error) { return; }
+                    const actual = fieldValue(condition.field_id);
+                    const expected = condition.value || '';
+                    let visible = actual === expected;
+                    if (condition.operator === 'not_equals') visible = actual !== expected;
+                    if (condition.operator === 'contains') visible = actual.toLowerCase().includes(expected.toLowerCase());
+                    if (condition.operator === 'not_empty') visible = actual !== '';
+                    if (condition.operator === 'empty') visible = actual === '';
+                    field.hidden = !visible;
+                    field.querySelectorAll('input,select,textarea').forEach(element => element.disabled = !visible);
+                });
+            }
+
             function show(index) {
                 current = index;
                 stages.forEach((stage, i) => {
@@ -49,6 +72,8 @@
                 if (event.target.closest('.webform-next') && validate(stages[current])) show(current + 1);
                 if (event.target.closest('.webform-prev')) show(current - 1);
             });
+            form.addEventListener('input', applyConditions);
+            form.addEventListener('change', applyConditions);
 
             form.addEventListener('submit', function (event) {
                 event.preventDefault();
@@ -71,6 +96,10 @@
                             throw new Error(response.data && response.data.message ? response.data.message : 'Submission failed.');
                         }
                         form.reset();
+                        if (response.data.redirect_url) {
+                            window.location.assign(response.data.redirect_url);
+                            return;
+                        }
                         stages.forEach(stage => stage.hidden = true);
                         message.classList.add('is-success');
                         message.textContent = response.data.message;
@@ -81,6 +110,7 @@
                     })
                     .finally(function () { button.disabled = false; });
             });
+            applyConditions();
             show(0);
         });
     });
