@@ -32,7 +32,7 @@ class Webform_Public {
         wp_localize_script('webform-public', 'WebformPublic', array('ajaxUrl' => admin_url('admin-ajax.php')));
         ob_start();
         ?>
-        <?php $preset = in_array($settings['style_preset'] ?? '', array('modern', 'minimal', 'rounded'), true) ? $settings['style_preset'] : 'modern'; ?>
+        <?php $available_presets = apply_filters('webform_style_presets', array('modern' => 'Modern', 'minimal' => 'Minimal', 'rounded' => 'Rounded')); $preset = array_key_exists($settings['style_preset'] ?? '', $available_presets) ? $settings['style_preset'] : 'modern'; ?>
         <div class="webform-public webform-style-<?php echo esc_attr($preset); ?>" style="--wf-accent:<?php echo esc_attr($settings['accent_color'] ?? '#6c4bd4'); ?>;--wf-button-text:<?php echo esc_attr($settings['button_text_color'] ?? '#ffffff'); ?>" data-form-id="<?php echo esc_attr($form_id); ?>">
             <?php if (count($schema) > 1) : ?><div class="webform-progress" role="progressbar" aria-valuemin="1" aria-valuemax="<?php echo esc_attr(count($schema)); ?>" aria-valuenow="1"><div class="webform-progress-bar"></div></div><ol class="webform-steps"><?php foreach ($schema as $index => $stage) : ?><li class="<?php echo $index === 0 ? 'is-active' : ''; ?>" <?php echo $index === 0 ? 'aria-current="step"' : ''; ?>><?php echo esc_html($stage['title']); ?></li><?php endforeach; ?></ol><?php endif; ?>
             <form novalidate enctype="multipart/form-data">
