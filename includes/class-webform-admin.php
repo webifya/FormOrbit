@@ -26,6 +26,9 @@ class Webform_Admin {
         add_submenu_page('webform', __('All Forms', 'webform'), __('All Forms', 'webform'), 'manage_options', 'webform', array($this, 'forms_page'));
         add_submenu_page('webform', __('Add New', 'webform'), __('Add New', 'webform'), 'manage_options', 'webform-builder', array($this, 'builder_page'));
         add_submenu_page('webform', __('Entries', 'webform'), __('Entries', 'webform'), 'manage_options', 'webform-entries', array($this, 'entries_page'));
+        if (!$this->is_pro_active()) {
+            add_submenu_page('webform', __('Webform Pro', 'webform'), __('Upgrade to Pro', 'webform'), 'manage_options', 'webform-pro', array($this, 'pro_page'));
+        }
     }
 
     public function assets($hook) {
@@ -129,6 +132,12 @@ class Webform_Admin {
                         }
                         ?>
                     </div>
+                    <?php if (!$this->is_pro_active()) : ?><div class="webform-pro-mini">
+                        <span class="webform-pro-badge"><?php esc_html_e('PRO', 'webform'); ?></span>
+                        <h3><?php esc_html_e('Grow with integrations', 'webform'); ?></h3>
+                        <p><?php esc_html_e('Email marketing, payments, Zapier, CRM connections, signatures, calculations, and priority support.', 'webform'); ?></p>
+                        <a href="<?php echo esc_url($this->upgrade_url('builder')); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('View Pro — $19.99/year', 'webform'); ?></a>
+                    </div><?php endif; ?>
                 </aside>
                 <main class="webform-canvas-panel">
                     <div class="webform-stage-tabs"><div id="webform-stage-tabs"></div><button class="button" id="webform-add-stage">+ <?php esc_html_e('Add stage', 'webform'); ?></button></div>
@@ -144,6 +153,11 @@ class Webform_Admin {
                     <label><?php esc_html_e('Submit button text', 'webform'); ?><input type="text" id="webform-submit-label" value="<?php echo esc_attr(isset($settings['submit_label']) ? $settings['submit_label'] : __('Submit', 'webform')); ?>"></label>
                     <label><?php esc_html_e('Redirect URL (optional)', 'webform'); ?><input type="url" id="webform-redirect-url" value="<?php echo esc_attr($settings['redirect_url'] ?? ''); ?>"></label>
                     <label><?php esc_html_e('Webhook URL (optional)', 'webform'); ?><input type="url" id="webform-webhook-url" value="<?php echo esc_attr($settings['webhook_url'] ?? ''); ?>"></label>
+                    <hr>
+                    <h2><?php esc_html_e('Access and limits', 'webform'); ?></h2>
+                    <label class="webform-check"><input type="checkbox" id="webform-require-login" <?php checked(!empty($settings['require_login'])); ?>> <?php esc_html_e('Require visitors to log in', 'webform'); ?></label>
+                    <label><?php esc_html_e('Maximum total entries', 'webform'); ?><input type="number" min="0" id="webform-submission-limit" value="<?php echo esc_attr(absint($settings['submission_limit'] ?? 0)); ?>"><small><?php esc_html_e('Use 0 for unlimited.', 'webform'); ?></small></label>
+                    <label><?php esc_html_e('Closed form message', 'webform'); ?><textarea id="webform-closed-message" rows="3"><?php echo esc_textarea($settings['closed_message'] ?? __('This form is currently unavailable.', 'webform')); ?></textarea></label>
                 </aside>
             </div>
         </div>
@@ -216,6 +230,9 @@ class Webform_Admin {
             'submit_label' => sanitize_text_field($settings['submit_label'] ?? __('Submit', 'webform')),
             'redirect_url' => esc_url_raw($settings['redirect_url'] ?? ''),
             'webhook_url' => esc_url_raw($settings['webhook_url'] ?? ''),
+            'require_login' => !empty($settings['require_login']),
+            'submission_limit' => absint($settings['submission_limit'] ?? 0),
+            'closed_message' => sanitize_textarea_field($settings['closed_message'] ?? __('This form is currently unavailable.', 'webform')),
         ));
         wp_send_json_success(array('id' => $form_id, 'message' => __('Saved', 'webform'), 'shortcode' => '[webform id="' . $form_id . '"]'));
     }
@@ -330,5 +347,42 @@ class Webform_Admin {
     private function csv_cell($value) {
         $value = (string) $value;
         return preg_match('/^[=+\-@]/', $value) ? "'" . $value : $value;
+    }
+
+    public function pro_page() {
+        if (!current_user_can('manage_options')) return;
+        $features = array(
+            __('Stripe and PayPal payments', 'webform'),
+            __('Mailchimp, Brevo, ActiveCampaign, and ConvertKit', 'webform'),
+            __('Zapier and advanced webhook automation', 'webform'),
+            __('CRM integrations and lead routing', 'webform'),
+            __('Calculated fields and order forms', 'webform'),
+            __('Electronic signatures and PDF documents', 'webform'),
+            __('Advanced spam protection and priority support', 'webform'),
+            __('Automatic updates with one-site license', 'webform'),
+        );
+        ?>
+        <div class="wrap webform-wrap webform-pro-page">
+            <div class="webform-pro-hero">
+                <span class="webform-pro-badge"><?php esc_html_e('WEBFORM PRO', 'webform'); ?></span>
+                <h1><?php esc_html_e('Turn every form into a connected workflow', 'webform'); ?></h1>
+                <p><?php esc_html_e('Keep everything in Webform Free, then add payments, email marketing, automation, and advanced business tools.', 'webform'); ?></p>
+                <div class="webform-pro-price"><strong>$19.99</strong> <span><?php esc_html_e('per year / one website', 'webform'); ?></span></div>
+                <a class="button button-primary button-hero" href="<?php echo esc_url($this->upgrade_url('upgrade-page')); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Get Webform Pro', 'webform'); ?></a>
+            </div>
+            <div class="webform-pro-grid">
+                <?php foreach ($features as $feature) : ?><div class="webform-pro-feature"><span class="dashicons dashicons-yes-alt"></span><strong><?php echo esc_html($feature); ?></strong></div><?php endforeach; ?>
+            </div>
+            <p class="description"><?php esc_html_e('Webform Pro will install as a separate licensed add-on. Your forms and entries remain compatible with the free plugin.', 'webform'); ?></p>
+        </div>
+        <?php
+    }
+
+    private function upgrade_url($source) {
+        return apply_filters('webform_upgrade_url', add_query_arg(array('utm_source' => 'webform-plugin', 'utm_medium' => 'upgrade', 'utm_campaign' => sanitize_key($source)), 'https://www.webninjallc.com/'));
+    }
+
+    private function is_pro_active() {
+        return defined('WEBFORM_PRO_VERSION') || (bool) apply_filters('webform_is_pro_active', false);
     }
 }
