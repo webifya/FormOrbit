@@ -127,12 +127,19 @@ class Webform_Admin {
                             'checkbox' => __('Checkbox', 'webform'),
                             'number' => __('Number', 'webform'),
                             'date' => __('Date', 'webform'),
+                            'time' => __('Time', 'webform'),
                             'phone' => __('Phone', 'webform'),
                             'url' => __('Website', 'webform'),
                             'file' => __('File upload', 'webform'),
                             'consent' => __('Consent', 'webform'),
                             'poll' => __('Poll', 'webform'),
                             'quiz' => __('Quiz question', 'webform'),
+                            'rating' => __('Rating', 'webform'),
+                            'slider' => __('Slider', 'webform'),
+                            'hidden' => __('Hidden field', 'webform'),
+                            'html' => __('HTML content', 'webform'),
+                            'captcha' => __('Math CAPTCHA', 'webform'),
+                            'page_break' => __('Page break', 'webform'),
                             'heading' => __('Heading', 'webform'),
                         ));
                         foreach ($fields as $type => $label) {
@@ -166,8 +173,14 @@ class Webform_Admin {
                     <label class="webform-check"><input type="checkbox" id="webform-require-login" <?php checked(!empty($settings['require_login'])); ?>> <?php esc_html_e('Require visitors to log in', 'webform'); ?></label>
                     <label><?php esc_html_e('Maximum total entries', 'webform'); ?><input type="number" min="0" id="webform-submission-limit" value="<?php echo esc_attr(absint($settings['submission_limit'] ?? 0)); ?>"><small><?php esc_html_e('Use 0 for unlimited.', 'webform'); ?></small></label>
                     <label><?php esc_html_e('Closed form message', 'webform'); ?><textarea id="webform-closed-message" rows="3"><?php echo esc_textarea($settings['closed_message'] ?? __('This form is currently unavailable.', 'webform')); ?></textarea></label>
+                    <hr>
+                    <h2><?php esc_html_e('Appearance', 'webform'); ?></h2>
+                    <label><?php esc_html_e('Style preset', 'webform'); ?><select id="webform-style-preset"><option value="modern" <?php selected($settings['style_preset'] ?? 'modern', 'modern'); ?>><?php esc_html_e('Modern', 'webform'); ?></option><option value="minimal" <?php selected($settings['style_preset'] ?? '', 'minimal'); ?>><?php esc_html_e('Minimal', 'webform'); ?></option><option value="rounded" <?php selected($settings['style_preset'] ?? '', 'rounded'); ?>><?php esc_html_e('Rounded', 'webform'); ?></option></select></label>
+                    <label><?php esc_html_e('Accent color', 'webform'); ?><input type="color" id="webform-accent-color" value="<?php echo esc_attr($settings['accent_color'] ?? '#6c4bd4'); ?>"></label>
+                    <label><?php esc_html_e('Button text color', 'webform'); ?><input type="color" id="webform-button-text-color" value="<?php echo esc_attr($settings['button_text_color'] ?? '#ffffff'); ?>"></label>
                 </aside>
             </div>
+            <?php if (!$form_id && !$template_key) : ?><div class="webform-template-modal" id="webform-template-modal" role="dialog" aria-modal="true" aria-labelledby="webform-template-title"><div class="webform-template-dialog"><button type="button" class="webform-template-close" aria-label="<?php esc_attr_e('Close', 'webform'); ?>">×</button><h2 id="webform-template-title"><?php esc_html_e('Choose a starting template', 'webform'); ?></h2><p><?php esc_html_e('Select a template or start from a blank form.', 'webform'); ?></p><div class="webform-template-modal-grid"><a class="webform-template-choice" href="#"><strong><?php esc_html_e('Blank Form', 'webform'); ?></strong><span><?php esc_html_e('Build from scratch', 'webform'); ?></span></a><?php foreach ($this->free_templates() as $key => $template) : ?><a class="webform-template-choice" href="<?php echo esc_url(admin_url('admin.php?page=webform-builder&template=' . $key)); ?>"><strong><?php echo esc_html($template['name']); ?></strong><span><?php echo esc_html($template['description']); ?></span></a><?php endforeach; ?></div></div></div><?php endif; ?>
         </div>
         <?php
     }
@@ -241,13 +254,16 @@ class Webform_Admin {
             'require_login' => !empty($settings['require_login']),
             'submission_limit' => absint($settings['submission_limit'] ?? 0),
             'closed_message' => sanitize_textarea_field($settings['closed_message'] ?? __('This form is currently unavailable.', 'webform')),
+            'style_preset' => in_array($settings['style_preset'] ?? '', array('modern', 'minimal', 'rounded'), true) ? $settings['style_preset'] : 'modern',
+            'accent_color' => sanitize_hex_color($settings['accent_color'] ?? '') ?: '#6c4bd4',
+            'button_text_color' => sanitize_hex_color($settings['button_text_color'] ?? '') ?: '#ffffff',
         ));
         wp_send_json_success(array('id' => $form_id, 'message' => __('Saved', 'webform'), 'shortcode' => '[webform id="' . $form_id . '"]'));
     }
 
     private function sanitize_schema($schema) {
         $clean = array();
-        $allowed_types = apply_filters('webform_allowed_field_types', array('text', 'email', 'textarea', 'select', 'radio', 'checkbox', 'number', 'date', 'phone', 'url', 'file', 'consent', 'poll', 'quiz', 'heading'));
+        $allowed_types = apply_filters('webform_allowed_field_types', array('text', 'email', 'textarea', 'select', 'radio', 'checkbox', 'number', 'date', 'time', 'phone', 'url', 'file', 'consent', 'poll', 'quiz', 'rating', 'slider', 'hidden', 'html', 'captcha', 'heading'));
         $allowed_operators = array('equals', 'not_equals', 'contains', 'not_empty', 'empty');
         $seen_ids = array();
         foreach ($schema as $stage_index => $stage) {
@@ -264,7 +280,7 @@ class Webform_Admin {
                     $field_id = 'field_' . ($stage_index + 1) . '_' . ($field_index + 1) . '_' . wp_generate_password(6, false, false);
                 }
                 $seen_ids[$field_id] = true;
-                $clean_stage['fields'][] = array(
+                $clean_field = array(
                     'id' => $field_id,
                     'type' => $type,
                     'label' => substr(sanitize_text_field($field['label'] ?? ''), 0, 200),
@@ -275,6 +291,11 @@ class Webform_Admin {
                     'max_size' => min(20, max(1, absint($field['max_size'] ?? 5))),
                     'correct_answer' => sanitize_text_field($field['correct_answer'] ?? ''),
                     'points' => min(100, max(1, absint($field['points'] ?? 1))),
+                    'default_value' => sanitize_text_field($field['default_value'] ?? ''),
+                    'html' => wp_kses_post($field['html'] ?? ''),
+                    'min' => floatval($field['min'] ?? 0),
+                    'max' => floatval($field['max'] ?? 100),
+                    'step' => max(0.01, floatval($field['step'] ?? 1)),
                     'condition' => array(
                         'enabled' => !empty($field['condition']['enabled']),
                         'field_id' => sanitize_key($field['condition']['field_id'] ?? ''),
@@ -282,6 +303,7 @@ class Webform_Admin {
                         'value' => sanitize_text_field($field['condition']['value'] ?? ''),
                     ),
                 );
+                $clean_stage['fields'][] = apply_filters('webform_sanitize_field', $clean_field, $field);
             }
             $clean[] = $clean_stage;
         }
