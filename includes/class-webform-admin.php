@@ -42,6 +42,7 @@ class Webform_Admin {
             return;
         }
         wp_enqueue_style('webform-admin', WEBFORM_URL . 'assets/css/admin.css', array(), WEBFORM_VERSION);
+        wp_enqueue_style('webform-builder-refresh', WEBFORM_URL . 'assets/css/builder-refresh.css', array('webform-admin'), WEBFORM_VERSION);
         wp_enqueue_script('jquery-ui-sortable');
         wp_enqueue_script('webform-admin', WEBFORM_URL . 'assets/js/admin.js', array('jquery', 'jquery-ui-sortable'), WEBFORM_VERSION, true);
         wp_localize_script('webform-admin', 'WebformAdmin', array(
@@ -119,8 +120,9 @@ class Webform_Admin {
                 <input id="webform-name" class="regular-text" value="<?php echo esc_attr($form ? $form->post_title : __('Untitled form', 'webform')); ?>">
             </div>
             <div class="webform-builder">
-                <aside class="webform-sidebar">
-                    <h2><?php esc_html_e('Fields', 'webform'); ?></h2>
+                <aside class="webform-field-picker" id="webform-field-picker" aria-hidden="true">
+                    <div class="webform-field-picker-backdrop"></div><div class="webform-field-picker-dialog"><div class="webform-field-picker-head"><div><h2><?php esc_html_e('Add a field', 'webform'); ?></h2><p><?php esc_html_e('Choose a field to add to the current stage.', 'webform'); ?></p></div><button type="button" class="webform-field-picker-close" aria-label="<?php esc_attr_e('Close field picker', 'webform'); ?>">×</button></div>
+                    <h3><?php esc_html_e('Standard fields', 'webform'); ?></h3>
                     <div id="webform-palette" class="webform-palette">
                         <?php
                         $fields = apply_filters('webform_field_palette', array(
@@ -147,25 +149,21 @@ class Webform_Admin {
                             'page_break' => __('Page break', 'webform'),
                             'heading' => __('Heading', 'webform'),
                         ));
+                        $field_icons = array('text' => 'dashicons-editor-textcolor', 'email' => 'dashicons-email', 'textarea' => 'dashicons-editor-alignleft', 'select' => 'dashicons-arrow-down-alt2', 'radio' => 'dashicons-marker', 'checkbox' => 'dashicons-yes', 'number' => 'dashicons-editor-ol', 'date' => 'dashicons-calendar', 'time' => 'dashicons-clock', 'phone' => 'dashicons-phone', 'url' => 'dashicons-admin-links', 'file' => 'dashicons-upload', 'consent' => 'dashicons-privacy', 'poll' => 'dashicons-chart-bar', 'quiz' => 'dashicons-welcome-learn-more', 'rating' => 'dashicons-star-filled', 'slider' => 'dashicons-image-flip-horizontal', 'hidden' => 'dashicons-hidden', 'html' => 'dashicons-editor-code', 'captcha' => 'dashicons-shield', 'page_break' => 'dashicons-controls-forward', 'heading' => 'dashicons-heading', 'calculation' => 'dashicons-editor-table', 'field_group' => 'dashicons-grid-view', 'signature' => 'dashicons-edit');
                         foreach ($fields as $type => $label) {
-                            printf('<div class="webform-palette-item" data-type="%s"><span class="dashicons dashicons-plus-alt2"></span>%s</div>', esc_attr($type), esc_html($label));
+                            printf('<button type="button" class="webform-palette-item" data-type="%s"><span class="dashicons %s"></span><span>%s</span></button>', esc_attr($type), esc_attr($field_icons[$type] ?? 'dashicons-plus-alt2'), esc_html($label));
                         }
                         ?>
                     </div>
-                    <?php if (!$this->is_pro_active()) : ?><h2 class="webform-pro-fields-title"><?php esc_html_e('Pro fields', 'webform'); ?></h2><div class="webform-pro-field-list"><div><span class="dashicons dashicons-lock"></span><?php esc_html_e('Calculation', 'webform'); ?></div><div><span class="dashicons dashicons-lock"></span><?php esc_html_e('Field group', 'webform'); ?></div><div><span class="dashicons dashicons-lock"></span><?php esc_html_e('E-signature', 'webform'); ?></div><div><span class="dashicons dashicons-lock"></span><?php esc_html_e('PDF notification', 'webform'); ?></div></div><?php endif; ?>
-                    <?php if (!$this->is_pro_active()) : ?><div class="webform-pro-mini">
-                        <span class="webform-pro-badge"><?php esc_html_e('PRO', 'webform'); ?></span>
-                        <h3><?php esc_html_e('Grow with integrations', 'webform'); ?></h3>
-                        <p><?php esc_html_e('Email marketing, payments, Zapier, CRM connections, signatures, calculations, and priority support.', 'webform'); ?></p>
-                        <a href="<?php echo esc_url($this->upgrade_url('builder')); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('View Pro — $19.99/year', 'webform'); ?></a>
-                    </div><?php endif; ?>
+                    <?php if (!$this->is_pro_active()) : ?><div class="webform-picker-pro"><div><span class="webform-pro-badge"><?php esc_html_e('RECOMMENDED PRO', 'webform'); ?></span><h3><?php esc_html_e('Build revenue and automated workflows', 'webform'); ?></h3><p><?php esc_html_e('Upgrade for calculated totals, grouped layouts, signatures, PDF notifications, hosted payments, Mailchimp, Brevo, Zapier, premium styles, and 20 business templates.', 'webform'); ?></p></div><div class="webform-pro-field-list"><div><span class="dashicons dashicons-editor-table"></span><?php esc_html_e('Calculations', 'webform'); ?></div><div><span class="dashicons dashicons-grid-view"></span><?php esc_html_e('Field groups', 'webform'); ?></div><div><span class="dashicons dashicons-edit"></span><?php esc_html_e('E-signatures', 'webform'); ?></div><div><span class="dashicons dashicons-media-document"></span><?php esc_html_e('PDF notifications', 'webform'); ?></div></div><a class="button button-primary" href="<?php echo esc_url($this->upgrade_url('field-picker')); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('See everything in Pro — $19.99/year', 'webform'); ?></a></div><?php endif; ?>
+                    </div>
                 </aside>
                 <main class="webform-canvas-panel">
-                    <div class="webform-stage-tabs"><div id="webform-stage-tabs"></div><button class="button" id="webform-add-stage">+ <?php esc_html_e('Add stage', 'webform'); ?></button></div>
+                    <div class="webform-stage-tabs"><div id="webform-stage-tabs"></div><div class="webform-canvas-tools"><button type="button" class="button button-primary webform-open-field-picker"><span class="dashicons dashicons-plus-alt2"></span><?php esc_html_e('Add field', 'webform'); ?></button><button class="button" id="webform-add-stage">+ <?php esc_html_e('Add stage', 'webform'); ?></button></div></div>
                     <div id="webform-canvas" class="webform-canvas"></div>
                 </main>
                 <aside class="webform-properties">
-                    <div class="webform-property-tabs"><button type="button" class="is-active" data-panel="field"><?php esc_html_e('Field', 'webform'); ?></button><button type="button" data-panel="confirmation"><?php esc_html_e('Confirmation', 'webform'); ?></button><button type="button" data-panel="access"><?php esc_html_e('Access', 'webform'); ?></button><button type="button" data-panel="style"><?php esc_html_e('Style', 'webform'); ?></button></div>
+                    <div class="webform-property-tabs"><button type="button" class="is-active" data-panel="field"><?php esc_html_e('Field', 'webform'); ?></button><button type="button" data-panel="confirmation"><?php esc_html_e('Confirmation', 'webform'); ?></button><button type="button" data-panel="integrations"><?php esc_html_e('Integrations', 'webform'); ?></button><button type="button" data-panel="access"><?php esc_html_e('Access', 'webform'); ?></button><button type="button" data-panel="style"><?php esc_html_e('Style', 'webform'); ?></button></div>
                     <div class="webform-property-panel is-active" data-panel="field"><h2><?php esc_html_e('Field settings', 'webform'); ?></h2><div id="webform-field-settings"><p class="description"><?php esc_html_e('Select a field to edit its options.', 'webform'); ?></p></div></div>
                     <div class="webform-property-panel" data-panel="confirmation"><h2><?php esc_html_e('Confirmation', 'webform'); ?></h2>
                     <label><?php esc_html_e('Success message', 'webform'); ?><textarea id="webform-success-message" rows="3"><?php echo esc_textarea(isset($settings['success_message']) ? $settings['success_message'] : __('Thanks! Your response has been submitted.', 'webform')); ?></textarea></label>
@@ -182,6 +180,7 @@ class Webform_Admin {
                     <label><?php esc_html_e('Accent color', 'webform'); ?><input type="color" id="webform-accent-color" value="<?php echo esc_attr($settings['accent_color'] ?? '#6c4bd4'); ?>"></label>
                     <label><?php esc_html_e('Button text color', 'webform'); ?><input type="color" id="webform-button-text-color" value="<?php echo esc_attr($settings['button_text_color'] ?? '#ffffff'); ?>"></label>
                     </div>
+                    <div class="webform-property-panel" data-panel="integrations"><h2><?php esc_html_e('Integrations', 'webform'); ?></h2><?php if ($this->is_pro_active()) : do_action('webform_builder_integrations_panel', $form_id); else : ?><p class="description"><?php esc_html_e('Connect form submissions to your business tools with Webform Pro.', 'webform'); ?></p><div class="webform-integration-list"><div><span class="dashicons dashicons-email"></span><strong>Mailchimp</strong><small><?php esc_html_e('Email audiences', 'webform'); ?></small></div><div><span class="dashicons dashicons-megaphone"></span><strong>Brevo</strong><small><?php esc_html_e('Marketing automation', 'webform'); ?></small></div><div><span class="dashicons dashicons-randomize"></span><strong>Zapier</strong><small><?php esc_html_e('Thousands of apps', 'webform'); ?></small></div><div><span class="dashicons dashicons-money-alt"></span><strong>Stripe / PayPal</strong><small><?php esc_html_e('Hosted payments', 'webform'); ?></small></div></div><a class="button button-primary" href="<?php echo esc_url($this->upgrade_url('integrations-tab')); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Unlock integrations', 'webform'); ?></a><?php endif; ?></div>
                 </aside>
             </div>
             <?php if (!$form_id && !$template_key) : ?><div class="webform-template-modal" id="webform-template-modal" role="dialog" aria-modal="true" aria-labelledby="webform-template-title"><div class="webform-template-dialog"><button type="button" class="webform-template-close" aria-label="<?php esc_attr_e('Close', 'webform'); ?>">×</button><h2 id="webform-template-title"><?php esc_html_e('Choose a starting template', 'webform'); ?></h2><p><?php esc_html_e('Select a template or start from a blank form.', 'webform'); ?></p><div class="webform-template-modal-grid"><a class="webform-template-choice" href="#"><strong><?php esc_html_e('Blank Form', 'webform'); ?></strong><span><?php esc_html_e('Build from scratch', 'webform'); ?></span></a><?php foreach ($this->free_templates() as $key => $template) : ?><a class="webform-template-choice" href="<?php echo esc_url(admin_url('admin.php?page=webform-builder&template=' . $key)); ?>"><strong><?php echo esc_html($template['name']); ?></strong><span><?php echo esc_html($template['description']); ?></span></a><?php endforeach; ?></div></div></div><?php endif; ?>
