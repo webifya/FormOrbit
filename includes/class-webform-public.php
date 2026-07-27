@@ -16,6 +16,7 @@ class Webform_Public {
             return current_user_can('manage_options') ? '<p>' . esc_html__('Webform not found.', 'webform') . '</p>' : '';
         }
         $schema = get_post_meta($form_id, '_webform_schema', true);
+        $settings = get_post_meta($form_id, '_webform_settings', true);
         if (!$schema) {
             return '';
         }
@@ -26,7 +27,7 @@ class Webform_Public {
         ?>
         <div class="webform-public" data-form-id="<?php echo esc_attr($form_id); ?>">
             <?php if (count($schema) > 1) : ?><div class="webform-progress" role="progressbar" aria-valuemin="1" aria-valuemax="<?php echo esc_attr(count($schema)); ?>" aria-valuenow="1"><div class="webform-progress-bar"></div></div><ol class="webform-steps"><?php foreach ($schema as $index => $stage) : ?><li class="<?php echo $index === 0 ? 'is-active' : ''; ?>" <?php echo $index === 0 ? 'aria-current="step"' : ''; ?>><?php echo esc_html($stage['title']); ?></li><?php endforeach; ?></ol><?php endif; ?>
-            <form novalidate>
+            <form novalidate enctype="multipart/form-data">
                 <input type="hidden" name="action" value="webform_submit">
                 <input type="hidden" name="form_id" value="<?php echo esc_attr($form_id); ?>">
                 <input type="hidden" name="nonce" value="<?php echo esc_attr(wp_create_nonce('webform_submit_' . $form_id)); ?>">
@@ -37,7 +38,7 @@ class Webform_Public {
                         <?php foreach ($stage['fields'] as $field) : $this->render_field($field); endforeach; ?>
                         <div class="webform-actions">
                             <?php if ($stage_index > 0) : ?><button type="button" class="webform-prev"><?php esc_html_e('Back', 'webform'); ?></button><?php endif; ?>
-                            <?php if ($stage_index < count($schema) - 1) : ?><button type="button" class="webform-next"><?php esc_html_e('Continue', 'webform'); ?></button><?php else : ?><button type="submit" class="webform-submit"><?php esc_html_e('Submit', 'webform'); ?></button><?php endif; ?>
+                            <?php if ($stage_index < count($schema) - 1) : ?><button type="button" class="webform-next"><?php esc_html_e('Continue', 'webform'); ?></button><?php else : ?><button type="submit" class="webform-submit"><?php echo esc_html($settings['submit_label'] ?? __('Submit', 'webform')); ?></button><?php endif; ?>
                         </div>
                     </section>
                 <?php endforeach; ?>
@@ -57,9 +58,11 @@ class Webform_Public {
         }
         $required = !empty($field['required']) ? ' required' : '';
         $describedby = $id . '-error';
+        $condition = !empty($field['condition']['enabled']) ? $field['condition'] : array();
+        $condition_attr = $condition ? ' data-condition="' . esc_attr(wp_json_encode($condition)) . '"' : '';
         if (in_array($field['type'], array('radio', 'checkbox'), true)) {
             ?>
-            <fieldset class="webform-field webform-field-<?php echo esc_attr($field['type']); ?>">
+            <fieldset class="webform-field webform-field-<?php echo esc_attr($field['type']); ?>"<?php echo $condition_attr; ?>>
                 <legend><?php echo esc_html($field['label']); ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></legend>
                 <div class="webform-choices" <?php echo $field['type'] === 'checkbox' && $required ? 'data-required="true"' : ''; ?>>
                     <?php foreach ($field['options'] as $index => $option) : $option_id = $id . '-' . $index; ?>
@@ -71,15 +74,27 @@ class Webform_Public {
             <?php
             return;
         }
+        if ($field['type'] === 'consent') {
+            ?>
+            <div class="webform-field webform-field-consent"<?php echo $condition_attr; ?>>
+                <label for="<?php echo esc_attr($id); ?>"><input id="<?php echo esc_attr($id); ?>" type="checkbox" name="<?php echo esc_attr($name); ?>" value="Yes" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $required; ?>> <?php echo esc_html($field['label']); ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></label>
+                <span class="webform-error" id="<?php echo esc_attr($describedby); ?>"></span>
+            </div>
+            <?php
+            return;
+        }
         ?>
-        <div class="webform-field webform-field-<?php echo esc_attr($field['type']); ?>">
+        <div class="webform-field webform-field-<?php echo esc_attr($field['type']); ?>"<?php echo $condition_attr; ?>>
             <label for="<?php echo esc_attr($id); ?>"><?php echo esc_html($field['label']); ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></label>
             <?php if ($field['type'] === 'textarea') : ?>
                 <textarea id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" maxlength="10000" aria-describedby="<?php echo esc_attr($describedby); ?>" placeholder="<?php echo esc_attr($field['placeholder']); ?>"<?php echo $required; ?>></textarea>
             <?php elseif ($field['type'] === 'select') : ?>
                 <select id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $required; ?>><option value=""><?php esc_html_e('Select an option', 'webform'); ?></option><?php foreach ($field['options'] as $option) : ?><option value="<?php echo esc_attr($option); ?>"><?php echo esc_html($option); ?></option><?php endforeach; ?></select>
+            <?php elseif ($field['type'] === 'file') : ?>
+                <input type="file" id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" accept="<?php echo esc_attr(implode(',', array_map(function ($ext) { return '.' . trim($ext); }, explode(',', $field['allowed_extensions'])))); ?>" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $required; ?>>
+                <small><?php echo esc_html(sprintf(__('Allowed: %1$s. Maximum: %2$d MB.', 'webform'), $field['allowed_extensions'], $field['max_size'])); ?></small>
             <?php else : ?>
-                <?php $type = in_array($field['type'], array('email', 'number', 'date'), true) ? $field['type'] : ($field['type'] === 'phone' ? 'tel' : 'text'); ?>
+                <?php $type = in_array($field['type'], array('email', 'number', 'date', 'url'), true) ? $field['type'] : ($field['type'] === 'phone' ? 'tel' : 'text'); ?>
                 <input type="<?php echo esc_attr($type); ?>" id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" <?php echo in_array($type, array('text', 'email', 'tel'), true) ? 'maxlength="1000"' : ''; ?> aria-describedby="<?php echo esc_attr($describedby); ?>" placeholder="<?php echo esc_attr($field['placeholder']); ?>"<?php echo $required; ?>>
             <?php endif; ?>
             <span class="webform-error" id="<?php echo esc_attr($describedby); ?>"></span>
@@ -112,12 +127,24 @@ class Webform_Public {
         foreach ($schema as $stage) {
             foreach ($stage['fields'] as $field) {
                 if ($field['type'] === 'heading') continue;
+                if (!$this->condition_passes($field['condition'] ?? array(), $posted)) continue;
                 $value = $posted[$field['id']] ?? '';
+                if ($field['type'] === 'file') {
+                    $upload = $this->handle_upload($field);
+                    if (is_wp_error($upload)) {
+                        $errors[$field['id']] = $upload->get_error_message();
+                        $value = '';
+                    } else {
+                        $value = $upload;
+                    }
+                }
                 $value = is_array($value) ? array_slice(array_map('sanitize_text_field', $value), 0, 100) : substr(sanitize_textarea_field($value), 0, 10000);
                 if (!empty($field['required']) && (empty($value) && $value !== '0')) {
                     $errors[$field['id']] = sprintf(__('%s is required.', 'webform'), $field['label']);
                 } elseif ($field['type'] === 'email' && $value && !is_email($value)) {
                     $errors[$field['id']] = __('Enter a valid email address.', 'webform');
+                } elseif ($field['type'] === 'url' && $value && !wp_http_validate_url($value)) {
+                    $errors[$field['id']] = __('Enter a valid URL.', 'webform');
                 } elseif (in_array($field['type'], array('select', 'radio'), true) && $value && !in_array($value, $field['options'], true)) {
                     $errors[$field['id']] = __('Select a valid option.', 'webform');
                 } elseif ($field['type'] === 'checkbox' && array_diff((array) $value, $field['options'])) {
@@ -141,7 +168,42 @@ class Webform_Public {
             foreach ($data as $item) $lines[] = $item['label'] . ': ' . (is_array($item['value']) ? implode(', ', $item['value']) : $item['value']);
             wp_mail($settings['notification_email'], sprintf(__('New submission: %s', 'webform'), get_the_title($form_id)), implode("\n", $lines));
         }
-        wp_send_json_success(array('message' => $settings['success_message'] ?? __('Thanks! Your response has been submitted.', 'webform')));
+        if (!empty($settings['webhook_url']) && wp_http_validate_url($settings['webhook_url'])) {
+            wp_safe_remote_post($settings['webhook_url'], array('timeout' => 5, 'blocking' => false, 'headers' => array('Content-Type' => 'application/json'), 'body' => wp_json_encode(array('form_id' => $form_id, 'entry_id' => $entry_id, 'form_title' => get_the_title($form_id), 'fields' => $data))));
+        }
+        wp_send_json_success(array('message' => $settings['success_message'] ?? __('Thanks! Your response has been submitted.', 'webform'), 'redirect_url' => !empty($settings['redirect_url']) ? $settings['redirect_url'] : ''));
+    }
+
+    private function condition_passes($condition, $posted) {
+        if (empty($condition['enabled']) || empty($condition['field_id'])) return true;
+        $actual = $posted[$condition['field_id']] ?? '';
+        $actual = is_array($actual) ? implode(', ', array_map('sanitize_text_field', $actual)) : sanitize_text_field($actual);
+        $expected = (string) ($condition['value'] ?? '');
+        switch ($condition['operator'] ?? 'equals') {
+            case 'not_equals': return $actual !== $expected;
+            case 'contains': return stripos($actual, $expected) !== false;
+            case 'not_empty': return $actual !== '';
+            case 'empty': return $actual === '';
+            default: return $actual === $expected;
+        }
+    }
+
+    private function handle_upload($field) {
+        if (empty($_FILES['fields']['name'][$field['id']])) return '';
+        $file = array(
+            'name' => sanitize_file_name($_FILES['fields']['name'][$field['id']]),
+            'type' => sanitize_mime_type($_FILES['fields']['type'][$field['id']]),
+            'tmp_name' => $_FILES['fields']['tmp_name'][$field['id']],
+            'error' => absint($_FILES['fields']['error'][$field['id']]),
+            'size' => absint($_FILES['fields']['size'][$field['id']]),
+        );
+        if ($file['size'] > absint($field['max_size']) * MB_IN_BYTES) return new WP_Error('file_size', __('The uploaded file is too large.', 'webform'));
+        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $allowed = array_filter(array_map('trim', explode(',', $field['allowed_extensions'])));
+        if (!$extension || !in_array($extension, $allowed, true)) return new WP_Error('file_type', __('This file type is not allowed.', 'webform'));
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        $uploaded = wp_handle_upload($file, array('test_form' => false));
+        return !empty($uploaded['error']) ? new WP_Error('upload_error', $uploaded['error']) : esc_url_raw($uploaded['url']);
     }
 
     private function client_ip() {
