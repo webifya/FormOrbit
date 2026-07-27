@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Webform
  * Description: A visual drag-and-drop, multi-step form builder for WordPress.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: Webifya
  * Text Domain: webform
  * Requires at least: 6.2
@@ -11,7 +11,7 @@
 
 defined('ABSPATH') || exit;
 
-define('WEBFORM_VERSION', '1.1.0');
+define('WEBFORM_VERSION', '1.2.0');
 define('WEBFORM_FILE', __FILE__);
 define('WEBFORM_PATH', plugin_dir_path(__FILE__));
 define('WEBFORM_URL', plugin_dir_url(__FILE__));
