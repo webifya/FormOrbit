@@ -5,6 +5,7 @@
     let schema = [];
     let activeStage = 0;
     let selectedId = null;
+    let dirty = false;
 
     function uid(prefix) {
         return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -34,6 +35,7 @@
             update: function () {
                 const order = $(this).children('.webform-field-card').map(function () { return $(this).data('id'); }).get();
                 schema[activeStage].fields.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+                dirty = true;
             }
         });
         renderSettings();
@@ -74,6 +76,7 @@
         const field = { id: uid('field'), type, label: defaults[type] || 'Field', placeholder: '', required: false, options: choices ? ['Option 1', 'Option 2'] : [] };
         schema[activeStage].fields.push(field);
         selectedId = field.id;
+        dirty = true;
         render();
     }
 
@@ -86,6 +89,7 @@
     $(document).on('click', '.webform-remove-field', function () {
         const id = $(this).closest('.webform-field-card').data('id');
         schema[activeStage].fields = schema[activeStage].fields.filter(field => field.id !== id);
+        dirty = true;
         if (selectedId === id) selectedId = null;
         render();
     });
@@ -94,6 +98,7 @@
         if (!field) return;
         const prop = $(this).data('prop');
         field[prop] = prop === 'required' ? $(this).is(':checked') : prop === 'options' ? $(this).val().split('\n').map(v => v.trim()).filter(Boolean) : $(this).val();
+        dirty = true;
         const caret = this.selectionStart;
         $('#webform-canvas').html(schema[activeStage].fields.map(fieldCard).join(''));
         if (prop !== 'required') {
@@ -110,19 +115,21 @@
     $(document).on('dblclick', '.webform-stage-tab', function () {
         const index = Number($(this).data('stage'));
         const title = window.prompt('Stage name', schema[index].title);
-        if (title && title.trim()) { schema[index].title = title.trim(); render(); }
+        if (title && title.trim()) { schema[index].title = title.trim(); dirty = true; render(); }
     });
     $(document).on('click', '.webform-remove-stage', function (event) {
         event.stopPropagation();
         const index = Number($(this).parent().data('stage'));
         if (schema[index].fields.length && !window.confirm('Remove this stage and all of its fields?')) return;
         schema.splice(index, 1);
+        dirty = true;
         activeStage = Math.max(0, activeStage - 1);
         selectedId = null;
         render();
     });
     $('#webform-add-stage').on('click', function () {
         schema.push({ id: uid('stage'), title: `Stage ${schema.length + 1}`, fields: [] });
+        dirty = true;
         activeStage = schema.length - 1;
         selectedId = null;
         render();
@@ -140,12 +147,19 @@
         }).done(function (response) {
             if (!response.success) throw new Error(response.data && response.data.message);
             $('#webform-id').val(response.data.id);
+            dirty = false;
             $('#webform-save-status').html(`Saved · <code>${escapeHtml(response.data.shortcode)}</code>`);
             window.history.replaceState({}, '', `admin.php?page=webform-builder&form_id=${response.data.id}`);
         }).fail(function (xhr) {
             const message = xhr.responseJSON && xhr.responseJSON.data ? xhr.responseJSON.data.message : 'Save failed.';
             $('#webform-save-status').text(message);
         }).always(function () { $button.prop('disabled', false); });
+    });
+    $('#webform-name,#webform-success-message,#webform-notification-email').on('input', function () { dirty = true; });
+    window.addEventListener('beforeunload', function (event) {
+        if (!dirty) return;
+        event.preventDefault();
+        event.returnValue = '';
     });
     $(document).on('click', '.webform-delete', function () {
         if (!window.confirm('Move this form to the trash?')) return;
