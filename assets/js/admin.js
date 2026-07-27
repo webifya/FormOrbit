@@ -1,7 +1,7 @@
 (function ($) {
     'use strict';
 
-    const defaults = { text: 'Text', email: 'Email', textarea: 'Long text', select: 'Dropdown', radio: 'Radio', checkbox: 'Checkbox', number: 'Number', date: 'Date', phone: 'Phone', url: 'Website', file: 'File upload', consent: 'I agree to the terms', heading: 'Heading' };
+    const defaults = { text: 'Text', email: 'Email', textarea: 'Long text', select: 'Dropdown', radio: 'Radio', checkbox: 'Checkbox', number: 'Number', date: 'Date', phone: 'Phone', url: 'Website', file: 'File upload', consent: 'I agree to the terms', poll: 'Poll question', quiz: 'Quiz question', heading: 'Heading' };
     let schema = [];
     let activeStage = 0;
     let selectedId = null;
@@ -46,7 +46,7 @@
         return `<div class="webform-field-card ${field.id === selectedId ? 'is-selected' : ''}" data-id="${field.id}">
             <span class="dashicons dashicons-menu webform-drag"></span>
             <div class="webform-field-preview"><strong>${escapeHtml(field.label)}${field.required ? ' <em>*</em>' : ''}</strong>
-            ${['select','radio','checkbox'].includes(field.type) ? `<div class="webform-option-preview">${options}</div>` : field.type === 'heading' ? '' : `<div class="webform-input-preview">${escapeHtml(field.placeholder || '')}</div>`}</div>
+            ${['select','radio','checkbox','poll','quiz'].includes(field.type) ? `<div class="webform-option-preview">${options}</div>` : field.type === 'heading' ? '' : `<div class="webform-input-preview">${escapeHtml(field.placeholder || '')}</div>`}</div>
             <span class="webform-type">${escapeHtml(field.type)}</span>
             <button class="webform-remove-field" title="Remove">×</button>
         </div>`;
@@ -62,13 +62,14 @@
             $('#webform-field-settings').html('<p class="description">Select a field to edit its options.</p>');
             return;
         }
-        const choices = ['select', 'radio', 'checkbox'].includes(field.type);
+        const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz'].includes(field.type);
         const candidates = schema.flatMap(stage => stage.fields).filter(item => item.id !== field.id && item.type !== 'heading' && item.type !== 'file');
         const condition = field.condition || { enabled: false, field_id: '', operator: 'equals', value: '' };
         $('#webform-field-settings').html(`
             <label>Label<input type="text" data-prop="label" value="${escapeHtml(field.label)}"></label>
             ${!['heading','consent','file'].includes(field.type) && !choices ? `<label>Placeholder<input type="text" data-prop="placeholder" value="${escapeHtml(field.placeholder || '')}"></label>` : ''}
             ${choices ? `<label>Options <small>One per line</small><textarea rows="6" data-prop="options">${escapeHtml((field.options || []).join('\n'))}</textarea></label>` : ''}
+            ${field.type === 'quiz' ? `<label>Correct answer<select data-prop="correct_answer"><option value="">Choose answer</option>${(field.options || []).map(option => `<option value="${escapeHtml(option)}" ${field.correct_answer === option ? 'selected' : ''}>${escapeHtml(option)}</option>`).join('')}</select></label><label>Points<input type="number" min="1" max="100" data-prop="points" value="${Number(field.points || 1)}"></label>` : ''}
             ${field.type === 'file' ? `<label>Allowed extensions<input type="text" data-prop="allowed_extensions" value="${escapeHtml(field.allowed_extensions || 'jpg,jpeg,png,pdf,doc,docx')}"></label><label>Maximum size (MB)<input type="number" min="1" max="20" data-prop="max_size" value="${Number(field.max_size || 5)}"></label>` : ''}
             ${field.type !== 'heading' ? `<label class="webform-check"><input type="checkbox" data-prop="required" ${field.required ? 'checked' : ''}> Required field</label>` : ''}
             ${field.type !== 'heading' && candidates.length ? `<hr><h3>Conditional display</h3>
@@ -82,8 +83,8 @@
     }
 
     function addField(type) {
-        const choices = ['select', 'radio', 'checkbox'].includes(type);
-        const field = { id: uid('field'), type, label: defaults[type] || 'Field', placeholder: '', required: type === 'consent', options: choices ? ['Option 1', 'Option 2'] : [], allowed_extensions: 'jpg,jpeg,png,pdf,doc,docx', max_size: 5, condition: { enabled: false, field_id: '', operator: 'equals', value: '' } };
+        const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz'].includes(type);
+        const field = { id: uid('field'), type, label: defaults[type] || 'Field', placeholder: '', required: type === 'consent', options: choices ? ['Option 1', 'Option 2'] : [], allowed_extensions: 'jpg,jpeg,png,pdf,doc,docx', max_size: 5, correct_answer: '', points: 1, condition: { enabled: false, field_id: '', operator: 'equals', value: '' } };
         schema[activeStage].fields.push(field);
         selectedId = field.id;
         dirty = true;
