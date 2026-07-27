@@ -1,7 +1,7 @@
 (function ($) {
     'use strict';
 
-    const defaults = { text: 'Text', email: 'Email', textarea: 'Long text', select: 'Dropdown', radio: 'Radio', checkbox: 'Checkbox', number: 'Number', date: 'Date', phone: 'Phone', url: 'Website', file: 'File upload', consent: 'I agree to the terms', poll: 'Poll question', quiz: 'Quiz question', heading: 'Heading' };
+    const defaults = { text: 'Text', email: 'Email', textarea: 'Long text', select: 'Dropdown', radio: 'Radio', checkbox: 'Checkbox', number: 'Number', date: 'Date', time: 'Time', phone: 'Phone', url: 'Website', file: 'File upload', consent: 'I agree to the terms', poll: 'Poll question', quiz: 'Quiz question', rating: 'Rating', slider: 'Slider', hidden: 'Hidden field', html: 'HTML content', captcha: 'Security check', calculation: 'Calculation', signature: 'Signature', field_group: 'Field group', heading: 'Heading' };
     let schema = [];
     let activeStage = 0;
     let selectedId = null;
@@ -24,7 +24,7 @@
     function render() {
         if (activeStage >= schema.length) activeStage = schema.length - 1;
         $('#webform-stage-tabs').html(schema.map((stage, i) =>
-            `<button class="webform-stage-tab ${i === activeStage ? 'is-active' : ''}" data-stage="${i}">${escapeHtml(stage.title)}${schema.length > 1 ? '<span class="webform-remove-stage" title="Remove stage">×</span>' : ''}</button>`
+            `<button class="webform-stage-tab ${i === activeStage ? 'is-active' : ''}" data-stage="${i}"><span>${escapeHtml(stage.title)}</span><span class="dashicons dashicons-edit webform-edit-stage" title="Rename stage"></span>${schema.length > 1 ? '<span class="webform-remove-stage" title="Remove stage">×</span>' : ''}</button>`
         ).join(''));
         const fields = schema[activeStage].fields || [];
         $('#webform-canvas').html(fields.length ? fields.map(fieldCard).join('') : '<div class="webform-drop-empty"><span class="dashicons dashicons-move"></span><strong>Drop fields here</strong><small>Or click a field in the left panel</small></div>');
@@ -66,12 +66,18 @@
         const candidates = schema.flatMap(stage => stage.fields).filter(item => item.id !== field.id && item.type !== 'heading' && item.type !== 'file');
         const condition = field.condition || { enabled: false, field_id: '', operator: 'equals', value: '' };
         $('#webform-field-settings').html(`
+            <p class="description">Field ID: <code>${escapeHtml(field.id)}</code></p>
             <label>Label<input type="text" data-prop="label" value="${escapeHtml(field.label)}"></label>
-            ${!['heading','consent','file'].includes(field.type) && !choices ? `<label>Placeholder<input type="text" data-prop="placeholder" value="${escapeHtml(field.placeholder || '')}"></label>` : ''}
+            ${!['heading','consent','file','hidden','html','captcha','rating','slider'].includes(field.type) && !choices ? `<label>Placeholder<input type="text" data-prop="placeholder" value="${escapeHtml(field.placeholder || '')}"></label>` : ''}
             ${choices ? `<label>Options <small>One per line</small><textarea rows="6" data-prop="options">${escapeHtml((field.options || []).join('\n'))}</textarea></label>` : ''}
             ${field.type === 'quiz' ? `<label>Correct answer<select data-prop="correct_answer"><option value="">Choose answer</option>${(field.options || []).map(option => `<option value="${escapeHtml(option)}" ${field.correct_answer === option ? 'selected' : ''}>${escapeHtml(option)}</option>`).join('')}</select></label><label>Points<input type="number" min="1" max="100" data-prop="points" value="${Number(field.points || 1)}"></label>` : ''}
             ${field.type === 'file' ? `<label>Allowed extensions<input type="text" data-prop="allowed_extensions" value="${escapeHtml(field.allowed_extensions || 'jpg,jpeg,png,pdf,doc,docx')}"></label><label>Maximum size (MB)<input type="number" min="1" max="20" data-prop="max_size" value="${Number(field.max_size || 5)}"></label>` : ''}
-            ${field.type !== 'heading' ? `<label class="webform-check"><input type="checkbox" data-prop="required" ${field.required ? 'checked' : ''}> Required field</label>` : ''}
+            ${field.type === 'hidden' ? `<label>Default value<input type="text" data-prop="default_value" value="${escapeHtml(field.default_value || '')}"></label>` : ''}
+            ${field.type === 'html' ? `<label>Safe HTML content<textarea rows="8" data-prop="html">${escapeHtml(field.html || '')}</textarea></label>` : ''}
+            ${field.type === 'slider' ? `<label>Minimum<input type="number" data-prop="min" value="${Number(field.min ?? 0)}"></label><label>Maximum<input type="number" data-prop="max" value="${Number(field.max ?? 100)}"></label><label>Step<input type="number" min="0.01" step="0.01" data-prop="step" value="${Number(field.step || 1)}"></label>` : ''}
+            ${field.type === 'calculation' ? `<label>Formula <small>Use field IDs in braces, for example {price} * {quantity}</small><input type="text" data-prop="formula" value="${escapeHtml(field.formula || '')}"></label><label>Decimal places<input type="number" min="0" max="6" data-prop="decimal_places" value="${Number(field.decimal_places ?? 2)}"></label>` : ''}
+            ${field.type === 'field_group' ? `<label>Fields to group<input type="number" min="1" max="6" data-prop="group_count" value="${Number(field.group_count || 2)}"></label><label>Columns<input type="number" min="1" max="4" data-prop="group_columns" value="${Number(field.group_columns || 2)}"></label>` : ''}
+            ${!['heading','hidden','html'].includes(field.type) ? `<label class="webform-check"><input type="checkbox" data-prop="required" ${field.required ? 'checked' : ''}> Required field</label>` : ''}
             ${field.type !== 'heading' && candidates.length ? `<hr><h3>Conditional display</h3>
                 <label class="webform-check"><input type="checkbox" data-condition="enabled" ${condition.enabled ? 'checked' : ''}> Show this field conditionally</label>
                 <div class="webform-condition-settings ${condition.enabled ? '' : 'is-hidden'}">
@@ -83,8 +89,16 @@
     }
 
     function addField(type) {
+        if (type === 'page_break') {
+            schema.push({ id: uid('stage'), title: `Stage ${schema.length + 1}`, fields: [] });
+            activeStage = schema.length - 1;
+            selectedId = null;
+            dirty = true;
+            render();
+            return;
+        }
         const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz'].includes(type);
-        const field = { id: uid('field'), type, label: defaults[type] || 'Field', placeholder: '', required: type === 'consent', options: choices ? ['Option 1', 'Option 2'] : [], allowed_extensions: 'jpg,jpeg,png,pdf,doc,docx', max_size: 5, correct_answer: '', points: 1, condition: { enabled: false, field_id: '', operator: 'equals', value: '' } };
+        const field = { id: uid('field'), type, label: defaults[type] || 'Field', placeholder: '', required: ['consent','captcha','signature'].includes(type), options: choices ? ['Option 1', 'Option 2'] : [], allowed_extensions: 'jpg,jpeg,png,pdf,doc,docx', max_size: 5, correct_answer: '', points: 1, default_value: '', html: '<p>Add your content here.</p>', min: 0, max: 100, step: 1, formula: '', decimal_places: 2, group_count: 2, group_columns: 2, condition: { enabled: false, field_id: '', operator: 'equals', value: '' } };
         schema[activeStage].fields.push(field);
         selectedId = field.id;
         dirty = true;
@@ -137,6 +151,12 @@
         const title = window.prompt('Stage name', schema[index].title);
         if (title && title.trim()) { schema[index].title = title.trim(); dirty = true; render(); }
     });
+    $(document).on('click', '.webform-edit-stage', function (event) {
+        event.stopPropagation();
+        const index = Number($(this).closest('.webform-stage-tab').data('stage'));
+        const title = window.prompt('Stage name', schema[index].title);
+        if (title && title.trim()) { schema[index].title = title.trim(); dirty = true; render(); }
+    });
     $(document).on('click', '.webform-remove-stage', function (event) {
         event.stopPropagation();
         const index = Number($(this).parent().data('stage'));
@@ -171,7 +191,10 @@
                 webhook_url: $('#webform-webhook-url').val(),
                 require_login: $('#webform-require-login').is(':checked'),
                 submission_limit: $('#webform-submission-limit').val(),
-                closed_message: $('#webform-closed-message').val()
+                closed_message: $('#webform-closed-message').val(),
+                style_preset: $('#webform-style-preset').val(),
+                accent_color: $('#webform-accent-color').val(),
+                button_text_color: $('#webform-button-text-color').val()
             })
         }).done(function (response) {
             if (!response.success) throw new Error(response.data && response.data.message);
@@ -184,7 +207,11 @@
             $('#webform-save-status').text(message);
         }).always(function () { $button.prop('disabled', false); });
     });
-    $('#webform-name,#webform-success-message,#webform-notification-email,#webform-submit-label,#webform-redirect-url,#webform-webhook-url,#webform-require-login,#webform-submission-limit,#webform-closed-message').on('input change', function () { dirty = true; });
+    $('#webform-name,#webform-success-message,#webform-notification-email,#webform-submit-label,#webform-redirect-url,#webform-webhook-url,#webform-require-login,#webform-submission-limit,#webform-closed-message,#webform-style-preset,#webform-accent-color,#webform-button-text-color').on('input change', function () { dirty = true; });
+    $(document).on('click', '.webform-template-close,.webform-template-choice[href=\"#\"]', function (event) {
+        event.preventDefault();
+        $('#webform-template-modal').fadeOut(150);
+    });
     window.addEventListener('beforeunload', function (event) {
         if (!dirty) return;
         event.preventDefault();
