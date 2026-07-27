@@ -119,6 +119,12 @@
     $(document).on('click', '.webform-field-picker-close, .webform-field-picker-backdrop', closeFieldPicker);
     $(document).on('keydown', function (event) { if (event.key === 'Escape') closeFieldPicker(); });
     $(document).on('click', '.webform-palette-item', function () { addField($(this).data('type')); closeFieldPicker(); });
+    function updateRecaptchaPanels() {
+        const mode = $('#webform-recaptcha-mode').val() || 'enterprise';
+        $('.webform-recaptcha-panel').attr('hidden', true).filter('[data-mode="' + mode + '"]').removeAttr('hidden');
+    }
+    $(document).on('change', '#webform-recaptcha-mode', updateRecaptchaPanels);
+    updateRecaptchaPanels();
     $(document).on('click', '.webform-field-card', function (event) {
         if ($(event.target).closest('.webform-remove-field').length) return;
         selectedId = $(this).data('id');
