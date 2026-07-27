@@ -11,6 +11,9 @@ class Webform_Admin {
         add_action('admin_post_webform_duplicate_form', array($this, 'duplicate_form'));
         add_action('admin_post_webform_export_entries', array($this, 'export_entries'));
         add_action('admin_post_webform_delete_entry', array($this, 'delete_entry'));
+        add_action('admin_post_webform_save_global_settings', array($this, 'save_global_settings'));
+        add_action('admin_post_webform_import', array($this, 'import_form'));
+        add_action('admin_head', array($this, 'suppress_editor_notices'), 1);
     }
 
     public function menu() {
@@ -27,6 +30,8 @@ class Webform_Admin {
         add_submenu_page('webform', __('Add New', 'webform'), __('Add New', 'webform'), 'manage_options', 'webform-builder', array($this, 'builder_page'));
         add_submenu_page('webform', __('Form Templates', 'webform'), __('Templates', 'webform'), 'manage_options', 'webform-templates', array($this, 'templates_page'));
         add_submenu_page('webform', __('Entries', 'webform'), __('Entries', 'webform'), 'manage_options', 'webform-entries', array($this, 'entries_page'));
+        add_submenu_page('webform', __('Import Forms', 'webform'), __('Import', 'webform'), 'manage_options', 'webform-import', array($this, 'import_page'));
+        add_submenu_page('webform', __('Webform Settings', 'webform'), __('Settings', 'webform'), 'manage_options', 'webform-settings', array($this, 'settings_page'));
         if (!$this->is_pro_active()) {
             add_submenu_page('webform', __('Webform Pro', 'webform'), __('Upgrade to Pro', 'webform'), 'manage_options', 'webform-pro', array($this, 'pro_page'));
         }
@@ -138,7 +143,7 @@ class Webform_Admin {
                             'slider' => __('Slider', 'webform'),
                             'hidden' => __('Hidden field', 'webform'),
                             'html' => __('HTML content', 'webform'),
-                            'captcha' => __('Math CAPTCHA', 'webform'),
+                            'captcha' => __('Google CAPTCHA', 'webform'),
                             'page_break' => __('Page break', 'webform'),
                             'heading' => __('Heading', 'webform'),
                         ));
@@ -147,6 +152,7 @@ class Webform_Admin {
                         }
                         ?>
                     </div>
+                    <?php if (!$this->is_pro_active()) : ?><h2 class="webform-pro-fields-title"><?php esc_html_e('Pro fields', 'webform'); ?></h2><div class="webform-pro-field-list"><div><span class="dashicons dashicons-lock"></span><?php esc_html_e('Calculation', 'webform'); ?></div><div><span class="dashicons dashicons-lock"></span><?php esc_html_e('Field group', 'webform'); ?></div><div><span class="dashicons dashicons-lock"></span><?php esc_html_e('E-signature', 'webform'); ?></div><div><span class="dashicons dashicons-lock"></span><?php esc_html_e('PDF notification', 'webform'); ?></div></div><?php endif; ?>
                     <?php if (!$this->is_pro_active()) : ?><div class="webform-pro-mini">
                         <span class="webform-pro-badge"><?php esc_html_e('PRO', 'webform'); ?></span>
                         <h3><?php esc_html_e('Grow with integrations', 'webform'); ?></h3>
@@ -159,25 +165,23 @@ class Webform_Admin {
                     <div id="webform-canvas" class="webform-canvas"></div>
                 </main>
                 <aside class="webform-properties">
-                    <h2><?php esc_html_e('Field settings', 'webform'); ?></h2>
-                    <div id="webform-field-settings"><p class="description"><?php esc_html_e('Select a field to edit its options.', 'webform'); ?></p></div>
-                    <hr>
-                    <h2><?php esc_html_e('Confirmation', 'webform'); ?></h2>
+                    <div class="webform-property-tabs"><button type="button" class="is-active" data-panel="field"><?php esc_html_e('Field', 'webform'); ?></button><button type="button" data-panel="confirmation"><?php esc_html_e('Confirmation', 'webform'); ?></button><button type="button" data-panel="access"><?php esc_html_e('Access', 'webform'); ?></button><button type="button" data-panel="style"><?php esc_html_e('Style', 'webform'); ?></button></div>
+                    <div class="webform-property-panel is-active" data-panel="field"><h2><?php esc_html_e('Field settings', 'webform'); ?></h2><div id="webform-field-settings"><p class="description"><?php esc_html_e('Select a field to edit its options.', 'webform'); ?></p></div></div>
+                    <div class="webform-property-panel" data-panel="confirmation"><h2><?php esc_html_e('Confirmation', 'webform'); ?></h2>
                     <label><?php esc_html_e('Success message', 'webform'); ?><textarea id="webform-success-message" rows="3"><?php echo esc_textarea(isset($settings['success_message']) ? $settings['success_message'] : __('Thanks! Your response has been submitted.', 'webform')); ?></textarea></label>
                     <label><?php esc_html_e('Notification email', 'webform'); ?><input type="email" id="webform-notification-email" value="<?php echo esc_attr(isset($settings['notification_email']) ? $settings['notification_email'] : get_option('admin_email')); ?>"></label>
                     <label><?php esc_html_e('Submit button text', 'webform'); ?><input type="text" id="webform-submit-label" value="<?php echo esc_attr(isset($settings['submit_label']) ? $settings['submit_label'] : __('Submit', 'webform')); ?>"></label>
                     <label><?php esc_html_e('Redirect URL (optional)', 'webform'); ?><input type="url" id="webform-redirect-url" value="<?php echo esc_attr($settings['redirect_url'] ?? ''); ?>"></label>
                     <label><?php esc_html_e('Webhook URL (optional)', 'webform'); ?><input type="url" id="webform-webhook-url" value="<?php echo esc_attr($settings['webhook_url'] ?? ''); ?>"></label>
-                    <hr>
-                    <h2><?php esc_html_e('Access and limits', 'webform'); ?></h2>
+                    </div><div class="webform-property-panel" data-panel="access"><h2><?php esc_html_e('Access and limits', 'webform'); ?></h2>
                     <label class="webform-check"><input type="checkbox" id="webform-require-login" <?php checked(!empty($settings['require_login'])); ?>> <?php esc_html_e('Require visitors to log in', 'webform'); ?></label>
                     <label><?php esc_html_e('Maximum total entries', 'webform'); ?><input type="number" min="0" id="webform-submission-limit" value="<?php echo esc_attr(absint($settings['submission_limit'] ?? 0)); ?>"><small><?php esc_html_e('Use 0 for unlimited.', 'webform'); ?></small></label>
                     <label><?php esc_html_e('Closed form message', 'webform'); ?><textarea id="webform-closed-message" rows="3"><?php echo esc_textarea($settings['closed_message'] ?? __('This form is currently unavailable.', 'webform')); ?></textarea></label>
-                    <hr>
-                    <h2><?php esc_html_e('Appearance', 'webform'); ?></h2>
+                    </div><div class="webform-property-panel" data-panel="style"><h2><?php esc_html_e('Appearance', 'webform'); ?></h2>
                     <label><?php esc_html_e('Style preset', 'webform'); ?><select id="webform-style-preset"><option value="modern" <?php selected($settings['style_preset'] ?? 'modern', 'modern'); ?>><?php esc_html_e('Modern', 'webform'); ?></option><option value="minimal" <?php selected($settings['style_preset'] ?? '', 'minimal'); ?>><?php esc_html_e('Minimal', 'webform'); ?></option><option value="rounded" <?php selected($settings['style_preset'] ?? '', 'rounded'); ?>><?php esc_html_e('Rounded', 'webform'); ?></option></select></label>
                     <label><?php esc_html_e('Accent color', 'webform'); ?><input type="color" id="webform-accent-color" value="<?php echo esc_attr($settings['accent_color'] ?? '#6c4bd4'); ?>"></label>
                     <label><?php esc_html_e('Button text color', 'webform'); ?><input type="color" id="webform-button-text-color" value="<?php echo esc_attr($settings['button_text_color'] ?? '#ffffff'); ?>"></label>
+                    </div>
                 </aside>
             </div>
             <?php if (!$form_id && !$template_key) : ?><div class="webform-template-modal" id="webform-template-modal" role="dialog" aria-modal="true" aria-labelledby="webform-template-title"><div class="webform-template-dialog"><button type="button" class="webform-template-close" aria-label="<?php esc_attr_e('Close', 'webform'); ?>">×</button><h2 id="webform-template-title"><?php esc_html_e('Choose a starting template', 'webform'); ?></h2><p><?php esc_html_e('Select a template or start from a blank form.', 'webform'); ?></p><div class="webform-template-modal-grid"><a class="webform-template-choice" href="#"><strong><?php esc_html_e('Blank Form', 'webform'); ?></strong><span><?php esc_html_e('Build from scratch', 'webform'); ?></span></a><?php foreach ($this->free_templates() as $key => $template) : ?><a class="webform-template-choice" href="<?php echo esc_url(admin_url('admin.php?page=webform-builder&template=' . $key)); ?>"><strong><?php echo esc_html($template['name']); ?></strong><span><?php echo esc_html($template['description']); ?></span></a><?php endforeach; ?></div></div></div><?php endif; ?>
@@ -379,6 +383,120 @@ class Webform_Admin {
     private function csv_cell($value) {
         $value = (string) $value;
         return preg_match('/^[=+\-@]/', $value) ? "'" . $value : $value;
+    }
+
+    public function suppress_editor_notices() {
+        $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+        if ($page !== 'webform-builder') return;
+        remove_all_actions('admin_notices');
+        remove_all_actions('all_admin_notices');
+    }
+
+    public function settings_page() {
+        if (!current_user_can('manage_options')) return;
+        $settings = wp_parse_args((array) get_option('webform_global_settings', array()), array('recaptcha_enabled' => false, 'recaptcha_site_key' => '', 'recaptcha_secret_key' => ''));
+        ?>
+        <div class="wrap webform-wrap"><div class="webform-page-head"><div><h1><?php esc_html_e('Webform Settings', 'webform'); ?></h1><p><?php esc_html_e('Global security and service configuration.', 'webform'); ?></p></div></div>
+        <form class="webform-settings-card" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post"><input type="hidden" name="action" value="webform_save_global_settings"><?php wp_nonce_field('webform_save_global_settings'); ?>
+            <h2><?php esc_html_e('Google reCAPTCHA v2', 'webform'); ?></h2>
+            <p><?php esc_html_e('Create Checkbox keys in the Google reCAPTCHA console, then add a CAPTCHA field to any form.', 'webform'); ?></p>
+            <label><input type="checkbox" name="recaptcha_enabled" value="1" <?php checked(!empty($settings['recaptcha_enabled'])); ?>> <?php esc_html_e('Enable Google reCAPTCHA', 'webform'); ?></label>
+            <label><?php esc_html_e('Site key', 'webform'); ?><input name="recaptcha_site_key" value="<?php echo esc_attr($settings['recaptcha_site_key']); ?>"></label>
+            <label><?php esc_html_e('Secret key', 'webform'); ?><input type="password" name="recaptcha_secret_key" value="<?php echo esc_attr($settings['recaptcha_secret_key']); ?>" autocomplete="off"></label>
+            <button class="button button-primary"><?php esc_html_e('Save settings', 'webform'); ?></button>
+        </form></div>
+        <?php
+    }
+
+    public function save_global_settings() {
+        if (!current_user_can('manage_options')) wp_die(esc_html__('Permission denied.', 'webform'));
+        check_admin_referer('webform_save_global_settings');
+        update_option('webform_global_settings', array(
+            'recaptcha_enabled' => !empty($_POST['recaptcha_enabled']),
+            'recaptcha_site_key' => sanitize_text_field(wp_unslash($_POST['recaptcha_site_key'] ?? '')),
+            'recaptcha_secret_key' => sanitize_text_field(wp_unslash($_POST['recaptcha_secret_key'] ?? '')),
+        ), false);
+        wp_safe_redirect(admin_url('admin.php?page=webform-settings'));
+        exit;
+    }
+
+    public function import_page() {
+        if (!current_user_can('manage_options')) return;
+        ?>
+        <div class="wrap webform-wrap"><div class="webform-page-head"><div><h1><?php esc_html_e('Import Forms', 'webform'); ?></h1><p><?php esc_html_e('Convert exported forms into editable Webform forms.', 'webform'); ?></p></div></div>
+        <form class="webform-settings-card" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" enctype="multipart/form-data"><input type="hidden" name="action" value="webform_import"><?php wp_nonce_field('webform_import'); ?>
+            <label><?php esc_html_e('Source plugin', 'webform'); ?><select name="source"><option value="wpforms">WPForms JSON</option><option value="gravity">Gravity Forms JSON</option><option value="fluent">Fluent Forms JSON</option><option value="cf7">Contact Form 7 markup</option></select></label>
+            <label><?php esc_html_e('Export file', 'webform'); ?><input type="file" name="import_file" accept=".json,.txt"></label>
+            <label><?php esc_html_e('Or paste exported content', 'webform'); ?><textarea name="import_content" rows="12"></textarea></label>
+            <button class="button button-primary"><?php esc_html_e('Import and edit', 'webform'); ?></button>
+        </form></div>
+        <?php
+    }
+
+    public function import_form() {
+        if (!current_user_can('manage_options')) wp_die(esc_html__('Permission denied.', 'webform'));
+        check_admin_referer('webform_import');
+        $source = sanitize_key(wp_unslash($_POST['source'] ?? ''));
+        $content = trim((string) wp_unslash($_POST['import_content'] ?? ''));
+        if (!$content && !empty($_FILES['import_file']['tmp_name']) && absint($_FILES['import_file']['size']) <= 2 * MB_IN_BYTES) {
+            require_once ABSPATH . 'wp-admin/includes/file.php';
+            WP_Filesystem();
+            global $wp_filesystem;
+            $content = $wp_filesystem->get_contents($_FILES['import_file']['tmp_name']);
+        }
+        if (!$content) wp_die(esc_html__('No import content was provided.', 'webform'));
+        if ($source === 'cf7') {
+            $converted = $this->convert_cf7($content);
+        } else {
+            $decoded = json_decode($content, true);
+            if (!is_array($decoded)) wp_die(esc_html__('The import file is not valid JSON.', 'webform'));
+            $converted = $this->convert_json_form($decoded);
+        }
+        if (empty($converted['schema'])) wp_die(esc_html__('No supported fields were found in the export.', 'webform'));
+        $form_id = wp_insert_post(array('post_type' => 'webform_form', 'post_status' => 'publish', 'post_title' => sanitize_text_field($converted['name'] ?: __('Imported Form', 'webform'))));
+        update_post_meta($form_id, '_webform_schema', $this->sanitize_schema($converted['schema']));
+        update_post_meta($form_id, '_webform_settings', array('success_message' => __('Thanks! Your response has been submitted.', 'webform'), 'notification_email' => get_option('admin_email')));
+        wp_safe_redirect(admin_url('admin.php?page=webform-builder&form_id=' . $form_id));
+        exit;
+    }
+
+    private function convert_json_form($data) {
+        $node = $this->find_form_node($data);
+        $name = sanitize_text_field($node['title'] ?? ($node['name'] ?? ($node['settings']['form_title'] ?? __('Imported Form', 'webform'))));
+        $source_fields = $node['fields'] ?? ($node['form_fields'] ?? array());
+        if (is_string($source_fields)) $source_fields = json_decode($source_fields, true);
+        $stages = array(array('id' => 'stage_imported', 'title' => __('Imported Form', 'webform'), 'fields' => array()));
+        foreach ((array) $source_fields as $key => $source) {
+            if (!is_array($source)) continue;
+            $type = sanitize_key($source['type'] ?? ($source['element'] ?? 'text'));
+            if (in_array($type, array('page', 'pagebreak', 'step'), true)) {
+                $stages[] = array('id' => 'stage_' . count($stages), 'title' => sanitize_text_field($source['label'] ?? sprintf(__('Stage %d', 'webform'), count($stages) + 1)), 'fields' => array());
+                continue;
+            }
+            $map = array('name' => 'text', 'phone' => 'phone', 'email' => 'email', 'textarea' => 'textarea', 'select' => 'select', 'radio' => 'radio', 'checkbox' => 'checkbox', 'number' => 'number', 'date' => 'date', 'time' => 'time', 'url' => 'url', 'file' => 'file', 'html' => 'html', 'rating' => 'rating');
+            $type = $map[$type] ?? 'text';
+            $choices = array();
+            foreach ((array) ($source['choices'] ?? ($source['options'] ?? array())) as $choice) $choices[] = sanitize_text_field(is_array($choice) ? ($choice['label'] ?? ($choice['text'] ?? ($choice['value'] ?? ''))) : $choice);
+            $stages[count($stages) - 1]['fields'][] = array('id' => sanitize_key($source['id'] ?? $key) ?: 'field_' . wp_generate_password(6, false, false), 'type' => $type, 'label' => sanitize_text_field($source['label'] ?? ($source['adminLabel'] ?? __('Imported Field', 'webform'))), 'placeholder' => sanitize_text_field($source['placeholder'] ?? ''), 'required' => !empty($source['required']) || !empty($source['isRequired']), 'options' => array_filter($choices));
+        }
+        return array('name' => $name, 'schema' => $stages);
+    }
+
+    private function find_form_node($data) {
+        if (isset($data['fields']) || isset($data['form_fields'])) return $data;
+        foreach ($data as $value) if (is_array($value)) {
+            $found = $this->find_form_node($value);
+            if (isset($found['fields']) || isset($found['form_fields'])) return $found;
+        }
+        return $data;
+    }
+
+    private function convert_cf7($content) {
+        $fields = array();
+        preg_match_all('/\[(text|email|tel|url|number|date|textarea|select|checkbox|radio|file)(\*)?\s+([a-zA-Z0-9_-]+)[^\]]*\]/', $content, $matches, PREG_SET_ORDER);
+        $map = array('tel' => 'phone');
+        foreach ($matches as $match) $fields[] = array('id' => sanitize_key($match[3]), 'type' => $map[$match[1]] ?? $match[1], 'label' => ucwords(str_replace(array('-', '_'), ' ', $match[3])), 'placeholder' => '', 'required' => $match[2] === '*', 'options' => array());
+        return array('name' => __('Imported Contact Form', 'webform'), 'schema' => array(array('id' => 'stage_imported', 'title' => __('Contact Form', 'webform'), 'fields' => $fields)));
     }
 
     public function templates_page() {
