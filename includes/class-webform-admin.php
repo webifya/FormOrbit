@@ -30,7 +30,7 @@ class Webform_Admin {
         add_submenu_page('webform', __('Add New', 'webform'), __('Add New', 'webform'), 'manage_options', 'webform-builder', array($this, 'builder_page'));
         add_submenu_page('webform', __('Form Templates', 'webform'), __('Templates', 'webform'), 'manage_options', 'webform-templates', array($this, 'templates_page'));
         add_submenu_page('webform', __('Entries', 'webform'), __('Entries', 'webform'), 'manage_options', 'webform-entries', array($this, 'entries_page'));
-        add_submenu_page('webform', __('Import Forms', 'webform'), __('Import', 'webform'), 'manage_options', 'webform-import', array($this, 'import_page'));
+        add_submenu_page('webform', __('Import and Export Forms', 'webform'), __('Import / Export', 'webform'), 'manage_options', 'webform-import', array($this, 'import_page'));
         add_submenu_page('webform', __('Webform Settings', 'webform'), __('Settings', 'webform'), 'manage_options', 'webform-settings', array($this, 'settings_page'));
         if (!$this->is_pro_active()) {
             add_submenu_page('webform', __('Webform Pro', 'webform'), __('Upgrade to Pro', 'webform'), 'manage_options', 'webform-pro', array($this, 'pro_page'));
@@ -67,6 +67,7 @@ class Webform_Admin {
             return;
         }
         $forms = get_posts(array('post_type' => 'webform_form', 'posts_per_page' => -1, 'post_status' => array('publish', 'draft'), 'orderby' => 'modified', 'order' => 'DESC'));
+        $embed_counts = $this->embed_counts();
         ?>
         <div class="wrap webform-wrap">
             <div class="webform-page-head">
@@ -77,14 +78,22 @@ class Webform_Admin {
                 <?php if (!$forms) : ?>
                     <div class="webform-empty"><span class="dashicons dashicons-feedback"></span><h2><?php esc_html_e('Create your first form', 'webform'); ?></h2><p><?php esc_html_e('Add fields, arrange stages, and publish it with a shortcode.', 'webform'); ?></p></div>
                 <?php else : ?>
-                    <table class="widefat striped"><thead><tr><th><?php esc_html_e('Name', 'webform'); ?></th><th><?php esc_html_e('Shortcode', 'webform'); ?></th><th><?php esc_html_e('Entries', 'webform'); ?></th><th><?php esc_html_e('Updated', 'webform'); ?></th><th></th></tr></thead><tbody>
+                    <table class="wp-list-table widefat fixed striped table-view-list webform-forms-table"><thead><tr>
+                        <th class="column-primary"><?php esc_html_e('Form', 'webform'); ?></th><th class="column-shortcode"><?php esc_html_e('Shortcode', 'webform'); ?></th><th><?php esc_html_e('Entries', 'webform'); ?></th><th><?php esc_html_e('Embeds', 'webform'); ?></th><th><?php esc_html_e('Status', 'webform'); ?></th><th><?php esc_html_e('Created', 'webform'); ?></th><th><?php esc_html_e('Updated', 'webform'); ?></th>
+                    </tr></thead><tbody>
                     <?php foreach ($forms as $form) : ?>
+                        <?php $edit_url = admin_url('admin.php?page=webform-builder&form_id=' . $form->ID); ?>
                         <tr>
-                            <td><strong><a href="<?php echo esc_url(admin_url('admin.php?page=webform-builder&form_id=' . $form->ID)); ?>"><?php echo esc_html($form->post_title); ?></a></strong></td>
-                            <td><code>[webform id="<?php echo esc_attr($form->ID); ?>"]</code></td>
-                            <td><?php echo esc_html($this->entry_count($form->ID)); ?></td>
-                            <td><?php echo esc_html(get_the_modified_date('', $form)); ?></td>
-                            <td class="webform-row-actions"><a href="<?php echo esc_url(admin_url('admin.php?page=webform-builder&form_id=' . $form->ID)); ?>"><?php esc_html_e('Edit', 'webform'); ?></a> <a href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=webform_duplicate_form&form_id=' . $form->ID), 'webform_duplicate_' . $form->ID)); ?>"><?php esc_html_e('Duplicate', 'webform'); ?></a> <button class="button-link-delete webform-delete" data-id="<?php echo esc_attr($form->ID); ?>"><?php esc_html_e('Delete', 'webform'); ?></button></td>
+                            <td class="column-primary" data-colname="<?php esc_attr_e('Form', 'webform'); ?>"><strong><a class="row-title" href="<?php echo esc_url($edit_url); ?>"><?php echo esc_html($form->post_title); ?></a></strong>
+                                <div class="row-actions"><span><a href="<?php echo esc_url($edit_url); ?>"><?php esc_html_e('Edit', 'webform'); ?></a> | </span><span><a href="<?php echo esc_url(add_query_arg('panel', 'confirmation', $edit_url)); ?>"><?php esc_html_e('Settings', 'webform'); ?></a> | </span><span><a href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=webform_duplicate_form&form_id=' . $form->ID), 'webform_duplicate_' . $form->ID)); ?>"><?php esc_html_e('Duplicate', 'webform'); ?></a> | </span><span class="trash"><button type="button" class="button-link-delete webform-delete" data-id="<?php echo esc_attr($form->ID); ?>"><?php esc_html_e('Trash', 'webform'); ?></button> | </span><span><a href="<?php echo esc_url(wp_nonce_url(add_query_arg('webform_preview', $form->ID, home_url('/')), 'webform_preview_' . $form->ID)); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Preview', 'webform'); ?></a></span></div>
+                                <button type="button" class="toggle-row"><span class="screen-reader-text"><?php esc_html_e('Show more details', 'webform'); ?></span></button>
+                            </td>
+                            <td data-colname="<?php esc_attr_e('Shortcode', 'webform'); ?>"><code>[webform id="<?php echo esc_attr($form->ID); ?>"]</code></td>
+                            <td data-colname="<?php esc_attr_e('Entries', 'webform'); ?>"><?php echo esc_html($this->entry_count($form->ID)); ?></td>
+                            <td data-colname="<?php esc_attr_e('Embeds', 'webform'); ?>"><?php echo esc_html($embed_counts[$form->ID] ?? 0); ?></td>
+                            <td data-colname="<?php esc_attr_e('Status', 'webform'); ?>"><span class="webform-status webform-status-<?php echo esc_attr($form->post_status); ?>"><?php echo esc_html($form->post_status === 'publish' ? __('Published', 'webform') : __('Draft', 'webform')); ?></span></td>
+                            <td data-colname="<?php esc_attr_e('Created', 'webform'); ?>" title="<?php echo esc_attr(get_the_date('c', $form)); ?>"><?php echo esc_html(get_the_date(get_option('date_format'), $form)); ?></td>
+                            <td data-colname="<?php esc_attr_e('Updated', 'webform'); ?>" title="<?php echo esc_attr(get_the_modified_date('c', $form)); ?>"><?php echo esc_html(get_the_modified_date(get_option('date_format'), $form)); ?></td>
                         </tr>
                     <?php endforeach; ?>
                     </tbody></table>
@@ -97,6 +106,22 @@ class Webform_Admin {
     private function entry_count($form_id) {
         $query = new WP_Query(array('post_type' => 'webform_entry', 'post_status' => 'private', 'posts_per_page' => 1, 'fields' => 'ids', 'meta_query' => array('relation' => 'AND', array('key' => '_webform_form_id', 'value' => $form_id), array('relation' => 'OR', array('key' => '_webform_entry_status', 'compare' => 'NOT EXISTS'), array('key' => '_webform_entry_status', 'value' => 'submitted')))));
         return $query->found_posts;
+    }
+
+    private function embed_counts() {
+        $counts = array();
+        $content_ids = get_posts(array('post_type' => 'any', 'post_status' => array('publish', 'private', 'draft', 'future'), 'posts_per_page' => 2000, 'fields' => 'ids', 's' => 'webform', 'no_found_rows' => true, 'orderby' => 'none'));
+        foreach ($content_ids as $content_id) {
+            $content = (string) get_post_field('post_content', $content_id);
+            if (!preg_match_all('/\[webform\b[^\]]*\bid\s*=\s*(["\']?)(\d+)\1[^\]]*\]/i', $content, $matches)) {
+                continue;
+            }
+            foreach ($matches[2] as $embedded_form_id) {
+                $embedded_form_id = absint($embedded_form_id);
+                $counts[$embedded_form_id] = ($counts[$embedded_form_id] ?? 0) + 1;
+            }
+        }
+        return $counts;
     }
 
     public function builder_page() {
@@ -490,14 +515,20 @@ class Webform_Admin {
 
     public function import_page() {
         if (!current_user_can('manage_options')) return;
+        $forms = get_posts(array('post_type' => 'webform_form', 'post_status' => array('publish', 'draft'), 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC'));
         ?>
-        <div class="wrap webform-wrap"><div class="webform-page-head"><div><h1><?php esc_html_e('Import Forms', 'webform'); ?></h1><p><?php esc_html_e('Convert exported forms into editable Webform forms.', 'webform'); ?></p></div></div>
-        <form class="webform-settings-card" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" enctype="multipart/form-data"><input type="hidden" name="action" value="webform_import"><?php wp_nonce_field('webform_import'); ?>
-            <label><?php esc_html_e('Source plugin', 'webform'); ?><select name="source"><option value="wpforms">WPForms JSON</option><option value="gravity">Gravity Forms JSON</option><option value="fluent">Fluent Forms JSON</option><option value="cf7">Contact Form 7 markup</option></select></label>
-            <label><?php esc_html_e('Export file', 'webform'); ?><input type="file" name="import_file" accept=".json,.txt"></label>
-            <label><?php esc_html_e('Or paste exported content', 'webform'); ?><textarea name="import_content" rows="12"></textarea></label>
-            <button class="button button-primary"><?php esc_html_e('Import and edit', 'webform'); ?></button>
-        </form></div>
+        <div class="wrap webform-wrap"><div class="webform-page-head"><div><h1><?php esc_html_e('Import and Export Forms', 'webform'); ?></h1><p><?php esc_html_e('Move forms between websites or migrate from another form builder.', 'webform'); ?></p></div></div>
+        <div class="webform-transfer-grid">
+            <form class="webform-settings-card" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" enctype="multipart/form-data"><input type="hidden" name="action" value="webform_import"><?php wp_nonce_field('webform_import'); ?>
+                <h2><?php esc_html_e('Import a form', 'webform'); ?></h2>
+                <label><?php esc_html_e('Source', 'webform'); ?><select name="source"><option value="auto"><?php esc_html_e('Detect automatically', 'webform'); ?></option><option value="webform">Webform</option><option value="wpforms">WPForms</option><option value="gravity">Gravity Forms</option><option value="fluent">Fluent Forms</option><option value="formidable">Formidable Forms</option><option value="forminator">Forminator</option><option value="cf7">Contact Form 7</option></select></label>
+                <label><?php esc_html_e('Import file', 'webform'); ?><input type="file" name="import_file" accept=".json,.csv,.xml,.txt,application/json,text/csv,application/xml,text/xml,text/plain"></label>
+                <p class="description"><?php esc_html_e('Supported formats: JSON, CSV, XML, and Contact Form 7 text markup. Maximum file size: 5 MB.', 'webform'); ?></p>
+                <label><?php esc_html_e('Or paste exported content', 'webform'); ?><textarea name="import_content" rows="10"></textarea></label>
+                <button class="button button-primary"><?php esc_html_e('Import and edit', 'webform'); ?></button>
+            </form>
+            <div><?php do_action('webform_import_export_tools', $forms); ?><?php if (!apply_filters('webform_can_export_forms', false)) : ?><div class="webform-settings-card webform-export-pro-card"><span class="webform-pro-badge"><?php esc_html_e('PRO', 'webform'); ?></span><h2><?php esc_html_e('Export forms', 'webform'); ?></h2><p><?php esc_html_e('Export complete form structures and settings as JSON, CSV, or XML for backups and migrations.', 'webform'); ?></p><ul><li><?php esc_html_e('Portable fields, stages, and settings', 'webform'); ?></li><li><?php esc_html_e('JSON, CSV, and XML downloads', 'webform'); ?></li><li><?php esc_html_e('Import files on another Webform website', 'webform'); ?></li></ul><a class="button button-primary" href="<?php echo esc_url($this->upgrade_url('form-export')); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Unlock form export', 'webform'); ?></a></div><?php endif; ?></div>
+        </div></div>
         <?php
     }
 
@@ -506,7 +537,9 @@ class Webform_Admin {
         check_admin_referer('webform_import');
         $source = sanitize_key(wp_unslash($_POST['source'] ?? ''));
         $content = trim((string) wp_unslash($_POST['import_content'] ?? ''));
-        if (!$content && !empty($_FILES['import_file']['tmp_name']) && absint($_FILES['import_file']['size']) <= 2 * MB_IN_BYTES) {
+        $filename = '';
+        if (!$content && !empty($_FILES['import_file']['tmp_name']) && absint($_FILES['import_file']['size']) <= 5 * MB_IN_BYTES) {
+            $filename = sanitize_file_name(wp_unslash($_FILES['import_file']['name'] ?? ''));
             require_once ABSPATH . 'wp-admin/includes/file.php';
             WP_Filesystem();
             global $wp_filesystem;
@@ -516,19 +549,212 @@ class Webform_Admin {
         if ($source === 'cf7') {
             $converted = $this->convert_cf7($content);
         } else {
-            $decoded = json_decode($content, true);
-            if (!is_array($decoded)) wp_die(esc_html__('The import file is not valid JSON.', 'webform'));
-            $converted = $this->convert_json_form($decoded);
+            $format = $this->detect_import_format($content, $filename);
+            if ($format === 'csv') {
+                $converted = $this->convert_csv_form($content);
+            } elseif ($format === 'xml') {
+                $converted = $this->convert_xml_form($content, $source);
+            } else {
+                $decoded = json_decode($content, true);
+                if (!is_array($decoded)) wp_die(esc_html__('The import file is not valid JSON.', 'webform'));
+                if ($source === 'forminator' || ($source === 'auto' && $this->looks_like_forminator($decoded))) {
+                    $converted = $this->convert_forminator($decoded);
+                } elseif ($source === 'formidable' || ($source === 'auto' && $this->looks_like_formidable($decoded))) {
+                    $converted = $this->convert_formidable($decoded);
+                } else {
+                    $converted = $this->convert_json_form($decoded);
+                }
+            }
         }
         if (empty($converted['schema'])) wp_die(esc_html__('No supported fields were found in the export.', 'webform'));
         $form_id = wp_insert_post(array('post_type' => 'webform_form', 'post_status' => 'publish', 'post_title' => sanitize_text_field($converted['name'] ?: __('Imported Form', 'webform'))));
         update_post_meta($form_id, '_webform_schema', $this->sanitize_schema($converted['schema']));
-        update_post_meta($form_id, '_webform_settings', array('success_message' => __('Thanks! Your response has been submitted.', 'webform'), 'notification_email' => get_option('admin_email')));
+        update_post_meta($form_id, '_webform_settings', $this->sanitize_import_settings($converted['settings'] ?? array()));
         wp_safe_redirect(admin_url('admin.php?page=webform-builder&form_id=' . $form_id));
         exit;
     }
 
+    private function detect_import_format($content, $filename) {
+        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        if (in_array($extension, array('csv', 'xml', 'json'), true)) {
+            return $extension;
+        }
+        $trimmed = ltrim($content);
+        if (strpos($trimmed, '<') === 0) return 'xml';
+        if (strpos($trimmed, '{') === 0 || strpos($trimmed, '[') === 0) return 'json';
+        return 'csv';
+    }
+
+    private function convert_csv_form($content) {
+        $lines = preg_split('/\r\n|\r|\n/', trim($content));
+        $header = array_map('sanitize_key', str_getcsv((string) array_shift($lines)));
+        $required_columns = array('stage_title', 'field_type', 'label');
+        if (array_diff($required_columns, $header)) {
+            wp_die(esc_html__('The CSV must include stage_title, field_type, and label columns.', 'webform'));
+        }
+        $stages = array();
+        $name = __('Imported Form', 'webform');
+        $settings = array();
+        foreach ($lines as $line) {
+            if (trim($line) === '') continue;
+            $values = str_getcsv($line);
+            $row = array_combine($header, array_pad($values, count($header), ''));
+            if (!$row) continue;
+            if (!empty($row['form_name'])) $name = sanitize_text_field($row['form_name']);
+            if (!empty($row['settings_json']) && !$settings) {
+                $decoded_settings = json_decode($row['settings_json'], true);
+                if (is_array($decoded_settings)) $settings = $decoded_settings;
+            }
+            $stage_title = sanitize_text_field($row['stage_title']);
+            $stage_key = sanitize_key($row['stage_id'] ?? $stage_title) ?: 'stage_' . (count($stages) + 1);
+            if (!isset($stages[$stage_key])) $stages[$stage_key] = array('id' => $stage_key, 'title' => $stage_title ?: __('Imported Form', 'webform'), 'fields' => array());
+            $options = !empty($row['options']) ? preg_split('/\s*\|\s*/', $row['options']) : array();
+            $field = array('id' => sanitize_key($row['field_id'] ?? '') ?: 'field_' . wp_generate_password(6, false, false), 'type' => $this->map_import_type($row['field_type']), 'label' => sanitize_text_field($row['label']), 'placeholder' => sanitize_text_field($row['placeholder'] ?? ''), 'required' => in_array(strtolower((string) ($row['required'] ?? '')), array('1', 'yes', 'true', 'required'), true), 'options' => array_map('sanitize_text_field', $options));
+            if (!empty($row['field_json'])) {
+                $decoded_field = json_decode($row['field_json'], true);
+                if (is_array($decoded_field)) $field = array_merge($field, $decoded_field);
+            }
+            $stages[$stage_key]['fields'][] = $field;
+        }
+        return array('name' => $name, 'schema' => array_values($stages), 'settings' => $settings);
+    }
+
+    private function convert_xml_form($content, $source) {
+        if (!function_exists('simplexml_load_string')) {
+            wp_die(esc_html__('XML support is not available on this server.', 'webform'));
+        }
+        $xml = simplexml_load_string($content, 'SimpleXMLElement', LIBXML_NONET | LIBXML_NOCDATA);
+        if ($xml === false) wp_die(esc_html__('The import file is not valid XML.', 'webform'));
+        $root_name = $xml->getName();
+        if ($root_name === 'webform-export') {
+            $name = sanitize_text_field((string) $xml->form->name);
+            $settings = json_decode((string) $xml->form->settings, true);
+            $stages = array();
+            foreach ($xml->form->stages->stage as $stage_node) {
+                $stage = array('id' => sanitize_key((string) $stage_node['id']), 'title' => sanitize_text_field((string) $stage_node['title']), 'fields' => array());
+                foreach ($stage_node->field as $field_node) {
+                    $field = json_decode((string) $field_node, true);
+                    if (is_array($field)) $stage['fields'][] = $field;
+                }
+                $stages[] = $stage;
+            }
+            return array('name' => $name, 'schema' => $stages, 'settings' => is_array($settings) ? $settings : array());
+        }
+        if ($source === 'formidable' || stripos($root_name, 'formidable') !== false) {
+            $formidable = $this->convert_formidable_xml($xml);
+            if (!empty($formidable['schema'][0]['fields'])) return $formidable;
+        }
+        $decoded = json_decode(wp_json_encode($xml), true);
+        return $source === 'forminator' ? $this->convert_forminator($decoded) : ($source === 'formidable' || stripos($root_name, 'formidable') !== false ? $this->convert_formidable($decoded) : $this->convert_json_form($decoded));
+    }
+
+    private function convert_formidable_xml($xml) {
+        $form_nodes = $xml->xpath('//*[local-name()="form"]');
+        $form_node = !empty($form_nodes) ? $form_nodes[0] : $xml;
+        $name_nodes = $form_node->xpath('.//*[local-name()="name" or local-name()="title"]');
+        $name = !empty($name_nodes) ? sanitize_text_field((string) $name_nodes[0]) : __('Imported Formidable Form', 'webform');
+        $field_nodes = $form_node->xpath('.//*[local-name()="field"]');
+        $fields = array();
+        foreach ((array) $field_nodes as $field_node) {
+            $field = json_decode(wp_json_encode($field_node), true);
+            if (!is_array($field)) continue;
+            foreach ($field_node->attributes() as $attribute => $value) $field[(string) $attribute] = (string) $value;
+            $fields[] = $field;
+        }
+        return $this->build_imported_form($name, $fields, 'formidable');
+    }
+
+    private function convert_forminator($data) {
+        $node = isset($data['data']) && is_array($data['data']) ? $data['data'] : $data;
+        $name = sanitize_text_field($node['name'] ?? ($node['settings']['formName'] ?? ($node['settings']['form_name'] ?? __('Imported Forminator Form', 'webform'))));
+        $fields = $node['fields'] ?? array();
+        if (!$fields && !empty($node['wrappers'])) $fields = $this->flatten_import_fields($node['wrappers']);
+        return $this->build_imported_form($name, $fields, 'forminator');
+    }
+
+    private function convert_formidable($data) {
+        $node = $this->find_form_node($data);
+        if (!empty($data['forms'][0]) && is_array($data['forms'][0])) $node = $data['forms'][0];
+        $name = sanitize_text_field($node['name'] ?? ($node['form_key'] ?? ($node['title'] ?? __('Imported Formidable Form', 'webform'))));
+        $fields = $node['fields'] ?? ($data['fields'] ?? array());
+        return $this->build_imported_form($name, $this->flatten_import_fields($fields), 'formidable');
+    }
+
+    private function build_imported_form($name, $fields, $source) {
+        $stages = array(array('id' => 'stage_imported', 'title' => $name, 'fields' => array()));
+        foreach ((array) $fields as $key => $field) {
+            if (!is_array($field)) continue;
+            $field_options = isset($field['field_options']) && is_array($field['field_options']) ? $field['field_options'] : array();
+            $raw_type = $this->import_scalar($field['type'] ?? ($field['field_type'] ?? ($field['element_type'] ?? 'text')));
+            if (in_array(sanitize_key($raw_type), array('page-break', 'page_break', 'pagebreak', 'section'), true)) {
+                $stages[] = array('id' => 'stage_' . (count($stages) + 1), 'title' => sanitize_text_field($this->import_scalar($field['field_label'] ?? ($field['name'] ?? sprintf(__('Stage %d', 'webform'), count($stages) + 1)))), 'fields' => array());
+                continue;
+            }
+            $choices = $field['options'] ?? ($field['choices'] ?? array());
+            if (isset($field_options['options'])) $choices = $field_options['options'];
+            $normalized_choices = array();
+            foreach ((array) $choices as $choice) $normalized_choices[] = sanitize_text_field($this->import_scalar(is_array($choice) ? ($choice['label'] ?? ($choice['value'] ?? ($choice['option_value'] ?? ''))) : $choice));
+            $stages[count($stages) - 1]['fields'][] = array(
+                'id' => sanitize_key($this->import_scalar($field['element_id'] ?? ($field['field_key'] ?? ($field['id'] ?? $key)))) ?: 'field_' . wp_generate_password(6, false, false),
+                'type' => $this->map_import_type($raw_type),
+                'label' => sanitize_text_field($this->import_scalar($field['field_label'] ?? ($field['name'] ?? ($field['label'] ?? __('Imported Field', 'webform'))))),
+                'placeholder' => sanitize_text_field($this->import_scalar($field['placeholder'] ?? ($field_options['placeholder'] ?? ''))),
+                'required' => !empty($field['required']) || !empty($field['mandatory']) || (($field_options['required_indicator'] ?? '') !== ''),
+                'options' => array_filter($normalized_choices),
+            );
+        }
+        return array('name' => $name, 'schema' => $stages, 'source' => $source);
+    }
+
+    private function flatten_import_fields($nodes) {
+        $fields = array();
+        foreach ((array) $nodes as $node) {
+            if (!is_array($node)) continue;
+            if (isset($node['type']) || isset($node['field_type']) || isset($node['element_type'])) $fields[] = $node;
+            foreach (array('fields', 'wrappers', 'columns', 'elements') as $child_key) {
+                if (!empty($node[$child_key]) && is_array($node[$child_key])) $fields = array_merge($fields, $this->flatten_import_fields($node[$child_key]));
+            }
+        }
+        return $fields;
+    }
+
+    private function import_scalar($value) {
+        if (is_scalar($value)) return (string) $value;
+        if (is_array($value)) {
+            $first = reset($value);
+            return is_scalar($first) ? (string) $first : '';
+        }
+        return '';
+    }
+
+    private function looks_like_forminator($data) {
+        return isset($data['data']['wrappers']) || isset($data['data']['settings']['formName']) || (($data['type'] ?? '') === 'form');
+    }
+
+    private function looks_like_formidable($data) {
+        return isset($data['forms']) || isset($data['form_key']) || isset($data['frm_form']);
+    }
+
+    private function map_import_type($type) {
+        $type = sanitize_key($type);
+        $map = array('name' => 'text', 'first_name' => 'text', 'last_name' => 'text', 'input' => 'text', 'phone' => 'phone', 'tel' => 'phone', 'email' => 'email', 'textarea' => 'textarea', 'paragraph' => 'textarea', 'select' => 'select', 'dropdown' => 'select', 'radio' => 'radio', 'checkbox' => 'checkbox', 'number' => 'number', 'date' => 'date', 'time' => 'time', 'url' => 'url', 'website' => 'url', 'file' => 'file', 'upload' => 'file', 'html' => 'html', 'section' => 'heading', 'divider' => 'heading', 'heading' => 'heading', 'rating' => 'rating', 'star' => 'rating', 'scale' => 'slider', 'slider' => 'slider', 'hidden' => 'hidden', 'consent' => 'consent', 'captcha' => 'captcha', 'calculation' => 'calculation', 'currency' => 'currency', 'signature' => 'signature', 'address' => 'address');
+        return $map[$type] ?? 'text';
+    }
+
+    private function sanitize_import_settings($settings) {
+        $defaults = array('success_message' => __('Thanks! Your response has been submitted.', 'webform'), 'notification_email' => get_option('admin_email'), 'submit_label' => __('Submit', 'webform'), 'confirmation_type' => 'message', 'style_preset' => 'modern', 'accent_color' => '#6c4bd4', 'button_text_color' => '#ffffff');
+        $settings = wp_parse_args((array) $settings, $defaults);
+        $confirmation_type = in_array($settings['confirmation_type'], array('message', 'redirect', 'webhook'), true) ? $settings['confirmation_type'] : 'message';
+        if ($confirmation_type === 'webhook' && !apply_filters('webform_allow_webhook_confirmation', false)) $confirmation_type = 'message';
+        $clean = array('success_message' => wp_kses_post($settings['success_message']), 'notification_email' => sanitize_email($settings['notification_email']), 'submit_label' => sanitize_text_field($settings['submit_label']), 'confirmation_type' => $confirmation_type, 'redirect_url' => esc_url_raw($settings['redirect_url'] ?? ''), 'webhook_url' => esc_url_raw($settings['webhook_url'] ?? ''), 'require_login' => !empty($settings['require_login']), 'submission_limit' => absint($settings['submission_limit'] ?? 0), 'style_preset' => sanitize_key($settings['style_preset']), 'accent_color' => sanitize_hex_color($settings['accent_color']) ?: '#6c4bd4', 'button_text_color' => sanitize_hex_color($settings['button_text_color']) ?: '#ffffff');
+        return apply_filters('webform_sanitize_form_settings', $clean, $settings, 0);
+    }
+
     private function convert_json_form($data) {
+        if (isset($data['webform_export_version'], $data['form'])) {
+            $form = (array) $data['form'];
+            return array('name' => sanitize_text_field($form['name'] ?? __('Imported Form', 'webform')), 'schema' => (array) ($form['schema'] ?? array()), 'settings' => (array) ($form['settings'] ?? array()));
+        }
         $node = $this->find_form_node($data);
         $name = sanitize_text_field($node['title'] ?? ($node['name'] ?? ($node['settings']['form_title'] ?? __('Imported Form', 'webform'))));
         $source_fields = $node['fields'] ?? ($node['form_fields'] ?? array());
@@ -541,8 +767,7 @@ class Webform_Admin {
                 $stages[] = array('id' => 'stage_' . count($stages), 'title' => sanitize_text_field($source['label'] ?? sprintf(__('Stage %d', 'webform'), count($stages) + 1)), 'fields' => array());
                 continue;
             }
-            $map = array('name' => 'text', 'phone' => 'phone', 'email' => 'email', 'textarea' => 'textarea', 'select' => 'select', 'radio' => 'radio', 'checkbox' => 'checkbox', 'number' => 'number', 'date' => 'date', 'time' => 'time', 'url' => 'url', 'file' => 'file', 'html' => 'html', 'rating' => 'rating');
-            $type = $map[$type] ?? 'text';
+            $type = $this->map_import_type($type);
             $choices = array();
             foreach ((array) ($source['choices'] ?? ($source['options'] ?? array())) as $choice) $choices[] = sanitize_text_field(is_array($choice) ? ($choice['label'] ?? ($choice['text'] ?? ($choice['value'] ?? ''))) : $choice);
             $stages[count($stages) - 1]['fields'][] = array('id' => sanitize_key($source['id'] ?? $key) ?: 'field_' . wp_generate_password(6, false, false), 'type' => $type, 'label' => sanitize_text_field($source['label'] ?? ($source['adminLabel'] ?? __('Imported Field', 'webform'))), 'placeholder' => sanitize_text_field($source['placeholder'] ?? ''), 'required' => !empty($source['required']) || !empty($source['isRequired']), 'options' => array_filter($choices));
