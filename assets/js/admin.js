@@ -6,6 +6,11 @@
     let activeStage = 0;
     let selectedId = null;
     let dirty = false;
+    const proFieldTypes = WebformAdmin.proFieldTypes || [];
+
+    function isLockedProField(field) {
+        return !WebformAdmin.proActive && proFieldTypes.includes(field.type);
+    }
 
     function uid(prefix) {
         return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -94,7 +99,7 @@
         const fields = schema[activeStage].fields || [];
         $('#webform-canvas').html(fields.length ? fields.map(fieldCard).join('') : '<div class="webform-drop-empty"><span class="dashicons dashicons-layout"></span><strong>Start building your form</strong><small>Add a field, then drag it into the order you want.</small><button type="button" class="button button-primary webform-open-field-picker"><span class="dashicons dashicons-plus-alt2"></span>Add your first field</button></div>');
         $('#webform-canvas').sortable({
-            items: '.webform-field-card',
+            items: '.webform-field-card:not(.is-pro-locked)',
             handle: '.webform-drag',
             placeholder: 'webform-sort-placeholder',
             update: function () {
@@ -108,14 +113,15 @@
 
     function fieldCard(field) {
         const typeName = (defaults[field.type] || field.type || 'Field').replace(' question', '');
-        const style = WebformAdmin.proStyling && field.style ? field.style : {};
+        const locked = isLockedProField(field);
+        const style = field.style || {};
         const cardStyle = `--preview-width:${Number(style.width || 100)}%;--preview-label:${escapeHtml(style.label_color || '#1d2327')};--preview-bg:${escapeHtml(style.background_color || '#ffffff')};--preview-text:${escapeHtml(style.text_color || '#3c434a')};--preview-radius:${Number(style.radius ?? 7)}px`;
-        return `<div class="webform-field-card webform-field-card-${escapeHtml(field.type)} ${field.id === selectedId ? 'is-selected' : ''}" data-id="${field.id}" style="${cardStyle}">
-            <span class="dashicons dashicons-menu webform-drag"></span>
+        return `<div class="webform-field-card webform-field-card-${escapeHtml(field.type)} ${locked ? 'is-pro-locked' : ''} ${field.id === selectedId ? 'is-selected' : ''}" data-id="${field.id}" style="${cardStyle}">
+            <span class="dashicons ${locked ? 'dashicons-lock' : 'dashicons-menu'} webform-drag"></span>
             <div class="webform-field-preview"><strong>${escapeHtml(field.label)}${field.required ? ' <em>*</em>' : ''}</strong>
             ${fieldPreview(field)}</div>
-            <span class="webform-type">${escapeHtml(typeName)}</span>
-            <button class="webform-remove-field" title="Remove">×</button>
+            <span class="webform-type">${locked ? 'PRO LOCKED' : escapeHtml(typeName)}</span>
+            ${locked ? '' : '<button class="webform-remove-field" title="Remove">×</button>'}
         </div>`;
     }
 
@@ -127,6 +133,10 @@
         const field = selectedField();
         if (!field) {
             $('#webform-field-settings').html('<p class="description">Select a field to edit its options.</p>');
+            return;
+        }
+        if (isLockedProField(field)) {
+            $('#webform-field-settings').html('<div class="webform-locked-field-message"><span class="dashicons dashicons-lock"></span><strong>Pro field unavailable</strong><p>This field and its settings are preserved. Activate Webform Pro with a valid license to edit or display it.</p></div>');
             return;
         }
         const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz', 'product'].includes(field.type);
