@@ -5,8 +5,41 @@ defined('ABSPATH') || exit;
 class Webform_Public {
     public function __construct() {
         add_shortcode('webform', array($this, 'shortcode'));
+        add_action('template_redirect', array($this, 'preview'));
         add_action('wp_ajax_webform_submit', array($this, 'submit'));
         add_action('wp_ajax_nopriv_webform_submit', array($this, 'submit'));
+    }
+
+    public function preview() {
+        $form_id = isset($_GET['webform_preview']) ? absint($_GET['webform_preview']) : 0;
+        if (!$form_id) {
+            return;
+        }
+        $nonce = isset($_GET['_wpnonce']) ? sanitize_text_field(wp_unslash($_GET['_wpnonce'])) : '';
+        if (!current_user_can('manage_options') || !wp_verify_nonce($nonce, 'webform_preview_' . $form_id)) {
+            wp_die(esc_html__('You are not allowed to preview this form.', 'webform'), '', array('response' => 403));
+        }
+        $form = get_post($form_id);
+        if (!$form || $form->post_type !== 'webform_form') {
+            wp_die(esc_html__('Webform not found.', 'webform'), '', array('response' => 404));
+        }
+        wp_enqueue_style('webform-public', WEBFORM_URL . 'assets/css/public.css', array(), WEBFORM_VERSION);
+        wp_enqueue_script('webform-public', WEBFORM_URL . 'assets/js/public.js', array(), WEBFORM_VERSION, true);
+        status_header(200);
+        nocache_headers();
+        ?>
+        <!doctype html><html <?php language_attributes(); ?>><head>
+            <meta charset="<?php bloginfo('charset'); ?>"><meta name="viewport" content="width=device-width, initial-scale=1">
+            <title><?php echo esc_html(sprintf(__('Preview: %s', 'webform'), $form->post_title)); ?></title>
+            <?php wp_head(); ?>
+            <style>.webform-preview-page{background:#f0f2f5;margin:0;padding:32px 18px}.webform-preview-toolbar{align-items:center;display:flex;justify-content:space-between;margin:0 auto 18px;max-width:900px}.webform-preview-toolbar strong{font:600 16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.webform-preview-toolbar a{background:#2271b1;border-radius:4px;color:#fff;font:600 13px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:10px 14px;text-decoration:none}.webform-preview-frame{margin:auto;max-width:900px}</style>
+        </head><body class="webform-preview-page">
+            <div class="webform-preview-toolbar"><strong><?php echo esc_html(sprintf(__('Previewing “%s”', 'webform'), $form->post_title)); ?></strong><a href="<?php echo esc_url(admin_url('admin.php?page=webform-builder&form_id=' . $form_id)); ?>"><?php esc_html_e('Back to editor', 'webform'); ?></a></div>
+            <main class="webform-preview-frame"><?php echo do_shortcode('[webform id="' . absint($form_id) . '"]'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></main>
+            <?php wp_footer(); ?>
+        </body></html>
+        <?php
+        exit;
     }
 
     public function shortcode($atts) {
