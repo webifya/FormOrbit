@@ -1,0 +1,16 @@
+.webform-preset-picker{align-items:center;display:flex;gap:6px;margin-top:6px}
+.webform-preset-picker select{margin:0!important;min-width:0}
+.webform-preview-preset{align-items:center;display:inline-flex!important;flex:0 0 38px;height:38px;justify-content:center;padding:0!important}
+.webform-preview-preset .dashicons{margin:0}
+.webform-preset-preview-modal[hidden]{display:none}
+.webform-preset-preview-modal{inset:0;position:fixed;z-index:100100}
+.webform-preset-preview-backdrop{background:rgba(18,16,28,.64);border:0;inset:0;position:absolute;width:100%}
+.webform-preset-preview-dialog{background:#f6f7f9;border-radius:14px;box-shadow:0 24px 80px rgba(0,0,0,.3);box-sizing:border-box;left:50%;max-height:90vh;max-width:720px;overflow:auto;padding:22px;position:absolute;top:50%;transform:translate(-50%,-50%);width:calc(100% - 40px)}
+.webform-preset-preview-head{align-items:center;display:flex;justify-content:space-between;margin-bottom:16px}
+.webform-preset-preview-head small{color:#6548c7;font-weight:700;letter-spacing:.08em}
+.webform-preset-preview-head h2{font-size:22px;margin:3px 0 0}
+.webform-preset-preview-close{font-size:24px!important;height:36px;line-height:28px!important;width:36px}
+.webform-preset-preview-form{margin:0 auto!important;padding:28px!important}
+.webform-preset-preview-form textarea{min-height:82px}
+.webform-preset-preview-form .webform-stage.is-active{display:block}
+.webform-preset-preview-form .webform-field{width:100%!important}
