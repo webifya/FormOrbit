@@ -579,7 +579,12 @@ class Webform_Admin {
             __('Calculated fields and order forms', 'webform'),
             __('Electronic signatures and PDF documents', 'webform'),
             __('Advanced spam protection and priority support', 'webform'),
-            __('Automatic updates with one-site license', 'webform'),
+            __('Automatic updates with every paid license', 'webform'),
+        );
+        $plans = array(
+            array('name' => __('Pro Annual', 'webform'), 'price' => '$19.99', 'term' => __('per year', 'webform'), 'sites' => __('1 website', 'webform'), 'url' => $this->purchase_url('single', 'plans-single'), 'featured' => false),
+            array('name' => __('Pro Bundle', 'webform'), 'price' => '$99.99', 'term' => __('per year', 'webform'), 'sites' => __('Up to 10 websites', 'webform'), 'url' => $this->purchase_url('bundle', 'plans-bundle'), 'featured' => true),
+            array('name' => __('Pro Lifetime', 'webform'), 'price' => '$249.99', 'term' => __('one-time payment', 'webform'), 'sites' => __('Lifetime license', 'webform'), 'url' => $this->purchase_url('lifetime', 'plans-lifetime'), 'featured' => false),
         );
         ?>
         <div class="wrap webform-wrap webform-pro-page">
@@ -587,9 +592,9 @@ class Webform_Admin {
                 <span class="webform-pro-badge"><?php esc_html_e('WEBFORM PRO', 'webform'); ?></span>
                 <h1><?php esc_html_e('Turn every form into a connected workflow', 'webform'); ?></h1>
                 <p><?php esc_html_e('Keep everything in Webform Free, then add payments, email marketing, automation, and advanced business tools.', 'webform'); ?></p>
-                <div class="webform-pro-price"><strong>$19.99</strong> <span><?php esc_html_e('per year / one website', 'webform'); ?></span></div>
-                <a class="button button-primary button-hero" href="<?php echo esc_url($this->upgrade_url('upgrade-page')); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Get Webform Pro', 'webform'); ?></a>
+                <p class="webform-pro-price-intro"><?php esc_html_e('Choose the license that fits your websites.', 'webform'); ?></p>
             </div>
+            <div class="webform-plan-grid"><?php foreach ($plans as $plan) : ?><article class="webform-plan-card <?php echo $plan['featured'] ? 'is-featured' : ''; ?>"><?php if ($plan['featured']) : ?><span class="webform-plan-popular"><?php esc_html_e('BEST FOR AGENCIES', 'webform'); ?></span><?php endif; ?><h2><?php echo esc_html($plan['name']); ?></h2><div class="webform-plan-price"><?php echo esc_html($plan['price']); ?></div><p><?php echo esc_html($plan['term']); ?></p><strong><?php echo esc_html($plan['sites']); ?></strong><a class="button button-primary" href="<?php echo esc_url($plan['url']); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Choose this plan', 'webform'); ?></a></article><?php endforeach; ?></div>
             <div class="webform-pro-grid">
                 <?php foreach ($features as $feature) : ?><div class="webform-pro-feature"><span class="dashicons dashicons-yes-alt"></span><strong><?php echo esc_html($feature); ?></strong></div><?php endforeach; ?>
             </div>
@@ -599,7 +604,16 @@ class Webform_Admin {
     }
 
     private function upgrade_url($source) {
-        return apply_filters('webform_upgrade_url', add_query_arg(array('utm_source' => 'webform-plugin', 'utm_medium' => 'upgrade', 'utm_campaign' => sanitize_key($source)), 'https://www.webninjallc.com/'));
+        return apply_filters('webform_upgrade_url', $this->purchase_url('single', $source));
+    }
+
+    private function purchase_url($plan, $source) {
+        $urls = array(
+            'single' => 'https://www.webninjallc.com/product/webform-pro/',
+            'bundle' => 'https://www.webninjallc.com/product/webform-pro-bundle/',
+            'lifetime' => 'https://www.webninjallc.com/product/webform-lifetime/',
+        );
+        return add_query_arg(array('utm_source' => 'webform-plugin', 'utm_medium' => 'upgrade', 'utm_campaign' => sanitize_key($source)), $urls[$plan] ?? $urls['single']);
     }
 
     private function is_pro_active() {
