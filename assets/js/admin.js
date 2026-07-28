@@ -13,7 +13,7 @@
     }
 
     function previewWidth(value) {
-        return ({ '100': '100%', '75': '74%', '50': '49%', '33': '32%' })[String(value || '100')] || '100%';
+        return ({ 'auto': 'auto', '100': '100%', '75': '74%', '50': '49%', '33': '32%' })[String(value || '100')] || '100%';
     }
 
     function uid(prefix) {
@@ -120,10 +120,13 @@
         const locked = isLockedProField(field);
         const style = field.style || {};
         const cardStyle = `--preview-width:${previewWidth(style.width)};--preview-label:${escapeHtml(style.label_color || '#1d2327')};--preview-bg:${escapeHtml(style.background_color || '#ffffff')};--preview-text:${escapeHtml(style.text_color || '#3c434a')};--preview-radius:${Number(style.radius ?? 7)}px`;
-        return `<div class="webform-field-card webform-field-card-${escapeHtml(field.type)} ${locked ? 'is-pro-locked' : ''} ${field.id === selectedId ? 'is-selected' : ''}" data-id="${field.id}" style="${cardStyle}">
+        const widthMode = String(style.width || '100');
+        const widthControls = WebformAdmin.proActive && !locked ? `<div class="webform-card-widths" aria-label="Field width"><button type="button" data-card-width="auto" class="${widthMode === 'auto' ? 'is-active' : ''}" title="Auto width">Auto</button><button type="button" data-card-width="100" class="${widthMode === '100' ? 'is-active' : ''}" title="Full width">1/1</button><button type="button" data-card-width="50" class="${widthMode === '50' ? 'is-active' : ''}" title="Half width">1/2</button><button type="button" data-card-width="33" class="${widthMode === '33' ? 'is-active' : ''}" title="One-third width">1/3</button></div>` : '';
+        return `<div class="webform-field-card webform-field-card-${escapeHtml(field.type)} ${widthMode === 'auto' ? 'is-width-auto' : ''} ${locked ? 'is-pro-locked' : ''} ${field.id === selectedId ? 'is-selected' : ''}" data-id="${field.id}" style="${cardStyle}">
             <span class="dashicons ${locked ? 'dashicons-lock' : 'dashicons-menu'} webform-drag"></span>
             <div class="webform-field-preview"><strong>${escapeHtml(field.label)}${field.required ? ' <em>*</em>' : ''}</strong>
             ${fieldPreview(field)}</div>
+            ${widthControls}
             <span class="webform-type">${locked ? 'PRO LOCKED' : escapeHtml(typeName)}</span>
             ${locked ? '' : '<button class="webform-remove-field" title="Remove">×</button>'}
         </div>`;
@@ -173,7 +176,7 @@
                 </div>` : ''}
             <hr><h3>Field appearance ${WebformAdmin.proStyling ? '<span class="webform-pro-badge">PRO</span>' : ''}</h3>
             ${WebformAdmin.proStyling ? `<div class="webform-field-style-controls">
-                <label>Field width<select data-field-style="width"><option value="100" ${(field.style?.width || '100') === '100' ? 'selected' : ''}>Full width</option><option value="75" ${field.style?.width === '75' ? 'selected' : ''}>75%</option><option value="50" ${field.style?.width === '50' ? 'selected' : ''}>Half width</option><option value="33" ${field.style?.width === '33' ? 'selected' : ''}>One third</option></select></label>
+                <label>Field width<select data-field-style="width"><option value="auto" ${field.style?.width === 'auto' ? 'selected' : ''}>Auto — share row space</option><option value="100" ${(field.style?.width || '100') === '100' ? 'selected' : ''}>Full width</option><option value="75" ${field.style?.width === '75' ? 'selected' : ''}>75%</option><option value="50" ${field.style?.width === '50' ? 'selected' : ''}>Half width</option><option value="33" ${field.style?.width === '33' ? 'selected' : ''}>One third</option></select></label>
                 <div class="webform-style-color-grid"><label>Label<input type="color" data-field-style="label_color" value="${escapeHtml(field.style?.label_color || '#1d2327')}"></label><label>Field<input type="color" data-field-style="background_color" value="${escapeHtml(field.style?.background_color || '#ffffff')}"></label><label>Text<input type="color" data-field-style="text_color" value="${escapeHtml(field.style?.text_color || '#1d2327')}"></label></div>
                 <label>Corner radius<input type="number" min="0" max="40" data-field-style="radius" value="${Number(field.style?.radius ?? 7)}"></label>
                 <label>Custom CSS class<input type="text" data-field-style="css_class" value="${escapeHtml(field.style?.css_class || '')}" placeholder="featured-field"></label>
@@ -191,7 +194,7 @@
             return;
         }
         const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz', 'product'].includes(type);
-        const field = { id: uid('field'), type, label: defaults[type] || 'Field', placeholder: '', required: ['consent','captcha','signature'].includes(type), options: choices ? (type === 'product' ? ['Standard|19.99', 'Premium|39.99'] : ['Option 1', 'Option 2']) : [], allowed_extensions: 'jpg,jpeg,png,pdf,doc,docx', max_size: 5, correct_answer: '', points: 1, default_value: '', html: '<p>Add your content here.</p>', min: 0, max: type === 'currency' ? 999999999 : 100, step: 1, formula: '', decimal_places: 2, group_count: 2, group_columns: 2, repeater_min: 1, repeater_max: 10, repeater_button: 'Add another', currency_symbol: '$', price_amount: 0, currency_code: 'USD', min_date: '', max_date: '', style: {}, condition: { enabled: false, field_id: '', operator: 'equals', value: '' } };
+        const field = { id: uid('field'), type, label: defaults[type] || 'Field', placeholder: '', required: ['consent','captcha','signature'].includes(type), options: choices ? (type === 'product' ? ['Standard|19.99', 'Premium|39.99'] : ['Option 1', 'Option 2']) : [], allowed_extensions: 'jpg,jpeg,png,pdf,doc,docx', max_size: 5, correct_answer: '', points: 1, default_value: '', html: '<p>Add your content here.</p>', min: 0, max: type === 'currency' ? 999999999 : 100, step: 1, formula: '', decimal_places: 2, group_count: 2, group_columns: 2, repeater_min: 1, repeater_max: 10, repeater_button: 'Add another', currency_symbol: '$', price_amount: 0, currency_code: 'USD', min_date: '', max_date: '', style: { width: WebformAdmin.proActive ? 'auto' : '100' }, condition: { enabled: false, field_id: '', operator: 'equals', value: '' } };
         schema[activeStage].fields.push(field);
         selectedId = field.id;
         dirty = true;
@@ -225,10 +228,22 @@
     $(document).on('change', '#webform-confirmation-type', updateConfirmationOptions);
     updateConfirmationOptions();
     $(document).on('click', '.webform-field-card', function (event) {
-        if ($(event.target).closest('.webform-remove-field').length) return;
+        if ($(event.target).closest('.webform-remove-field,.webform-card-widths').length) return;
         selectedId = $(this).data('id');
         render();
         $('.webform-property-tabs button[data-panel="field"]').trigger('click');
+    });
+    $(document).on('click', '.webform-card-widths button', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const id = $(this).closest('.webform-field-card').data('id');
+        const field = (schema[activeStage].fields || []).find(item => item.id === id);
+        if (!field || !WebformAdmin.proActive) return;
+        field.style = field.style || {};
+        field.style.width = String($(this).data('card-width'));
+        selectedId = id;
+        dirty = true;
+        render();
     });
     $(document).on('click', '.webform-remove-field', function () {
         const id = $(this).closest('.webform-field-card').data('id');
