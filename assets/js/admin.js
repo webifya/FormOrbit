@@ -19,7 +19,7 @@
     }
 
     function renderFreeProCatalog() {
-        if (WebformAdmin.proStyling || $('.webform-free-pro-catalog').length) return;
+        if (WebformAdmin.proInstalled || WebformAdmin.proStyling || $('.webform-free-pro-catalog').length) return;
         const fields = ['Calculation', 'Field group', 'E-signature', 'Address', 'Repeater', 'Appointment', 'NPS score', 'Currency', 'Product selector', 'Price', 'Advanced upload'];
         const integrations = {
             'Email marketing': ['Mailchimp', 'Brevo', 'ActiveCampaign', 'Kit', 'GetResponse'],
@@ -27,8 +27,14 @@
             'Automation & documents': ['Zapier', 'Webhooks', 'PDF notifications']
         };
         $('.webform-pro-field-preview-only .webform-pro-field-list').html(fields.map(name => `<div><span class="dashicons dashicons-lock"></span>${name}</div>`).join(''));
-        const catalog = `<div class="webform-free-pro-catalog"><span class="webform-pro-badge">PRO INTEGRATIONS — READ ONLY</span>${Object.entries(integrations).map(([category, names]) => `<h3>${category}</h3><div class="webform-pro-catalog-grid">${names.map(name => `<span>🔒 ${name}</span>`).join('')}</div>`).join('')}</div>`;
-        $('.webform-property-panel[data-panel="integrations"]').append(catalog);
+        const catalog = `<h2>Integrations</h2>
+            <p class="description">Connect form submissions to email marketing, payments, automation, and document tools with Webform Pro.</p>
+            <div class="webform-free-pro-catalog">
+                <span class="webform-pro-badge">WEBFORM PRO</span>
+                ${Object.entries(integrations).map(([category, names]) => `<h3>${category}</h3><div class="webform-pro-catalog-grid">${names.map(name => `<span><i class="dashicons dashicons-lock"></i>${name}</span>`).join('')}</div>`).join('')}
+                <a class="button button-primary webform-pro-catalog-button" href="https://www.webninjallc.com/product/webform-pro/?utm_source=webform-free&amp;utm_medium=builder&amp;utm_campaign=integrations" target="_blank" rel="noopener">Unlock integrations</a>
+            </div>`;
+        $('.webform-property-panel[data-panel="integrations"]').html(catalog);
     }
 
     function escapeHtml(value) {
