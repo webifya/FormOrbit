@@ -251,6 +251,13 @@
         field.style = field.style || {};
         field.style[$(this).data('field-style')] = $(this).val();
         dirty = true;
+        const card = $(`.webform-field-card[data-id="${field.id}"]`)[0];
+        if (!card) return;
+        if ($(this).data('field-style') === 'width') card.style.setProperty('--preview-width', `${Number($(this).val() || 100)}%`);
+        if ($(this).data('field-style') === 'label_color') card.style.setProperty('--preview-label', $(this).val());
+        if ($(this).data('field-style') === 'background_color') card.style.setProperty('--preview-bg', $(this).val());
+        if ($(this).data('field-style') === 'text_color') card.style.setProperty('--preview-text', $(this).val());
+        if ($(this).data('field-style') === 'radius') card.style.setProperty('--preview-radius', `${Number($(this).val() || 0)}px`);
     });
     $(document).on('click', '.webform-device-switcher button', function () {
         const device = $(this).data('device');
@@ -350,6 +357,11 @@
                 require_login: $('#webform-require-login').is(':checked'),
                 submission_limit: $('#webform-submission-limit').val(),
                 closed_message: $('#webform-closed-message').val(),
+                open_at: $('#webform-open-at').val(),
+                close_at: $('#webform-close-at').val(),
+                per_user_limit: $('#webform-per-user-limit').val(),
+                allowed_roles: $('#webform-allowed-roles').val() || [],
+                hide_after_submit: $('#webform-hide-after-submit').is(':checked'),
                 style_preset: $('#webform-style-preset').val(),
                 accent_color: $('#webform-accent-color').val(),
                 button_text_color: $('#webform-button-text-color').val(),
@@ -369,6 +381,7 @@
                 pdf_notifications: $('#webform-pdf-notifications').is(':checked'),
                 mailchimp_list: $('#webform-mailchimp-list').val(),
                 brevo_list: $('#webform-brevo-list').val(),
+                activecampaign_list: $('#webform-activecampaign-list').val(),
                 payment_provider: $('#webform-payment-provider').val()
             })
         }).done(function (response) {
