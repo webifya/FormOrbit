@@ -252,7 +252,20 @@
                 closed_message: $('#webform-closed-message').val(),
                 style_preset: $('#webform-style-preset').val(),
                 accent_color: $('#webform-accent-color').val(),
-                button_text_color: $('#webform-button-text-color').val()
+                button_text_color: $('#webform-button-text-color').val(),
+                font_family: $('#webform-font-family').val(),
+                base_font_size: $('#webform-base-font-size').val(),
+                label_font_size: $('#webform-label-font-size').val(),
+                text_color: $('#webform-text-color').val(),
+                form_background: $('#webform-form-background').val(),
+                field_background: $('#webform-field-background').val(),
+                border_color: $('#webform-border-color').val(),
+                form_max_width: $('#webform-form-max-width').val(),
+                field_spacing: $('#webform-field-spacing').val(),
+                field_radius: $('#webform-field-radius').val(),
+                button_radius: $('#webform-button-radius').val(),
+                button_padding: $('#webform-button-padding').val(),
+                custom_css: $('#webform-custom-css').val()
             })
         }).done(function (response) {
             if (!response.success) throw new Error(response.data && response.data.message);
