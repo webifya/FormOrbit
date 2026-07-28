@@ -81,7 +81,9 @@
 
     function fieldCard(field) {
         const typeName = (defaults[field.type] || field.type || 'Field').replace(' question', '');
-        return `<div class="webform-field-card webform-field-card-${escapeHtml(field.type)} ${field.id === selectedId ? 'is-selected' : ''}" data-id="${field.id}">
+        const style = WebformAdmin.proStyling && field.style ? field.style : {};
+        const cardStyle = `--preview-width:${Number(style.width || 100)}%;--preview-label:${escapeHtml(style.label_color || '#1d2327')};--preview-bg:${escapeHtml(style.background_color || '#ffffff')};--preview-text:${escapeHtml(style.text_color || '#3c434a')};--preview-radius:${Number(style.radius ?? 7)}px`;
+        return `<div class="webform-field-card webform-field-card-${escapeHtml(field.type)} ${field.id === selectedId ? 'is-selected' : ''}" data-id="${field.id}" style="${cardStyle}">
             <span class="dashicons dashicons-menu webform-drag"></span>
             <div class="webform-field-preview"><strong>${escapeHtml(field.label)}${field.required ? ' <em>*</em>' : ''}</strong>
             ${fieldPreview(field)}</div>
@@ -123,6 +125,13 @@
                     <label>Operator<select data-condition="operator">${[['equals','Equals'],['not_equals','Does not equal'],['contains','Contains'],['not_empty','Is not empty'],['empty','Is empty']].map(item => `<option value="${item[0]}" ${condition.operator === item[0] ? 'selected' : ''}>${item[1]}</option>`).join('')}</select></label>
                     <label>Value<input type="text" data-condition="value" value="${escapeHtml(condition.value || '')}"></label>
                 </div>` : ''}
+            <hr><h3>Field appearance ${WebformAdmin.proStyling ? '<span class="webform-pro-badge">PRO</span>' : ''}</h3>
+            ${WebformAdmin.proStyling ? `<div class="webform-field-style-controls">
+                <label>Field width<select data-field-style="width"><option value="100" ${(field.style?.width || '100') === '100' ? 'selected' : ''}>Full width</option><option value="75" ${field.style?.width === '75' ? 'selected' : ''}>75%</option><option value="50" ${field.style?.width === '50' ? 'selected' : ''}>Half width</option><option value="33" ${field.style?.width === '33' ? 'selected' : ''}>One third</option></select></label>
+                <div class="webform-style-color-grid"><label>Label<input type="color" data-field-style="label_color" value="${escapeHtml(field.style?.label_color || '#1d2327')}"></label><label>Field<input type="color" data-field-style="background_color" value="${escapeHtml(field.style?.background_color || '#ffffff')}"></label><label>Text<input type="color" data-field-style="text_color" value="${escapeHtml(field.style?.text_color || '#1d2327')}"></label></div>
+                <label>Corner radius<input type="number" min="0" max="40" data-field-style="radius" value="${Number(field.style?.radius ?? 7)}"></label>
+                <label>Custom CSS class<input type="text" data-field-style="css_class" value="${escapeHtml(field.style?.css_class || '')}" placeholder="featured-field"></label>
+            </div>` : '<div class="webform-field-style-locked">🔒 Width, colors, corners, and custom classes are available in Pro.</div>'}
         `);
     }
 
@@ -136,7 +145,7 @@
             return;
         }
         const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz'].includes(type);
-        const field = { id: uid('field'), type, label: defaults[type] || 'Field', placeholder: '', required: ['consent','captcha','signature'].includes(type), options: choices ? ['Option 1', 'Option 2'] : [], allowed_extensions: 'jpg,jpeg,png,pdf,doc,docx', max_size: 5, correct_answer: '', points: 1, default_value: '', html: '<p>Add your content here.</p>', min: 0, max: 100, step: 1, formula: '', decimal_places: 2, group_count: 2, group_columns: 2, condition: { enabled: false, field_id: '', operator: 'equals', value: '' } };
+        const field = { id: uid('field'), type, label: defaults[type] || 'Field', placeholder: '', required: ['consent','captcha','signature'].includes(type), options: choices ? ['Option 1', 'Option 2'] : [], allowed_extensions: 'jpg,jpeg,png,pdf,doc,docx', max_size: 5, correct_answer: '', points: 1, default_value: '', html: '<p>Add your content here.</p>', min: 0, max: 100, step: 1, formula: '', decimal_places: 2, group_count: 2, group_columns: 2, style: {}, condition: { enabled: false, field_id: '', operator: 'equals', value: '' } };
         schema[activeStage].fields.push(field);
         selectedId = field.id;
         dirty = true;
@@ -197,6 +206,57 @@
         field.condition[prop] = prop === 'enabled' ? $(this).is(':checked') : $(this).val();
         dirty = true;
         if (prop === 'enabled') $('.webform-condition-settings').toggleClass('is-hidden', !field.condition.enabled);
+    });
+    $(document).on('input change', '#webform-field-settings [data-field-style]', function () {
+        const field = selectedField();
+        if (!field || !WebformAdmin.proStyling) return;
+        field.style = field.style || {};
+        field.style[$(this).data('field-style')] = $(this).val();
+        dirty = true;
+    });
+    $(document).on('click', '.webform-device-switcher button', function () {
+        const device = $(this).data('device');
+        $('.webform-device-switcher button').removeClass('is-active');
+        $(this).addClass('is-active');
+        $('.webform-canvas-panel').removeClass('webform-preview-desktop webform-preview-tablet webform-preview-mobile').addClass('webform-preview-' + device);
+    });
+    function currentThemeSettings() {
+        return {
+            style_preset: $('#webform-style-preset').val(), accent_color: $('#webform-accent-color').val(), button_text_color: $('#webform-button-text-color').val(),
+            font_family: $('#webform-font-family').val(), base_font_size: $('#webform-base-font-size').val(), label_font_size: $('#webform-label-font-size').val(),
+            text_color: $('#webform-text-color').val(), form_background: $('#webform-form-background').val(), field_background: $('#webform-field-background').val(),
+            border_color: $('#webform-border-color').val(), form_max_width: $('#webform-form-max-width').val(), field_spacing: $('#webform-field-spacing').val(),
+            field_radius: $('#webform-field-radius').val(), button_radius: $('#webform-button-radius').val(), button_padding: $('#webform-button-padding').val(),
+            custom_css: $('#webform-custom-css').val()
+        };
+    }
+    const themeSelectors = { style_preset: '#webform-style-preset', accent_color: '#webform-accent-color', button_text_color: '#webform-button-text-color', font_family: '#webform-font-family', base_font_size: '#webform-base-font-size', label_font_size: '#webform-label-font-size', text_color: '#webform-text-color', form_background: '#webform-form-background', field_background: '#webform-field-background', border_color: '#webform-border-color', form_max_width: '#webform-form-max-width', field_spacing: '#webform-field-spacing', field_radius: '#webform-field-radius', button_radius: '#webform-button-radius', button_padding: '#webform-button-padding', custom_css: '#webform-custom-css' };
+    $(document).on('click', '#webform-apply-theme', function () {
+        const theme = WebformAdmin.savedThemes[$('#webform-saved-theme').val()];
+        if (!theme || !theme.settings) return;
+        Object.entries(theme.settings).forEach(([key, value]) => { if (themeSelectors[key]) $(themeSelectors[key]).val(value); });
+        dirty = true;
+        $('.webform-theme-status').text('Theme applied. Save the form to keep it.');
+    });
+    $(document).on('click', '#webform-save-theme', function () {
+        const name = window.prompt('Theme name');
+        if (!name || !name.trim()) return;
+        $.post(WebformAdmin.ajaxUrl, { action: 'webform_pro_save_theme', nonce: WebformAdmin.nonce, name: name.trim(), settings: JSON.stringify(currentThemeSettings()) }).done(function (response) {
+            if (!response.success) return;
+            WebformAdmin.savedThemes = response.data.themes;
+            $('#webform-saved-theme').append(`<option value="${escapeHtml(response.data.id)}">${escapeHtml(name.trim())}</option>`).val(response.data.id);
+            $('.webform-theme-status').text('Theme saved for reuse.');
+        }).fail(function (xhr) { $('.webform-theme-status').text(xhr.responseJSON?.data?.message || 'Could not save theme.'); });
+    });
+    $(document).on('click', '#webform-delete-theme', function () {
+        const id = $('#webform-saved-theme').val();
+        if (!id || !window.confirm('Delete this saved theme?')) return;
+        $.post(WebformAdmin.ajaxUrl, { action: 'webform_pro_delete_theme', nonce: WebformAdmin.nonce, theme_id: id }).done(function (response) {
+            if (!response.success) return;
+            WebformAdmin.savedThemes = response.data.themes;
+            $('#webform-saved-theme option:selected').remove();
+            $('.webform-theme-status').text('Theme deleted.');
+        });
     });
     $(document).on('click', '.webform-stage-tab', function (event) {
         if ($(event.target).hasClass('webform-remove-stage')) return;
@@ -279,6 +339,7 @@
         }).always(function () { $button.prop('disabled', false); });
     });
     $('#webform-name,#webform-success-message,#webform-notification-email,#webform-submit-label,#webform-redirect-url,#webform-webhook-url,#webform-require-login,#webform-submission-limit,#webform-closed-message,#webform-style-preset,#webform-accent-color,#webform-button-text-color').on('input change', function () { dirty = true; });
+    $(document).on('input change', '.webform-pro-style-controls input,.webform-pro-style-controls select,.webform-pro-style-controls textarea', function () { dirty = true; });
     $(document).on('click', '.webform-template-close,.webform-template-choice[href=\"#\"]', function (event) {
         event.preventDefault();
         $('#webform-template-modal').fadeOut(150);
