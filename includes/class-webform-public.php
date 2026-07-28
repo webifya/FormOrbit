@@ -46,7 +46,10 @@ class Webform_Public {
                 <?php foreach ($schema as $stage_index => $stage) : ?>
                     <section class="webform-stage <?php echo $stage_index === 0 ? 'is-active' : ''; ?>" data-stage="<?php echo esc_attr($stage_index); ?>" <?php echo $stage_index === 0 ? '' : 'hidden'; ?>>
                         <?php if (count($schema) > 1) : ?><h2><?php echo esc_html($stage['title']); ?></h2><?php endif; ?>
-                        <?php foreach ($stage['fields'] as $field) : $this->render_field($field); endforeach; ?>
+                        <?php foreach ($stage['fields'] as $field) : ?>
+                            <?php if (!empty($field['row_start'])) : ?><span class="webform-row-break" aria-hidden="true"></span><?php endif; ?>
+                            <?php $this->render_field($field); ?>
+                        <?php endforeach; ?>
                         <div class="webform-actions">
                             <?php if ($stage_index > 0) : ?><button type="button" class="webform-prev"><?php esc_html_e('Back', 'webform'); ?></button><?php endif; ?>
                             <?php if ($stage_index < count($schema) - 1) : ?><button type="button" class="webform-next"><?php esc_html_e('Continue', 'webform'); ?></button><?php else : ?><button type="submit" class="webform-submit"><?php echo esc_html($settings['submit_label'] ?? __('Submit', 'webform')); ?></button><?php endif; ?>
