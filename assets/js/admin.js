@@ -370,7 +370,7 @@
                 open_at: $('#webform-open-at').val(),
                 close_at: $('#webform-close-at').val(),
                 per_user_limit: $('#webform-per-user-limit').val(),
-                allowed_roles: $('#webform-allowed-roles').val() || [],
+                allowed_roles: $('[name="webform_allowed_roles"]:checked').map(function () { return $(this).val(); }).get(),
                 hide_after_submit: $('#webform-hide-after-submit').is(':checked'),
                 style_preset: $('#webform-style-preset').val(),
                 accent_color: $('#webform-accent-color').val(),
@@ -406,6 +406,10 @@
         }).always(function () { $button.prop('disabled', false); });
     });
     $('#webform-name,#webform-success-message,#webform-notification-email,#webform-submit-label,#webform-redirect-url,#webform-webhook-url,#webform-require-login,#webform-submission-limit,#webform-closed-message,#webform-style-preset,#webform-accent-color,#webform-button-text-color').on('input change', function () { dirty = true; });
+    $(document).on('change', '#webform-require-login', function () {
+        const enabled = $(this).is(':checked');
+        $('#webform-role-controls').toggleClass('is-disabled', !enabled).find('input[type="checkbox"]').prop('disabled', !enabled);
+    });
     $(document).on('input change', '.webform-pro-style-controls input,.webform-pro-style-controls select,.webform-pro-style-controls textarea', function () { dirty = true; });
     $(document).on('click', '.webform-template-close,.webform-template-choice[href=\"#\"]', function (event) {
         event.preventDefault();
