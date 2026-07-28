@@ -287,7 +287,7 @@ class Webform_Public {
             foreach ($data as $item) $lines[] = $item['label'] . ': ' . (is_array($item['value']) ? implode(', ', $item['value']) : $item['value']);
             wp_mail($settings['notification_email'], sprintf(__('New submission: %s', 'webform'), get_the_title($form_id)), implode("\n", $lines));
         }
-        if (!empty($settings['webhook_url']) && wp_http_validate_url($settings['webhook_url'])) {
+        if (($settings['confirmation_type'] ?? 'message') === 'webhook' && !empty($settings['webhook_url']) && wp_http_validate_url($settings['webhook_url'])) {
             wp_safe_remote_post($settings['webhook_url'], array('timeout' => 5, 'blocking' => false, 'headers' => array('Content-Type' => 'application/json'), 'body' => wp_json_encode(array('form_id' => $form_id, 'entry_id' => $entry_id, 'form_title' => get_the_title($form_id), 'fields' => $data))));
         }
         /**
@@ -299,7 +299,7 @@ class Webform_Public {
         do_action('webform_after_submission', $entry_id, $form_id, $data, $settings);
         $response = array(
             'message' => $settings['success_message'] ?? __('Thanks! Your response has been submitted.', 'webform'),
-            'redirect_url' => !empty($settings['redirect_url']) ? $settings['redirect_url'] : '',
+            'redirect_url' => ($settings['confirmation_type'] ?? 'message') === 'redirect' && !empty($settings['redirect_url']) ? $settings['redirect_url'] : '',
             'quiz' => $quiz_total ? array('score' => $quiz_score, 'total' => $quiz_total) : null,
             'polls' => $poll_results,
         );
