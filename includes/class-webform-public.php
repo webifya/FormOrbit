@@ -315,6 +315,13 @@ class Webform_Public {
         switch ($condition['operator'] ?? 'equals') {
             case 'not_equals': return $actual !== $expected;
             case 'contains': return stripos($actual, $expected) !== false;
+            case 'starts_with': return strpos(strtolower($actual), strtolower($expected)) === 0;
+            case 'ends_with':
+                $actual_text = strtolower($actual);
+                $expected_text = strtolower($expected);
+                return $expected_text === '' || substr($actual_text, -strlen($expected_text)) === $expected_text;
+            case 'greater_than': return is_numeric($actual) && is_numeric($expected) && floatval($actual) > floatval($expected);
+            case 'less_than': return is_numeric($actual) && is_numeric($expected) && floatval($actual) < floatval($expected);
             case 'not_empty': return $actual !== '';
             case 'empty': return $actual === '';
             default: return $actual === $expected;
