@@ -15,6 +15,20 @@
         try { schema = JSON.parse($('#webform-schema').val() || '[]'); } catch (e) { schema = []; }
         if (!Array.isArray(schema) || !schema.length) schema = [{ id: uid('stage'), title: 'Stage 1', fields: [] }];
         render();
+        renderFreeProCatalog();
+    }
+
+    function renderFreeProCatalog() {
+        if (WebformAdmin.proStyling || $('.webform-free-pro-catalog').length) return;
+        const fields = ['Calculation', 'Field group', 'E-signature', 'Address', 'Repeater', 'Appointment', 'NPS score', 'Currency', 'Product selector', 'Price', 'Advanced upload'];
+        const integrations = {
+            'Email marketing': ['Mailchimp', 'Brevo', 'ActiveCampaign', 'Kit', 'GetResponse'],
+            'Payments': ['Stripe', 'PayPal', 'Square', 'Bank transfer'],
+            'Automation & documents': ['Zapier', 'Webhooks', 'PDF notifications']
+        };
+        $('.webform-pro-field-preview-only .webform-pro-field-list').html(fields.map(name => `<div><span class="dashicons dashicons-lock"></span>${name}</div>`).join(''));
+        const catalog = `<div class="webform-free-pro-catalog"><span class="webform-pro-badge">PRO INTEGRATIONS — READ ONLY</span>${Object.entries(integrations).map(([category, names]) => `<h3>${category}</h3><div class="webform-pro-catalog-grid">${names.map(name => `<span>🔒 ${name}</span>`).join('')}</div>`).join('')}</div>`;
+        $('.webform-property-panel[data-panel="integrations"]').append(catalog);
     }
 
     function escapeHtml(value) {
@@ -311,6 +325,7 @@
         render();
     });
     $('#webform-save').on('click', function () {
+        if (window.tinyMCE && tinyMCE.get('webform-success-message')) tinyMCE.get('webform-success-message').save();
         const $button = $(this).prop('disabled', true);
         $('#webform-save-status').text('Saving…');
         $.post(WebformAdmin.ajaxUrl, {
