@@ -355,7 +355,7 @@ class Webform_Admin {
                     $clean_field['min_date'] = sanitize_text_field($field['min_date'] ?? '');
                     $clean_field['max_date'] = sanitize_text_field($field['max_date'] ?? '');
                     $clean_field['style'] = array(
-                        'width' => in_array((string) ($field['style']['width'] ?? '100'), array('100', '75', '50', '33'), true) ? (string) $field['style']['width'] : '100',
+                        'width' => in_array((string) ($field['style']['width'] ?? '100'), array('auto', '100', '75', '50', '33'), true) ? (string) $field['style']['width'] : '100',
                         'label_color' => sanitize_hex_color($field['style']['label_color'] ?? '') ?: '#1d2327',
                         'background_color' => sanitize_hex_color($field['style']['background_color'] ?? '') ?: '#ffffff',
                         'text_color' => sanitize_hex_color($field['style']['text_color'] ?? '') ?: '#1d2327',
