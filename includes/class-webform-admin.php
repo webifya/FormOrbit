@@ -324,6 +324,7 @@ class Webform_Admin {
                     'label' => substr(sanitize_text_field($field['label'] ?? ''), 0, 200),
                     'placeholder' => substr(sanitize_text_field($field['placeholder'] ?? ''), 0, 300),
                     'required' => !empty($field['required']),
+                    'row_start' => !empty($field['row_start']),
                     'options' => array_slice(array_values(array_filter(array_map('sanitize_text_field', (array) ($field['options'] ?? array())))), 0, 100),
                     'allowed_extensions' => preg_replace('/[^a-z0-9,\s]/', '', strtolower($field['allowed_extensions'] ?? 'jpg,jpeg,png,pdf,doc,docx')),
                     'max_size' => min(20, max(1, absint($field['max_size'] ?? 5))),
