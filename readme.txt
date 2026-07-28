@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.2.2
+Stable tag: 2.2.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -51,13 +51,13 @@ Webform is created by Mahfuzar Rahman at Web Ninja LLC.
 
 = 2.0.0 =
 * Added desktop, tablet, and mobile builder preview widths.
-* Added read-only Free visibility for reusable Pro themes and per-field styling.
+* Added Free previews for reusable Pro themes and per-field styling.
 * Added a licensed field-style schema and frontend extension path.
 * Improved responsive field layouts and mobile fallbacks.
 
 = 1.9.0 =
-* Added a transparent Free/Pro preset selector with all premium preset names visible in read-only mode.
-* Added read-only descriptions for Pro typography, color, layout, border, button, and custom CSS controls.
+* Added a transparent Free/Pro preset selector with all premium preset names visible.
+* Added previews of Pro typography, color, layout, border, button, and custom CSS controls.
 * Added frontend design variables for licensed typography, sizing, colors, width, spacing, and corner controls.
 * Added a safe extension pipeline for scoped per-form Pro CSS.
 
@@ -112,7 +112,7 @@ Webform is created by Mahfuzar Rahman at Web Ninja LLC.
 
 = 1.3.0 =
 * Added direct checkout links for annual single-site, annual 10-site bundle, and lifetime Webform Pro plans.
-* Added read-only Pro capability information inside the form builder.
+* Added Pro capability previews inside the form builder.
 * Added login requirements, submission limits, and custom closed-form messages.
 * Added submission timing checks to strengthen automated spam protection.
 * Prevented file uploads before non-file validation succeeds and cleaned up partial multi-file failures.
