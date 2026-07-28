@@ -112,7 +112,8 @@
                         }
                         stages.forEach(stage => stage.hidden = true);
                         message.classList.add('is-success');
-                        message.textContent = response.data.message;
+                        if (response.data.message_html) message.innerHTML = response.data.message_html;
+                        else message.textContent = response.data.message;
                         if (response.data.quiz) {
                             const quiz = document.createElement('strong');
                             quiz.className = 'webform-quiz-result';
