@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.2.0
+Stable tag: 2.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -111,7 +111,7 @@ Webform is created by Mahfuzar Rahman at Web Ninja LLC.
 * Updated the Pro offer to include 20 additional premium templates.
 
 = 1.3.0 =
-* Added an optional Webform Pro offer at $19.99/year with a transparent feature list.
+* Added direct checkout links for annual single-site, annual 10-site bundle, and lifetime Webform Pro plans.
 * Added read-only Pro capability information inside the form builder.
 * Added login requirements, submission limits, and custom closed-form messages.
 * Added submission timing checks to strengthen automated spam protection.
