@@ -52,6 +52,7 @@ class Webform_Admin {
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('webform_admin'),
             'formsUrl' => admin_url('admin.php?page=webform'),
+            'proInstalled' => false,
             'proStyling' => false,
             'savedThemes' => array(),
         )));
@@ -164,7 +165,7 @@ class Webform_Admin {
                     </div>
                     <?php if (!$this->is_pro_active()) : ?>
                         <div class="webform-picker-pro webform-pro-field-preview-only">
-                            <h4><?php esc_html_e('More Pro fields — preview only', 'webform'); ?></h4>
+                            <h4><?php esc_html_e('More fields in Webform Pro', 'webform'); ?></h4>
                             <div class="webform-pro-field-list">
                                 <div><span class="dashicons dashicons-location-alt"></span><?php esc_html_e('Address', 'webform'); ?></div>
                                 <div><span class="dashicons dashicons-list-view"></span><?php esc_html_e('Repeater', 'webform'); ?></div>
