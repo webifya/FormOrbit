@@ -106,6 +106,23 @@
             items: '.webform-field-card:not(.is-pro-locked)',
             handle: '.webform-drag',
             placeholder: 'webform-sort-placeholder',
+            tolerance: 'pointer',
+            forcePlaceholderSize: true,
+            helper: 'clone',
+            distance: 4,
+            start: function (event, ui) {
+                ui.placeholder.css({
+                    flex: ui.item.css('flex'),
+                    maxWidth: ui.item.css('max-width'),
+                    minWidth: ui.item.css('min-width'),
+                    width: ui.item.outerWidth(),
+                    height: ui.item.outerHeight()
+                });
+                $(this).addClass('is-sorting');
+            },
+            stop: function () {
+                $(this).removeClass('is-sorting');
+            },
             update: function (event, ui) {
                 const order = $(this).children('.webform-field-card').map(function () { return $(this).data('id'); }).get();
                 schema[activeStage].fields.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
@@ -113,6 +130,9 @@
                 if (moved && WebformAdmin.proActive && !isLockedProField(moved)) {
                     moved.style = moved.style || {};
                     moved.style.width = 'auto';
+                    const position = schema[activeStage].fields.indexOf(moved);
+                    const left = ui.item.offset().left - $(this).offset().left;
+                    moved.row_start = position > 0 && left <= Math.max(56, $(this).innerWidth() * 0.14);
                 }
                 dirty = true;
                 render();
@@ -127,8 +147,9 @@
         const style = field.style || {};
         const cardStyle = `--preview-width:${previewWidth(style.width)};--preview-label:${escapeHtml(style.label_color || '#1d2327')};--preview-bg:${escapeHtml(style.background_color || '#ffffff')};--preview-text:${escapeHtml(style.text_color || '#3c434a')};--preview-radius:${Number(style.radius ?? 7)}px`;
         const widthMode = String(style.width || '100');
-        const widthControls = WebformAdmin.proActive && !locked ? `<div class="webform-card-widths" aria-label="Field width"><button type="button" data-card-resize="-1" title="Decrease width" aria-label="Decrease width">−</button><button type="button" data-card-width="auto" class="${widthMode === 'auto' ? 'is-active' : ''}" title="Automatically share available row space">Auto</button><button type="button" data-card-width="100" class="${widthMode === '100' ? 'is-active' : ''}" title="Full width">1/1</button><button type="button" data-card-width="50" class="${widthMode === '50' ? 'is-active' : ''}" title="Half width">1/2</button><button type="button" data-card-width="33" class="${widthMode === '33' ? 'is-active' : ''}" title="One-third width">1/3</button><button type="button" data-card-resize="1" title="Increase width" aria-label="Increase width">＋</button></div>` : '';
-        return `<div class="webform-field-card webform-field-card-${escapeHtml(field.type)} ${widthMode === 'auto' ? 'is-width-auto' : ''} ${locked ? 'is-pro-locked' : ''} ${field.id === selectedId ? 'is-selected' : ''}" data-id="${field.id}" style="${cardStyle}">
+        const widthText = widthMode === 'auto' ? 'Fit' : `${widthMode}%`;
+        const widthControls = WebformAdmin.proActive && !locked && field.id === selectedId ? `<div class="webform-card-widths" aria-label="Field layout"><button type="button" data-card-resize="-1" title="Make field narrower" aria-label="Make field narrower">−</button><button type="button" data-card-width="auto" class="${widthMode === 'auto' ? 'is-active' : ''}" title="Fit available row space" aria-label="Fit available row space"><span class="dashicons dashicons-editor-expand"></span>${widthText}</button><button type="button" data-card-resize="1" title="Make field wider" aria-label="Make field wider">＋</button><button type="button" data-card-row="1" class="${field.row_start ? 'is-active' : ''}" title="Start a new row" aria-label="Start a new row"><span class="dashicons dashicons-arrow-down-alt"></span></button></div>` : '';
+        return `${field.row_start ? '<span class="webform-row-break" aria-hidden="true"></span>' : ''}<div class="webform-field-card webform-field-card-${escapeHtml(field.type)} ${widthMode === 'auto' ? 'is-width-auto' : ''} ${locked ? 'is-pro-locked' : ''} ${field.id === selectedId ? 'is-selected' : ''}" data-id="${field.id}" style="${cardStyle}">
             <span class="dashicons ${locked ? 'dashicons-lock' : 'dashicons-menu'} webform-drag"></span>
             <div class="webform-field-preview"><strong>${escapeHtml(field.label)}${field.required ? ' <em>*</em>' : ''}</strong>
             ${fieldPreview(field)}</div>
@@ -246,6 +267,14 @@
         const field = (schema[activeStage].fields || []).find(item => item.id === id);
         if (!field || !WebformAdmin.proActive) return;
         field.style = field.style || {};
+        if ($(this).data('card-row')) {
+            const index = schema[activeStage].fields.indexOf(field);
+            field.row_start = index > 0 && !field.row_start;
+            selectedId = id;
+            dirty = true;
+            render();
+            return;
+        }
         const direction = Number($(this).data('card-resize') || 0);
         if (direction) {
             const widths = ['33', '50', '75', '100'];
