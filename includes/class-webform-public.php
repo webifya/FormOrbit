@@ -75,6 +75,8 @@ class Webform_Public {
                 'canvas' => array('id' => true, 'class' => true, 'width' => true, 'height' => true, 'data-*' => true),
                 'button' => array('type' => true, 'class' => true),
                 'span' => array('class' => true, 'id' => true),
+                'strong' => array('class' => true),
+                'em' => array('class' => true),
                 'small' => array(),
             ));
             return;
@@ -269,6 +271,7 @@ class Webform_Public {
             wp_send_json_error(array('message' => __('We could not save your submission. Please try again.', 'webform')), 500);
         }
         update_post_meta($entry_id, '_webform_form_id', $form_id);
+        update_post_meta($entry_id, '_webform_user_id', get_current_user_id());
         update_post_meta($entry_id, '_webform_data', $data);
         if ($quiz_total) update_post_meta($entry_id, '_webform_quiz_score', array('score' => $quiz_score, 'total' => $quiz_total));
         $poll_results = array();
@@ -367,7 +370,7 @@ class Webform_Public {
                 return !empty($settings['closed_message']) ? $settings['closed_message'] : __('This form is currently unavailable.', 'webform');
             }
         }
-        return '';
+        return (string) apply_filters('webform_availability_error', '', $form_id, $settings);
     }
 
     private function valid_captcha($field_id, $value) {
