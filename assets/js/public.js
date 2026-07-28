@@ -23,6 +23,10 @@
                     let visible = actual === expected;
                     if (condition.operator === 'not_equals') visible = actual !== expected;
                     if (condition.operator === 'contains') visible = actual.toLowerCase().includes(expected.toLowerCase());
+                    if (condition.operator === 'starts_with') visible = actual.toLowerCase().startsWith(expected.toLowerCase());
+                    if (condition.operator === 'ends_with') visible = actual.toLowerCase().endsWith(expected.toLowerCase());
+                    if (condition.operator === 'greater_than') visible = Number(actual) > Number(expected);
+                    if (condition.operator === 'less_than') visible = Number(actual) < Number(expected);
                     if (condition.operator === 'not_empty') visible = actual !== '';
                     if (condition.operator === 'empty') visible = actual === '';
                     field.hidden = !visible;
