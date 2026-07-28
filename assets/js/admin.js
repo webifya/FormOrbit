@@ -12,6 +12,10 @@
         return !WebformAdmin.proActive && proFieldTypes.includes(field.type);
     }
 
+    function previewWidth(value) {
+        return ({ '100': '100%', '75': '74%', '50': '49%', '33': '32%' })[String(value || '100')] || '100%';
+    }
+
     function uid(prefix) {
         return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     }
@@ -115,7 +119,7 @@
         const typeName = (defaults[field.type] || field.type || 'Field').replace(' question', '');
         const locked = isLockedProField(field);
         const style = field.style || {};
-        const cardStyle = `--preview-width:${Number(style.width || 100)}%;--preview-label:${escapeHtml(style.label_color || '#1d2327')};--preview-bg:${escapeHtml(style.background_color || '#ffffff')};--preview-text:${escapeHtml(style.text_color || '#3c434a')};--preview-radius:${Number(style.radius ?? 7)}px`;
+        const cardStyle = `--preview-width:${previewWidth(style.width)};--preview-label:${escapeHtml(style.label_color || '#1d2327')};--preview-bg:${escapeHtml(style.background_color || '#ffffff')};--preview-text:${escapeHtml(style.text_color || '#3c434a')};--preview-radius:${Number(style.radius ?? 7)}px`;
         return `<div class="webform-field-card webform-field-card-${escapeHtml(field.type)} ${locked ? 'is-pro-locked' : ''} ${field.id === selectedId ? 'is-selected' : ''}" data-id="${field.id}" style="${cardStyle}">
             <span class="dashicons ${locked ? 'dashicons-lock' : 'dashicons-menu'} webform-drag"></span>
             <div class="webform-field-preview"><strong>${escapeHtml(field.label)}${field.required ? ' <em>*</em>' : ''}</strong>
@@ -263,7 +267,7 @@
         dirty = true;
         const card = $(`.webform-field-card[data-id="${field.id}"]`)[0];
         if (!card) return;
-        if ($(this).data('field-style') === 'width') card.style.setProperty('--preview-width', `${Number($(this).val() || 100)}%`);
+        if ($(this).data('field-style') === 'width') card.style.setProperty('--preview-width', previewWidth($(this).val()));
         if ($(this).data('field-style') === 'label_color') card.style.setProperty('--preview-label', $(this).val());
         if ($(this).data('field-style') === 'background_color') card.style.setProperty('--preview-bg', $(this).val());
         if ($(this).data('field-style') === 'text_color') card.style.setProperty('--preview-text', $(this).val());
