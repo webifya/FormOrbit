@@ -63,11 +63,12 @@ class Webform_Public {
     private function render_field($field) {
         $id = 'webform-' . $field['id'];
         $name = 'fields[' . $field['id'] . ']';
+        $field_class = apply_filters('webform_field_custom_class', '', $field);
         $custom_html = apply_filters('webform_custom_field_html', '', $field, $id, $name);
         if ($custom_html !== '') {
             echo wp_kses($custom_html, array(
                 'div' => array('class' => true, 'data-*' => true),
-                'fieldset' => array('class' => true),
+                'fieldset' => array('class' => true, 'data-*' => true),
                 'legend' => array(),
                 'label' => array('for' => true),
                 'input' => array('id' => true, 'class' => true, 'type' => true, 'name' => true, 'value' => true, 'readonly' => true, 'required' => true, 'data-*' => true),
@@ -83,21 +84,21 @@ class Webform_Public {
             return;
         }
         if ($field['type'] === 'html') {
-            echo '<div class="webform-html">' . wp_kses_post($field['html']) . '</div>';
+            echo '<div class="webform-html ' . esc_attr($field_class) . '" data-field-id="' . esc_attr($field['id']) . '">' . wp_kses_post($field['html']) . '</div>';
             return;
         }
         if ($field['type'] === 'heading') {
-            echo '<h3 class="webform-heading">' . esc_html($field['label']) . '</h3>';
+            echo '<h3 class="webform-heading ' . esc_attr($field_class) . '" data-field-id="' . esc_attr($field['id']) . '">' . esc_html($field['label']) . '</h3>';
             return;
         }
         $required = !empty($field['required']) ? ' required' : '';
         $describedby = $id . '-error';
         $condition = !empty($field['condition']['enabled']) ? $field['condition'] : array();
-        $condition_attr = $condition ? ' data-condition="' . esc_attr(wp_json_encode($condition)) . '"' : '';
+        $condition_attr = ' data-field-id="' . esc_attr($field['id']) . '"' . ($condition ? ' data-condition="' . esc_attr(wp_json_encode($condition)) . '"' : '');
         if (in_array($field['type'], array('radio', 'checkbox', 'poll', 'quiz'), true)) {
             $input_type = $field['type'] === 'checkbox' ? 'checkbox' : 'radio';
             ?>
-            <fieldset class="webform-field webform-field-<?php echo esc_attr($field['type']); ?>"<?php echo $condition_attr; ?>>
+            <fieldset class="webform-field webform-field-<?php echo esc_attr($field['type'] . ' ' . $field_class); ?>"<?php echo $condition_attr; ?>>
                 <legend><?php echo esc_html($field['label']); ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></legend>
                 <div class="webform-choices" <?php echo $field['type'] === 'checkbox' && $required ? 'data-required="true"' : ''; ?>>
                     <?php foreach ($field['options'] as $index => $option) : $option_id = $id . '-' . $index; ?>
@@ -111,7 +112,7 @@ class Webform_Public {
         }
         if ($field['type'] === 'consent') {
             ?>
-            <div class="webform-field webform-field-consent"<?php echo $condition_attr; ?>>
+            <div class="webform-field webform-field-consent <?php echo esc_attr($field_class); ?>"<?php echo $condition_attr; ?>>
                 <label for="<?php echo esc_attr($id); ?>"><input id="<?php echo esc_attr($id); ?>" type="checkbox" name="<?php echo esc_attr($name); ?>" value="Yes" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $required; ?>> <?php echo esc_html($field['label']); ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></label>
                 <span class="webform-error" id="<?php echo esc_attr($describedby); ?>"></span>
             </div>
@@ -122,7 +123,7 @@ class Webform_Public {
             $global_settings = (array) get_option('webform_global_settings', array());
             if ($this->google_recaptcha_enabled()) {
                 $action_attr = ($global_settings['recaptcha_mode'] ?? 'enterprise') === 'enterprise' ? ' data-action="' . esc_attr($global_settings['recaptcha_action'] ?? 'WEBFORM_SUBMIT') . '"' : '';
-                echo '<div class="webform-field webform-field-captcha"' . $condition_attr . '><div class="g-recaptcha" data-sitekey="' . esc_attr($global_settings['recaptcha_site_key']) . '"' . $action_attr . '></div><span class="webform-error" id="' . esc_attr($describedby) . '"></span></div>';
+                echo '<div class="webform-field webform-field-captcha ' . esc_attr($field_class) . '"' . $condition_attr . '><div class="g-recaptcha" data-sitekey="' . esc_attr($global_settings['recaptcha_site_key']) . '"' . $action_attr . '></div><span class="webform-error" id="' . esc_attr($describedby) . '"></span></div>';
                 return;
             }
             $first = wp_rand(2, 9);
@@ -130,7 +131,7 @@ class Webform_Public {
             $answer = $first + $second;
             $token = base64_encode($first . ':' . $second . ':' . wp_create_nonce('webform_captcha_' . $field['id'] . '_' . $answer));
             ?>
-            <div class="webform-field webform-field-captcha"<?php echo $condition_attr; ?>>
+            <div class="webform-field webform-field-captcha <?php echo esc_attr($field_class); ?>"<?php echo $condition_attr; ?>>
                 <label for="<?php echo esc_attr($id); ?>"><?php echo esc_html(sprintf(__('%1$d + %2$d = ?', 'webform'), $first, $second)); ?> <span aria-hidden="true">*</span></label>
                 <input type="number" id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" required>
                 <input type="hidden" name="captcha_tokens[<?php echo esc_attr($field['id']); ?>]" value="<?php echo esc_attr($token); ?>">
@@ -141,12 +142,12 @@ class Webform_Public {
         }
         if ($field['type'] === 'rating') {
             ?>
-            <fieldset class="webform-field webform-field-rating"<?php echo $condition_attr; ?>><legend><?php echo esc_html($field['label']); ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></legend><div class="webform-rating"><?php for ($rating = 5; $rating >= 1; $rating--) : ?><input id="<?php echo esc_attr($id . '-' . $rating); ?>" type="radio" name="<?php echo esc_attr($name); ?>" value="<?php echo esc_attr($rating); ?>" <?php echo $required && $rating === 1 ? 'required' : ''; ?>><label for="<?php echo esc_attr($id . '-' . $rating); ?>" aria-label="<?php echo esc_attr(sprintf(__('%d stars', 'webform'), $rating)); ?>">★</label><?php endfor; ?></div><span class="webform-error" id="<?php echo esc_attr($describedby); ?>"></span></fieldset>
+            <fieldset class="webform-field webform-field-rating <?php echo esc_attr($field_class); ?>"<?php echo $condition_attr; ?>><legend><?php echo esc_html($field['label']); ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></legend><div class="webform-rating"><?php for ($rating = 5; $rating >= 1; $rating--) : ?><input id="<?php echo esc_attr($id . '-' . $rating); ?>" type="radio" name="<?php echo esc_attr($name); ?>" value="<?php echo esc_attr($rating); ?>" <?php echo $required && $rating === 1 ? 'required' : ''; ?>><label for="<?php echo esc_attr($id . '-' . $rating); ?>" aria-label="<?php echo esc_attr(sprintf(__('%d stars', 'webform'), $rating)); ?>">★</label><?php endfor; ?></div><span class="webform-error" id="<?php echo esc_attr($describedby); ?>"></span></fieldset>
             <?php
             return;
         }
         ?>
-        <div class="webform-field webform-field-<?php echo esc_attr($field['type']); ?>"<?php echo $condition_attr; ?>>
+        <div class="webform-field webform-field-<?php echo esc_attr($field['type'] . ' ' . $field_class); ?>"<?php echo $condition_attr; ?>>
             <label for="<?php echo esc_attr($id); ?>"><?php echo esc_html($field['label']); ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></label>
             <?php if ($field['type'] === 'textarea') : ?>
                 <textarea id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" maxlength="10000" aria-describedby="<?php echo esc_attr($describedby); ?>" placeholder="<?php echo esc_attr($field['placeholder']); ?>"<?php echo $required; ?>></textarea>
