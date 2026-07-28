@@ -3,7 +3,7 @@
  * Plugin Name: Webform
  * Plugin URI: https://www.webninjallc.com/
  * Description: A visual drag-and-drop, multi-step form builder for WordPress.
- * Version: 2.3.1
+ * Version: 2.3.2
  * Author: Mahfuzar Rahman
  * Author URI: https://profiles.wordpress.org/mahfuzar/
  * License: GPLv2 or later
@@ -15,7 +15,7 @@
 
 defined('ABSPATH') || exit;
 
-define('WEBFORM_VERSION', '2.3.1');
+define('WEBFORM_VERSION', '2.3.2');
 define('WEBFORM_EDITION', 'free');
 define('WEBFORM_FILE', __FILE__);
 define('WEBFORM_PATH', plugin_dir_path(__FILE__));
