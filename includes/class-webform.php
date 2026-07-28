@@ -15,11 +15,13 @@ final class Webform {
     private function __construct() {
         require_once WEBFORM_PATH . 'includes/class-webform-admin.php';
         require_once WEBFORM_PATH . 'includes/class-webform-public.php';
+        require_once WEBFORM_PATH . 'includes/class-webform-mailer.php';
 
         add_action('init', array($this, 'register_post_types'));
         add_action('plugins_loaded', array($this, 'load_textdomain'));
         new Webform_Admin();
         new Webform_Public();
+        new Webform_Mailer();
         do_action('webform_loaded', $this);
     }
 
