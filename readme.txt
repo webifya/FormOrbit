@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.4.0
+Stable tag: 2.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -48,6 +48,17 @@ Webform is created by Mahfuzar Rahman at Web Ninja LLC.
 5. Copy the generated `[webform id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 2.5.0 =
+* Added JSON, CSV, and XML form imports with automatic format detection.
+* Added dedicated Formidable Forms and Forminator migration support.
+* Added a unified Import / Export screen with licensed Pro export tools.
+* Preserved stages, fields, settings, conditional rules, and Pro field data when moving Webform exports.
+
+= 2.4.1 =
+* Upgraded the Forms screen with native hover actions for editing, settings, duplication, trash, and secure previews.
+* Added entry, embed, status, creation date, and update date columns.
+* Added responsive form-list behavior and direct editor settings links.
 
 = 2.0.0 =
 * Added desktop, tablet, and mobile builder preview widths.
