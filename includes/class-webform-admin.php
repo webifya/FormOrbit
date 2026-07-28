@@ -53,6 +53,8 @@ class Webform_Admin {
             'nonce' => wp_create_nonce('webform_admin'),
             'formsUrl' => admin_url('admin.php?page=webform'),
             'proInstalled' => false,
+            'proActive' => false,
+            'proFieldTypes' => array('calculation', 'field_group', 'signature', 'address', 'repeater', 'appointment', 'nps', 'currency', 'product', 'price'),
             'proStyling' => false,
             'savedThemes' => array(),
         )));
@@ -298,7 +300,8 @@ class Webform_Admin {
 
     private function sanitize_schema($schema) {
         $clean = array();
-        $allowed_types = apply_filters('webform_allowed_field_types', array('text', 'email', 'textarea', 'select', 'radio', 'checkbox', 'number', 'date', 'time', 'phone', 'url', 'file', 'consent', 'poll', 'quiz', 'rating', 'slider', 'hidden', 'html', 'captcha', 'heading'));
+        $pro_types = array('calculation', 'field_group', 'signature', 'address', 'repeater', 'appointment', 'nps', 'currency', 'product', 'price');
+        $allowed_types = apply_filters('webform_allowed_field_types', array_merge(array('text', 'email', 'textarea', 'select', 'radio', 'checkbox', 'number', 'date', 'time', 'phone', 'url', 'file', 'consent', 'poll', 'quiz', 'rating', 'slider', 'hidden', 'html', 'captcha', 'heading'), $pro_types));
         $allowed_operators = array('equals', 'not_equals', 'contains', 'starts_with', 'ends_with', 'greater_than', 'less_than', 'not_empty', 'empty');
         $seen_ids = array();
         foreach ($schema as $stage_index => $stage) {
@@ -338,6 +341,28 @@ class Webform_Admin {
                         'value' => sanitize_text_field($field['condition']['value'] ?? ''),
                     ),
                 );
+                if (in_array($type, $pro_types, true)) {
+                    $clean_field['formula'] = preg_replace('/[^a-zA-Z0-9_{}+\-*\/().\s]/', '', $field['formula'] ?? '');
+                    $clean_field['decimal_places'] = min(6, absint($field['decimal_places'] ?? 2));
+                    $clean_field['group_count'] = min(6, max(1, absint($field['group_count'] ?? 2)));
+                    $clean_field['group_columns'] = min(4, max(1, absint($field['group_columns'] ?? 2)));
+                    $clean_field['repeater_min'] = min(20, max(1, absint($field['repeater_min'] ?? 1)));
+                    $clean_field['repeater_max'] = min(50, max(1, absint($field['repeater_max'] ?? 10)));
+                    $clean_field['repeater_button'] = substr(sanitize_text_field($field['repeater_button'] ?? ''), 0, 80);
+                    $clean_field['currency_symbol'] = substr(sanitize_text_field($field['currency_symbol'] ?? '$'), 0, 5);
+                    $clean_field['price_amount'] = max(0, floatval($field['price_amount'] ?? 0));
+                    $clean_field['currency_code'] = in_array(strtoupper($field['currency_code'] ?? 'USD'), array('USD', 'EUR', 'GBP', 'CAD', 'AUD', 'BDT'), true) ? strtoupper($field['currency_code']) : 'USD';
+                    $clean_field['min_date'] = sanitize_text_field($field['min_date'] ?? '');
+                    $clean_field['max_date'] = sanitize_text_field($field['max_date'] ?? '');
+                    $clean_field['style'] = array(
+                        'width' => in_array((string) ($field['style']['width'] ?? '100'), array('100', '75', '50', '33'), true) ? (string) $field['style']['width'] : '100',
+                        'label_color' => sanitize_hex_color($field['style']['label_color'] ?? '') ?: '#1d2327',
+                        'background_color' => sanitize_hex_color($field['style']['background_color'] ?? '') ?: '#ffffff',
+                        'text_color' => sanitize_hex_color($field['style']['text_color'] ?? '') ?: '#1d2327',
+                        'radius' => min(40, absint($field['style']['radius'] ?? 7)),
+                        'css_class' => sanitize_html_class($field['style']['css_class'] ?? ''),
+                    );
+                }
                 $clean_stage['fields'][] = apply_filters('webform_sanitize_field', $clean_field, $field);
             }
             $clean[] = $clean_stage;
