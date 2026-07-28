@@ -42,6 +42,7 @@ class Webform_Public {
                 <input type="hidden" name="form_id" value="<?php echo esc_attr($form_id); ?>">
                 <input type="hidden" name="nonce" value="<?php echo esc_attr(wp_create_nonce('webform_submit_' . $form_id)); ?>">
                 <input type="hidden" name="started_at" value="<?php echo esc_attr(time()); ?>">
+                <?php do_action('webform_form_hidden_fields', $form_id, $settings); ?>
                 <input type="text" name="website" class="webform-honeypot" tabindex="-1" autocomplete="off">
                 <?php foreach ($schema as $stage_index => $stage) : ?>
                     <section class="webform-stage <?php echo $stage_index === 0 ? 'is-active' : ''; ?>" data-stage="<?php echo esc_attr($stage_index); ?>" <?php echo $stage_index === 0 ? '' : 'hidden'; ?>>
@@ -51,6 +52,7 @@ class Webform_Public {
                             <?php $this->render_field($field); ?>
                         <?php endforeach; ?>
                         <div class="webform-actions">
+                            <?php do_action('webform_stage_actions', $form_id, $settings, $stage_index, count($schema)); ?>
                             <?php if ($stage_index > 0) : ?><button type="button" class="webform-prev"><?php esc_html_e('Back', 'webform'); ?></button><?php endif; ?>
                             <?php if ($stage_index < count($schema) - 1) : ?><button type="button" class="webform-next"><?php esc_html_e('Continue', 'webform'); ?></button><?php else : ?><button type="submit" class="webform-submit"><?php echo esc_html($settings['submit_label'] ?? __('Submit', 'webform')); ?></button><?php endif; ?>
                         </div>
@@ -271,13 +273,23 @@ class Webform_Public {
             }
             wp_send_json_error(array('message' => __('Please correct the highlighted fields.', 'webform'), 'errors' => $errors), 422);
         }
-        $entry_id = wp_insert_post(array('post_type' => 'webform_entry', 'post_status' => 'private', 'post_title' => sprintf(__('Submission for %s', 'webform'), get_the_title($form_id))));
+        $entry_id = absint(apply_filters('webform_existing_entry_id', 0, $form_id, $posted));
+        if (!$entry_id || get_post_type($entry_id) !== 'webform_entry') {
+            $entry_id = wp_insert_post(array('post_type' => 'webform_entry', 'post_status' => 'private', 'post_title' => sprintf(__('Submission for %s', 'webform'), get_the_title($form_id))));
+        } else {
+            wp_update_post(array('ID' => $entry_id, 'post_title' => sprintf(__('Submission for %s', 'webform'), get_the_title($form_id))));
+        }
         if (!$entry_id || is_wp_error($entry_id)) {
             wp_send_json_error(array('message' => __('We could not save your submission. Please try again.', 'webform')), 500);
         }
         update_post_meta($entry_id, '_webform_form_id', $form_id);
         update_post_meta($entry_id, '_webform_user_id', get_current_user_id());
         update_post_meta($entry_id, '_webform_data', $data);
+        update_post_meta($entry_id, '_webform_entry_status', 'submitted');
+        delete_post_meta($entry_id, '_webform_draft_token_hash');
+        delete_post_meta($entry_id, '_webform_draft_expires');
+        delete_post_meta($entry_id, '_webform_draft_values');
+        delete_post_meta($entry_id, '_webform_draft_stage');
         if ($quiz_total) update_post_meta($entry_id, '_webform_quiz_score', array('score' => $quiz_score, 'total' => $quiz_total));
         $poll_results = array();
         foreach ($poll_answers as $field_id => $answer) {
@@ -373,8 +385,7 @@ class Webform_Public {
                 'posts_per_page' => 1,
                 'fields' => 'ids',
                 'no_found_rows' => false,
-                'meta_key' => '_webform_form_id',
-                'meta_value' => $form_id,
+                'meta_query' => array('relation' => 'AND', array('key' => '_webform_form_id', 'value' => $form_id), array('relation' => 'OR', array('key' => '_webform_entry_status', 'compare' => 'NOT EXISTS'), array('key' => '_webform_entry_status', 'value' => 'submitted'))),
             ));
             if ($query->found_posts >= $limit) {
                 return !empty($settings['closed_message']) ? $settings['closed_message'] : __('This form is currently unavailable.', 'webform');
