@@ -322,6 +322,7 @@
         if (!field || !WebformAdmin.proStyling) return;
         field.style = field.style || {};
         field.style[$(this).data('field-style')] = $(this).val();
+        field.style.customized = true;
         dirty = true;
         const card = $(`.webform-field-card[data-id="${field.id}"]`)[0];
         if (!card) return;
@@ -348,6 +349,26 @@
         };
     }
     const themeSelectors = { style_preset: '#webform-style-preset', accent_color: '#webform-accent-color', button_text_color: '#webform-button-text-color', font_family: '#webform-font-family', base_font_size: '#webform-base-font-size', label_font_size: '#webform-label-font-size', text_color: '#webform-text-color', form_background: '#webform-form-background', field_background: '#webform-field-background', border_color: '#webform-border-color', form_max_width: '#webform-form-max-width', field_spacing: '#webform-field-spacing', field_radius: '#webform-field-radius', button_radius: '#webform-button-radius', button_padding: '#webform-button-padding', custom_css: '#webform-custom-css' };
+    const presetPalettes = {
+        modern:{accent_color:'#6c4bd4',button_text_color:'#ffffff',text_color:'#1d2327',form_background:'#ffffff',field_background:'#ffffff',border_color:'#dfe1e6'}, minimal:{accent_color:'#222222',button_text_color:'#ffffff',text_color:'#242424',form_background:'#ffffff',field_background:'#ffffff',border_color:'#b8b8b8'}, rounded:{accent_color:'#6750c8',button_text_color:'#ffffff',text_color:'#282334',form_background:'#fbfaff',field_background:'#ffffff',border_color:'#d9d2ed'},
+        elegant:{accent_color:'#8a6438',button_text_color:'#ffffff',text_color:'#302820',form_background:'#fffdf9',field_background:'#ffffff',border_color:'#dfd3c2'}, glass:{accent_color:'#6651c9',button_text_color:'#ffffff',text_color:'#25203a',form_background:'#f4f0ff',field_background:'#ffffff',border_color:'#d8cfef'}, dark:{accent_color:'#8b72ef',button_text_color:'#ffffff',text_color:'#f6f6f8',form_background:'#20202a',field_background:'#2c2c38',border_color:'#4a4a59'},
+        corporate:{accent_color:'#183b63',button_text_color:'#ffffff',text_color:'#1d3249',form_background:'#f8fafc',field_background:'#ffffff',border_color:'#b9c8d8'}, editorial:{accent_color:'#7d3728',button_text_color:'#ffffff',text_color:'#29231e',form_background:'#fffdf8',field_background:'#fffdf8',border_color:'#8f8175'}, pastel:{accent_color:'#a84f83',button_text_color:'#ffffff',text_color:'#493746',form_background:'#fff7fb',field_background:'#ffffff',border_color:'#e8cadb'},
+        contrast:{accent_color:'#000000',button_text_color:'#ffffff',text_color:'#000000',form_background:'#ffffff',field_background:'#ffffff',border_color:'#111111'}, compact:{accent_color:'#3858a6',button_text_color:'#ffffff',text_color:'#252a34',form_background:'#ffffff',field_background:'#ffffff',border_color:'#d5d9e0'}, spacious:{accent_color:'#4968b8',button_text_color:'#ffffff',text_color:'#293240',form_background:'#ffffff',field_background:'#ffffff',border_color:'#d8dde6'},
+        neon:{accent_color:'#5fffe0',button_text_color:'#101018',text_color:'#f6f7ff',form_background:'#12121a',field_background:'#1c1c27',border_color:'#5fffe0'}, earthy:{accent_color:'#70613f',button_text_color:'#ffffff',text_color:'#3f392d',form_background:'#f4efe5',field_background:'#fffaf0',border_color:'#b9a788'}, luxury:{accent_color:'#c3a35c',button_text_color:'#171512',text_color:'#f7eed8',form_background:'#171512',field_background:'#211f1b',border_color:'#8d743e'}, playful:{accent_color:'#e14d72',button_text_color:'#ffffff',text_color:'#342e63',form_background:'#fff9e8',field_background:'#ffffff',border_color:'#342e63'}
+    };
+    function applyPresetPalette(key) {
+        const palette = presetPalettes[key];
+        if (!palette) return;
+        Object.entries(palette).forEach(([name, value]) => { if (themeSelectors[name] && $(themeSelectors[name]).length) $(themeSelectors[name]).val(value); });
+    }
+    function updatePresetPreview() {
+        const select = $('#webform-style-preset'), key = select.val() || 'modern', palette = presetPalettes[key] || presetPalettes.modern;
+        $('.webform-preset-preview-form').attr('class', `webform-public webform-preset-preview-form webform-style-${key}`).css({'--wf-accent':palette.accent_color,'--wf-button-text':palette.button_text_color,'--wf-text':palette.text_color,'--wf-form-bg':palette.form_background,'--wf-field-bg':palette.field_background,'--wf-border':palette.border_color});
+        $('#webform-preset-preview-title').text(select.find('option:selected').text().replace('🔒 ', ''));
+    }
+    $(document).on('change', '#webform-style-preset', function () { applyPresetPalette($(this).val()); updatePresetPreview(); dirty = true; });
+    $(document).on('click', '.webform-preview-preset', function () { updatePresetPreview(); $('#webform-preset-preview-modal').removeAttr('hidden'); });
+    $(document).on('click', '.webform-preset-preview-close,.webform-preset-preview-backdrop', function () { $('#webform-preset-preview-modal').attr('hidden', true); });
     $(document).on('click', '#webform-apply-theme', function () {
         const theme = WebformAdmin.savedThemes[$('#webform-saved-theme').val()];
         if (!theme || !theme.settings) return;
