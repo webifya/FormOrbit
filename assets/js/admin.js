@@ -1,7 +1,7 @@
 (function ($) {
     'use strict';
 
-    const defaults = { text: 'Text', email: 'Email', textarea: 'Long text', select: 'Dropdown', radio: 'Radio', checkbox: 'Checkbox', number: 'Number', date: 'Date', time: 'Time', phone: 'Phone', url: 'Website', file: 'File upload', consent: 'I agree to the terms', poll: 'Poll question', quiz: 'Quiz question', rating: 'Rating', slider: 'Slider', hidden: 'Hidden field', html: 'HTML content', captcha: 'Security check', calculation: 'Calculation', signature: 'Signature', field_group: 'Field group', address: 'Address', repeater: 'Repeater', appointment: 'Appointment', nps: 'NPS score', currency: 'Currency', heading: 'Heading' };
+    const defaults = { text: 'Text', email: 'Email', textarea: 'Long text', select: 'Dropdown', radio: 'Radio', checkbox: 'Checkbox', number: 'Number', date: 'Date', time: 'Time', phone: 'Phone', url: 'Website', file: 'File upload', consent: 'I agree to the terms', poll: 'Poll question', quiz: 'Quiz question', rating: 'Rating', slider: 'Slider', hidden: 'Hidden field', html: 'HTML content', captcha: 'Security check', calculation: 'Calculation', signature: 'Signature', field_group: 'Field group', address: 'Address', repeater: 'Repeater', appointment: 'Appointment', nps: 'NPS score', currency: 'Currency', product: 'Product selector', price: 'Price', heading: 'Heading' };
     let schema = [];
     let activeStage = 0;
     let selectedId = null;
@@ -59,7 +59,9 @@
             repeater: '<div class="webform-preview-repeater"><div><i></i><button type="button">×</button></div><div><i></i><button type="button">×</button></div><small>＋ Add another</small></div>',
             appointment: '<div class="webform-preview-control webform-preview-with-icon"><span>Select date and time</span><span class="dashicons dashicons-calendar-alt"></span></div>',
             nps: '<div class="webform-preview-nps"><div>' + Array.from({length: 11}, (_, index) => `<i>${index}</i>`).join('') + '</div><small><span>Not likely</span><span>Very likely</span></small></div>',
-            currency: `<div class="webform-preview-control webform-preview-currency"><b>${escapeHtml(field.currency_symbol || '$')}</b><span>${placeholder || '0.00'}</span></div>`
+            currency: `<div class="webform-preview-control webform-preview-currency"><b>${escapeHtml(field.currency_symbol || '$')}</b><span>${placeholder || '0.00'}</span></div>`,
+            product: `<div class="webform-preview-product">${(field.options || ['Standard|19.99','Premium|39.99']).map(option => { const parts = option.split('|'); return `<span><i></i><strong>${escapeHtml(parts[0])}</strong><em>${escapeHtml(parts[1] || '0.00')}</em></span>`; }).join('')}</div>`,
+            price: `<div class="webform-preview-price"><span>${escapeHtml(field.label || 'Price')}</span><strong>${escapeHtml(field.currency_code || 'USD')} ${Number(field.price_amount || 0).toFixed(2)}</strong></div>`
         };
         return previews[field.type] || `<div class="webform-preview-control"><span>${placeholder || 'Field preview'}</span></div>`;
     }
@@ -107,7 +109,7 @@
             $('#webform-field-settings').html('<p class="description">Select a field to edit its options.</p>');
             return;
         }
-        const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz'].includes(field.type);
+        const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz', 'product'].includes(field.type);
         const candidates = schema.flatMap(stage => stage.fields).filter(item => item.id !== field.id && item.type !== 'heading' && item.type !== 'file');
         const condition = field.condition || { enabled: false, field_id: '', operator: 'equals', value: '' };
         $('#webform-field-settings').html(`
@@ -125,6 +127,8 @@
             ${field.type === 'repeater' ? `<label>Minimum rows<input type="number" min="1" max="20" data-prop="repeater_min" value="${Number(field.repeater_min || 1)}"></label><label>Maximum rows<input type="number" min="1" max="50" data-prop="repeater_max" value="${Number(field.repeater_max || 10)}"></label><label>Add button text<input type="text" data-prop="repeater_button" value="${escapeHtml(field.repeater_button || 'Add another')}"></label>` : ''}
             ${field.type === 'appointment' ? `<label>Earliest date and time<input type="datetime-local" data-prop="min_date" value="${escapeHtml(field.min_date || '')}"></label><label>Latest date and time<input type="datetime-local" data-prop="max_date" value="${escapeHtml(field.max_date || '')}"></label>` : ''}
             ${field.type === 'currency' ? `<label>Currency symbol<input type="text" maxlength="5" data-prop="currency_symbol" value="${escapeHtml(field.currency_symbol || '$')}"></label><label>Minimum<input type="number" step="0.01" data-prop="min" value="${Number(field.min ?? 0)}"></label><label>Maximum<input type="number" step="0.01" data-prop="max" value="${Number(field.max ?? 999999999)}"></label>` : ''}
+            ${field.type === 'product' ? `<p class="description">Enter each product as <code>Product name|19.99</code>.</p>` : ''}
+            ${field.type === 'price' ? `<label>Amount<input type="number" min="0" step="0.01" data-prop="price_amount" value="${Number(field.price_amount || 0)}"></label><label>Currency<select data-prop="currency_code">${['USD','EUR','GBP','CAD','AUD','BDT'].map(code => `<option ${field.currency_code === code ? 'selected' : ''}>${code}</option>`).join('')}</select></label>` : ''}
             ${!['heading','hidden','html'].includes(field.type) ? `<label class="webform-check"><input type="checkbox" data-prop="required" ${field.required ? 'checked' : ''}> Required field</label>` : ''}
             ${field.type !== 'heading' && candidates.length ? `<hr><h3>Conditional display</h3>
                 <label class="webform-check"><input type="checkbox" data-condition="enabled" ${condition.enabled ? 'checked' : ''}> Show this field conditionally</label>
@@ -152,8 +156,8 @@
             render();
             return;
         }
-        const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz'].includes(type);
-        const field = { id: uid('field'), type, label: defaults[type] || 'Field', placeholder: '', required: ['consent','captcha','signature'].includes(type), options: choices ? ['Option 1', 'Option 2'] : [], allowed_extensions: 'jpg,jpeg,png,pdf,doc,docx', max_size: 5, correct_answer: '', points: 1, default_value: '', html: '<p>Add your content here.</p>', min: 0, max: type === 'currency' ? 999999999 : 100, step: 1, formula: '', decimal_places: 2, group_count: 2, group_columns: 2, repeater_min: 1, repeater_max: 10, repeater_button: 'Add another', currency_symbol: '$', min_date: '', max_date: '', style: {}, condition: { enabled: false, field_id: '', operator: 'equals', value: '' } };
+        const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz', 'product'].includes(type);
+        const field = { id: uid('field'), type, label: defaults[type] || 'Field', placeholder: '', required: ['consent','captcha','signature'].includes(type), options: choices ? (type === 'product' ? ['Standard|19.99', 'Premium|39.99'] : ['Option 1', 'Option 2']) : [], allowed_extensions: 'jpg,jpeg,png,pdf,doc,docx', max_size: 5, correct_answer: '', points: 1, default_value: '', html: '<p>Add your content here.</p>', min: 0, max: type === 'currency' ? 999999999 : 100, step: 1, formula: '', decimal_places: 2, group_count: 2, group_columns: 2, repeater_min: 1, repeater_max: 10, repeater_button: 'Add another', currency_symbol: '$', price_amount: 0, currency_code: 'USD', min_date: '', max_date: '', style: {}, condition: { enabled: false, field_id: '', operator: 'equals', value: '' } };
         schema[activeStage].fields.push(field);
         selectedId = field.id;
         dirty = true;
@@ -180,6 +184,12 @@
     }
     $(document).on('change', '#webform-recaptcha-mode', updateRecaptchaPanels);
     updateRecaptchaPanels();
+    function updateConfirmationOptions() {
+        const type = $('#webform-confirmation-type').val() || 'message';
+        $('.webform-confirmation-option').attr('hidden', true).filter('[data-confirmation-option="' + type + '"]').removeAttr('hidden');
+    }
+    $(document).on('change', '#webform-confirmation-type', updateConfirmationOptions);
+    updateConfirmationOptions();
     $(document).on('click', '.webform-field-card', function (event) {
         if ($(event.target).closest('.webform-remove-field').length) return;
         selectedId = $(this).data('id');
@@ -311,6 +321,7 @@
             schema: JSON.stringify(schema),
             settings: JSON.stringify({
                 success_message: $('#webform-success-message').val(),
+                confirmation_type: $('#webform-confirmation-type').val(),
                 notification_email: $('#webform-notification-email').val(),
                 submit_label: $('#webform-submit-label').val(),
                 redirect_url: $('#webform-redirect-url').val(),
@@ -333,7 +344,11 @@
                 field_radius: $('#webform-field-radius').val(),
                 button_radius: $('#webform-button-radius').val(),
                 button_padding: $('#webform-button-padding').val(),
-                custom_css: $('#webform-custom-css').val()
+                custom_css: $('#webform-custom-css').val(),
+                pdf_notifications: $('#webform-pdf-notifications').is(':checked'),
+                mailchimp_list: $('#webform-mailchimp-list').val(),
+                brevo_list: $('#webform-brevo-list').val(),
+                payment_provider: $('#webform-payment-provider').val()
             })
         }).done(function (response) {
             if (!response.success) throw new Error(response.data && response.data.message);
