@@ -31,7 +31,7 @@
         if (WebformAdmin.proInstalled || WebformAdmin.proStyling || $('.webform-free-pro-catalog').length) return;
         const fields = ['Calculation', 'Field group', 'E-signature', 'Address', 'Repeater', 'Appointment', 'NPS score', 'Currency', 'Product selector', 'Price', 'Advanced upload'];
         const integrations = {
-            'Email marketing': ['Mailchimp', 'Brevo', 'ActiveCampaign', 'Kit', 'GetResponse'],
+            'Email marketing & CRM': ['Mailchimp', 'Brevo', 'ActiveCampaign', 'Kit', 'GetResponse', 'LeadConnector / GoHighLevel'],
             'Payments': ['Stripe', 'PayPal', 'Square', 'Bank transfer'],
             'Automation & documents': ['Zapier', 'Webhooks', 'PDF notifications']
         };
@@ -106,10 +106,16 @@
             items: '.webform-field-card:not(.is-pro-locked)',
             handle: '.webform-drag',
             placeholder: 'webform-sort-placeholder',
-            update: function () {
+            update: function (event, ui) {
                 const order = $(this).children('.webform-field-card').map(function () { return $(this).data('id'); }).get();
                 schema[activeStage].fields.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+                const moved = schema[activeStage].fields.find(field => field.id === ui.item.data('id'));
+                if (moved && WebformAdmin.proActive && !isLockedProField(moved)) {
+                    moved.style = moved.style || {};
+                    moved.style.width = 'auto';
+                }
                 dirty = true;
+                render();
             }
         });
         renderSettings();
@@ -121,7 +127,7 @@
         const style = field.style || {};
         const cardStyle = `--preview-width:${previewWidth(style.width)};--preview-label:${escapeHtml(style.label_color || '#1d2327')};--preview-bg:${escapeHtml(style.background_color || '#ffffff')};--preview-text:${escapeHtml(style.text_color || '#3c434a')};--preview-radius:${Number(style.radius ?? 7)}px`;
         const widthMode = String(style.width || '100');
-        const widthControls = WebformAdmin.proActive && !locked ? `<div class="webform-card-widths" aria-label="Field width"><button type="button" data-card-width="auto" class="${widthMode === 'auto' ? 'is-active' : ''}" title="Auto width">Auto</button><button type="button" data-card-width="100" class="${widthMode === '100' ? 'is-active' : ''}" title="Full width">1/1</button><button type="button" data-card-width="50" class="${widthMode === '50' ? 'is-active' : ''}" title="Half width">1/2</button><button type="button" data-card-width="33" class="${widthMode === '33' ? 'is-active' : ''}" title="One-third width">1/3</button></div>` : '';
+        const widthControls = WebformAdmin.proActive && !locked ? `<div class="webform-card-widths" aria-label="Field width"><button type="button" data-card-resize="-1" title="Decrease width" aria-label="Decrease width">−</button><button type="button" data-card-width="auto" class="${widthMode === 'auto' ? 'is-active' : ''}" title="Automatically share available row space">Auto</button><button type="button" data-card-width="100" class="${widthMode === '100' ? 'is-active' : ''}" title="Full width">1/1</button><button type="button" data-card-width="50" class="${widthMode === '50' ? 'is-active' : ''}" title="Half width">1/2</button><button type="button" data-card-width="33" class="${widthMode === '33' ? 'is-active' : ''}" title="One-third width">1/3</button><button type="button" data-card-resize="1" title="Increase width" aria-label="Increase width">＋</button></div>` : '';
         return `<div class="webform-field-card webform-field-card-${escapeHtml(field.type)} ${widthMode === 'auto' ? 'is-width-auto' : ''} ${locked ? 'is-pro-locked' : ''} ${field.id === selectedId ? 'is-selected' : ''}" data-id="${field.id}" style="${cardStyle}">
             <span class="dashicons ${locked ? 'dashicons-lock' : 'dashicons-menu'} webform-drag"></span>
             <div class="webform-field-preview"><strong>${escapeHtml(field.label)}${field.required ? ' <em>*</em>' : ''}</strong>
@@ -177,7 +183,7 @@
             <hr><h3>Field appearance ${WebformAdmin.proStyling ? '<span class="webform-pro-badge">PRO</span>' : ''}</h3>
             ${WebformAdmin.proStyling ? `<div class="webform-field-style-controls">
                 <label>Field width<select data-field-style="width"><option value="auto" ${field.style?.width === 'auto' ? 'selected' : ''}>Auto — share row space</option><option value="100" ${(field.style?.width || '100') === '100' ? 'selected' : ''}>Full width</option><option value="75" ${field.style?.width === '75' ? 'selected' : ''}>75%</option><option value="50" ${field.style?.width === '50' ? 'selected' : ''}>Half width</option><option value="33" ${field.style?.width === '33' ? 'selected' : ''}>One third</option></select></label>
-                <div class="webform-style-color-grid"><label>Label<input type="color" data-field-style="label_color" value="${escapeHtml(field.style?.label_color || '#1d2327')}"></label><label>Field<input type="color" data-field-style="background_color" value="${escapeHtml(field.style?.background_color || '#ffffff')}"></label><label>Text<input type="color" data-field-style="text_color" value="${escapeHtml(field.style?.text_color || '#1d2327')}"></label></div>
+                <div class="webform-style-color-grid"><label>Label<input type="color" data-field-style="label_color" value="${escapeHtml(field.style?.label_color || '#1d2327')}"></label>${field.type !== 'heading' ? `<label>Field<input type="color" data-field-style="background_color" value="${escapeHtml(field.style?.background_color || '#ffffff')}"></label><label>Text<input type="color" data-field-style="text_color" value="${escapeHtml(field.style?.text_color || '#1d2327')}"></label>` : ''}</div>
                 <label>Corner radius<input type="number" min="0" max="40" data-field-style="radius" value="${Number(field.style?.radius ?? 7)}"></label>
                 <label>Custom CSS class<input type="text" data-field-style="css_class" value="${escapeHtml(field.style?.css_class || '')}" placeholder="featured-field"></label>
             </div>` : '<div class="webform-field-style-locked">🔒 Width, colors, corners, and custom classes are available in Pro.</div>'}
@@ -240,7 +246,15 @@
         const field = (schema[activeStage].fields || []).find(item => item.id === id);
         if (!field || !WebformAdmin.proActive) return;
         field.style = field.style || {};
-        field.style.width = String($(this).data('card-width'));
+        const direction = Number($(this).data('card-resize') || 0);
+        if (direction) {
+            const widths = ['33', '50', '75', '100'];
+            const current = widths.indexOf(String(field.style.width || 'auto'));
+            const next = current < 0 ? (direction > 0 ? 1 : 0) : Math.max(0, Math.min(widths.length - 1, current + direction));
+            field.style.width = widths[next];
+        } else {
+            field.style.width = String($(this).data('card-width'));
+        }
         selectedId = id;
         dirty = true;
         render();
@@ -411,6 +425,7 @@
                 mailchimp_list: $('#webform-mailchimp-list').val(),
                 brevo_list: $('#webform-brevo-list').val(),
                 activecampaign_list: $('#webform-activecampaign-list').val(),
+                leadconnector_enabled: $('#webform-leadconnector-enabled').is(':checked'),
                 payment_provider: $('#webform-payment-provider').val()
             })
         }).done(function (response) {
