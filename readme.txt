@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.8.0
+Stable tag: 1.9.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -48,6 +48,12 @@ Webform is created by Mahfuzar Rahman at Web Ninja LLC.
 5. Copy the generated `[webform id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 1.9.0 =
+* Added a transparent Free/Pro preset selector with all premium preset names visible in read-only mode.
+* Added read-only descriptions for Pro typography, color, layout, border, button, and custom CSS controls.
+* Added frontend design variables for licensed typography, sizing, colors, width, spacing, and corner controls.
+* Added a safe extension pipeline for scoped per-form Pro CSS.
 
 = 1.8.0 =
 * Added accurate visual builder previews for every standard field type.
