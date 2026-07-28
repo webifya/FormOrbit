@@ -600,6 +600,6 @@ class Webform_Admin {
     }
 
     private function is_pro_active() {
-        return defined('WEBFORM_PRO_VERSION') || (bool) apply_filters('webform_is_pro_active', false);
+        return defined('WEBFORM_PRO_PLUGIN_VERSION') || defined('WEBFORM_PRO_VERSION') || (bool) apply_filters('webform_is_pro_active', false);
     }
 }
