@@ -309,7 +309,7 @@
             ${editable ? '<span class="dashicons dashicons-menu webform-live-child-drag" title="Drag to reorder"></span>' : ''}
             ${editable ? `<input class="webform-live-child-label" value="${label}" aria-label="Child field label">` : `<small>${label} ${required}</small>`}
             ${control}
-            ${editable ? `<button type="button" class="webform-live-eject-child" title="Move to main form" aria-label="Move ${label} to main form"><span class="dashicons dashicons-external"></span></button><button type="button" class="webform-live-remove-child" aria-label="Remove ${label}">×</button>` : ''}
+            ${editable ? `<span class="webform-live-child-actions"><button type="button" class="webform-live-eject-child" title="Drag or click to move to the main form" aria-label="Move ${label} to main form"><span class="dashicons dashicons-external"></span></button><button type="button" class="webform-live-remove-child" title="Delete child field" aria-label="Delete ${label}"><span class="dashicons dashicons-trash"></span></button></span>` : ''}
         </span>`;
     }
 
@@ -392,6 +392,40 @@
                 });
             }
         });
+        if ($.fn.draggable && $.fn.droppable) {
+            $('.webform-live-eject-child').draggable({
+                appendTo: 'body',
+                cursor: 'grabbing',
+                cursorAt: { left: 15, top: 15 },
+                distance: 4,
+                helper: function () {
+                    const child = $(this).closest('.webform-container-preview-child');
+                    return child.clone().addClass('webform-child-drag-helper').css({
+                        height: child.outerHeight(),
+                        width: Math.min(320, child.outerWidth())
+                    });
+                },
+                revert: 'invalid',
+                start: function () {
+                    $('#webform-canvas').addClass('is-child-drag-target');
+                },
+                stop: function () {
+                    $('#webform-canvas').removeClass('is-child-drag-target');
+                }
+            });
+            $('#webform-canvas').droppable({
+                accept: '.webform-live-eject-child',
+                greedy: true,
+                tolerance: 'pointer',
+                hoverClass: 'is-child-drag-over',
+                drop: function (event, ui) {
+                    const parent = containerFromElement(ui.draggable);
+                    if (!parent) return;
+                    const index = Number(ui.draggable.closest('[data-child-index]').data('child-index'));
+                    moveContainerChildOut(parent, index);
+                }
+            });
+        }
     }
 
     function childEditorMarkup(field, index) {
@@ -933,7 +967,7 @@
         const condition = field.condition || { enabled: false, field_id: '', operator: 'equals', value: '' };
         const selectedIcon = fieldIcons[field.icon] || fieldIcons[''];
         $('#webform-field-settings').html(`
-            <div class="webform-field-quick-actions"><p class="description">Field ID: <code>${escapeHtml(field.id)}</code></p>${WebformAdmin.proActive ? '<button type="button" class="button webform-duplicate-field"><span class="dashicons dashicons-admin-page" aria-hidden="true"></span>Duplicate</button>' : ''}</div>
+            <div class="webform-field-quick-actions"><p class="description">Field ID: <code>${escapeHtml(field.id)}</code></p>${WebformAdmin.proActive ? '<button type="button" class="button webform-duplicate-field" title="Duplicate field" aria-label="Duplicate field"><span class="dashicons dashicons-admin-page" aria-hidden="true"></span><span class="screen-reader-text">Duplicate field</span></button>' : ''}</div>
             <label>${field.type === 'field_group' ? 'Group label' : field.type === 'repeater' ? 'Repeater label' : 'Label'}<input type="text" data-prop="label" value="${escapeHtml(field.label)}"></label>
             ${!['hidden','html','rich_text','divider','heading','consent','captcha'].includes(field.type) ? `<label class="webform-check"><input type="checkbox" data-prop="hide_label" ${field.hide_label ? 'checked' : ''}> Hide label on public form <small>The label remains available to screen readers.</small></label>` : ''}
             ${['html','rich_text'].includes(field.type) ? '<p class="description">The editor label helps identify this element and is hidden on the public form.</p>' : ''}
