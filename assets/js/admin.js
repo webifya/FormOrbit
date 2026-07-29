@@ -140,6 +140,17 @@
             }
         });
         renderSettings();
+        refreshUserEmailFields();
+    }
+
+    function refreshUserEmailFields() {
+        const select = $('#webform-user-notification-email-field');
+        if (!select.length) return;
+        const saved = String(select.val() || select.data('saved') || '');
+        const emailFields = schema.flatMap(stage => stage.fields || []).filter(field => field.type === 'email');
+        select.html('<option value="">First email field automatically</option>' + emailFields.map(field => `<option value="${escapeHtml(field.id)}">${escapeHtml(field.label)} (${escapeHtml(field.id)})</option>`).join(''));
+        if (emailFields.some(field => field.id === saved)) select.val(saved);
+        select.data('saved', select.val() || saved);
     }
 
     function fieldCard(field) {
@@ -436,6 +447,7 @@
     });
     $('#webform-save').on('click', function () {
         if (window.tinyMCE && tinyMCE.get('webform-success-message')) tinyMCE.get('webform-success-message').save();
+        if (window.tinyMCE && tinyMCE.get('webform-user-notification-body')) tinyMCE.get('webform-user-notification-body').save();
         const $button = $(this).prop('disabled', true);
         $('#webform-save-status').text('Saving…');
         $.post(WebformAdmin.ajaxUrl, {
@@ -462,6 +474,11 @@
                 save_progress_enabled: $('#webform-save-progress-enabled').is(':checked'),
                 save_progress_days: $('#webform-save-progress-days').val(),
                 save_progress_label: $('#webform-save-progress-label').val(),
+                user_notification_enabled: $('#webform-user-notification-enabled').is(':checked'),
+                user_notification_email_field: $('#webform-user-notification-email-field').val(),
+                user_notification_subject: $('#webform-user-notification-subject').val(),
+                user_notification_body: $('#webform-user-notification-body').val(),
+                user_notification_pdf: $('#webform-user-notification-pdf').is(':checked'),
                 style_preset: $('#webform-style-preset').val(),
                 accent_color: $('#webform-accent-color').val(),
                 button_text_color: $('#webform-button-text-color').val(),
@@ -501,7 +518,14 @@
         const enabled = $(this).is(':checked');
         $('#webform-role-controls').toggleClass('is-disabled', !enabled).find('input[type="checkbox"]').prop('disabled', !enabled);
     });
+    $(document).on('change', '#webform-user-notification-enabled', function () {
+        $('#webform-user-notification-options').toggleClass('is-disabled', !$(this).is(':checked'));
+    });
+    $(document).on('change', '#webform-save-progress-enabled', function () {
+        $('#webform-save-progress-options').toggleClass('is-disabled', !$(this).is(':checked')).find('input').prop('disabled', !$(this).is(':checked'));
+    });
     $(document).on('input change', '.webform-pro-style-controls input,.webform-pro-style-controls select,.webform-pro-style-controls textarea', function () { dirty = true; });
+    $(document).on('input change', '.webform-confirmation-section input,.webform-confirmation-section select,.webform-confirmation-section textarea', function () { dirty = true; });
     $(document).on('click', '.webform-template-close,.webform-template-choice[href=\"#\"]', function (event) {
         event.preventDefault();
         $('#webform-template-modal').fadeOut(150);
@@ -512,8 +536,9 @@
         $(this).addClass('is-active');
         $('.webform-property-panel').removeClass('is-active').filter(`[data-panel="${panel}"]`).addClass('is-active');
     });
-    const requestedPanel = new URLSearchParams(window.location.search).get('panel');
-    if (requestedPanel && ['field', 'confirmation', 'integrations', 'access', 'style', 'pdf'].includes(requestedPanel)) {
+    let requestedPanel = new URLSearchParams(window.location.search).get('panel');
+    if (requestedPanel === 'pdf') requestedPanel = 'confirmation';
+    if (requestedPanel && ['field', 'confirmation', 'integrations', 'access', 'style'].includes(requestedPanel)) {
         $(`.webform-property-tabs button[data-panel="${requestedPanel}"]`).trigger('click');
     }
     window.addEventListener('beforeunload', function (event) {
