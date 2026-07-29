@@ -15,7 +15,7 @@ class Webform_Mailer {
     }
 
     public function menu() {
-        add_submenu_page('webform', __('Email Delivery', 'webform'), __('Email Delivery', 'webform'), 'manage_options', 'webform-email-delivery', array($this, 'page'));
+        add_submenu_page('webform', __('Email Delivery', 'webform'), __('Email Delivery', 'webform'), 'manage_options', 'webform-email-delivery', array($this, 'page'), 2);
     }
 
     public function configure($phpmailer) {
