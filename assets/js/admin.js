@@ -394,43 +394,104 @@
         });
     }
 
+    function childEditorMarkup(field, index) {
+        const children = containerChildren(field);
+        const child = children[index];
+        if (!child) return '';
+        const typeOptions = Object.entries(containerChildTypes).map(([value, label]) => `<option value="${value}" ${child && child.type === value ? 'selected' : ''}>${label}</option>`).join('');
+        const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz', 'product'].includes(child.type);
+        return `<div class="webform-child-editor webform-container-child" data-child-index="${index}">
+            <div class="webform-child-editor-heading">
+                <div><span>CHILD FIELD ${index + 1} OF ${children.length}</span><h4>${escapeHtml(child.label || containerChildTypes[child.type] || 'Field')}</h4><p>${escapeHtml(field.label || (field.type === 'repeater' ? 'Repeater' : 'Field group'))}</p></div>
+            </div>
+            <div class="webform-child-editor-grid">
+                <label>Field label<input type="text" data-child-prop="label" value="${escapeHtml(child.label || '')}" placeholder="Field label"></label>
+                <label>Field type<select data-child-prop="type">${typeOptions}</select></label>
+            </div>
+            ${!['radio','checkbox','select','consent','hidden','poll','quiz','product','html','heading','rich_text','divider','price'].includes(child.type) ? `<label>Placeholder<input type="text" data-child-prop="placeholder" value="${escapeHtml(child.placeholder || '')}" placeholder="Optional helper text"></label>` : ''}
+            ${choices ? `<label>Options <small>One per line</small><textarea rows="6" data-child-prop="options">${escapeHtml((child.options || []).join('\n'))}</textarea></label>` : ''}
+            ${child.type === 'textarea' ? `<label>Visible rows<input type="number" min="2" max="30" data-child-prop="rows" value="${Number(child.rows || 4)}"></label>` : ''}
+            ${['number','slider','currency'].includes(child.type) ? `<div class="webform-child-editor-grid is-three-columns"><label>Minimum<input type="number" data-child-prop="min" value="${escapeHtml(child.min ?? '')}"></label><label>Maximum<input type="number" data-child-prop="max" value="${escapeHtml(child.max ?? '')}"></label><label>Step<input type="number" step="any" data-child-prop="step" value="${escapeHtml(child.step || '1')}"></label></div>` : ''}
+            ${child.type === 'hidden' ? `<label>Default value<input type="text" data-child-prop="default_value" value="${escapeHtml(child.default_value || '')}"></label>` : ''}
+            ${child.type === 'html' ? `<label>Safe HTML<textarea rows="8" data-child-prop="html">${escapeHtml(child.html || '')}</textarea></label>` : ''}
+            ${child.type === 'rich_text' ? `<label>Formatted content<textarea rows="10" data-child-prop="rich_content">${escapeHtml(child.rich_content || '')}</textarea></label>` : ''}
+            ${child.type === 'price' ? `<div class="webform-child-editor-grid"><label>Amount<input type="number" min="0" step="0.01" data-child-prop="price_amount" value="${Number(child.price_amount || 0)}"></label><label>Currency<input type="text" maxlength="3" data-child-prop="currency_code" value="${escapeHtml(child.currency_code || 'USD')}"></label></div>` : ''}
+            ${child.type === 'currency' ? `<label>Currency symbol<input type="text" maxlength="5" data-child-prop="currency_symbol" value="${escapeHtml(child.currency_symbol || '$')}"></label>` : ''}
+            ${child.type === 'calculation' ? `<label>Formula<input type="text" data-child-prop="formula" value="${escapeHtml(child.formula || '')}"></label>` : ''}
+            ${!['heading','hidden','html','rich_text','divider','price','calculation'].includes(child.type) ? `<label class="webform-check"><input type="checkbox" data-child-prop="required" ${child.required ? 'checked' : ''}> Required field</label>` : ''}
+            <div class="webform-child-editor-actions">
+                <button type="button" class="button webform-child-move-out"><span class="dashicons dashicons-external"></span>Move to main form</button>
+                <button type="button" class="button-link-delete webform-remove-container-child">Remove child field</button>
+            </div>
+        </div>`;
+    }
+
+    function ensureChildEditorModal() {
+        if ($('#webform-child-editor-modal').length) return;
+        $('body').append(`<section id="webform-child-editor-modal" class="webform-child-editor-modal" hidden aria-hidden="true">
+            <button type="button" class="webform-child-editor-backdrop" aria-label="Close child field editor"></button>
+            <div class="webform-child-editor-dialog" role="dialog" aria-modal="true" aria-labelledby="webform-child-editor-title">
+                <header class="webform-child-editor-modal-head">
+                    <div><span class="dashicons dashicons-edit" aria-hidden="true"></span><div><small>GROUP / REPEATER FIELD</small><h2 id="webform-child-editor-title">Edit child field</h2></div></div>
+                    <button type="button" class="webform-child-editor-close" aria-label="Close child field editor">×</button>
+                </header>
+                <div class="webform-child-editor-modal-body"></div>
+                <footer class="webform-child-editor-modal-footer"><span>Changes appear instantly in the live builder.</span><button type="button" class="button button-primary webform-child-editor-done">Done</button></footer>
+            </div>
+        </section>`);
+    }
+
+    function refreshChildEditorModal() {
+        const field = selectedField();
+        const modal = $('#webform-child-editor-modal');
+        if (!field || selectedChildIndex === null || !containerChildren(field)[selectedChildIndex] || !modal.length) return;
+        const child = containerChildren(field)[selectedChildIndex];
+        modal.find('#webform-child-editor-title').text(`Edit ${child.label || containerChildTypes[child.type] || 'child field'}`);
+        modal.find('.webform-child-editor-modal-body').html(childEditorMarkup(field, selectedChildIndex));
+    }
+
+    function openChildEditor(field, index) {
+        if (!field || !containerChildren(field)[index]) return;
+        selectedId = field.id;
+        selectedChildIndex = index;
+        render();
+        ensureChildEditorModal();
+        refreshChildEditorModal();
+        $('#webform-child-editor-modal').removeAttr('hidden').attr('aria-hidden', 'false');
+        $('body').addClass('webform-child-editor-open');
+        $('.webform-property-tabs button[data-panel="field"]').trigger('click');
+        window.setTimeout(function () { $('#webform-child-editor-modal [data-child-prop="label"]').trigger('focus'); }, 0);
+    }
+
+    function closeChildEditor() {
+        $('#webform-child-editor-modal').attr('hidden', true).attr('aria-hidden', 'true');
+        $('body').removeClass('webform-child-editor-open');
+        $(`.webform-select-child[data-child-index="${selectedChildIndex}"]`).trigger('focus');
+    }
+
+    $(document).on('keydown', function (event) {
+        const modal = document.getElementById('webform-child-editor-modal');
+        if (event.key !== 'Tab' || !modal || modal.hidden) return;
+        const focusable = Array.from(modal.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[href],[tabindex]:not([tabindex="-1"])')).filter(element => element.offsetParent !== null);
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+        }
+    });
+
     function containerChildrenSettings(field) {
         const children = containerChildren(field);
         const legacy = !children.length;
         if (selectedChildIndex !== null && !children[selectedChildIndex]) selectedChildIndex = null;
-        const child = selectedChildIndex === null ? null : children[selectedChildIndex];
-        const typeOptions = Object.entries(containerChildTypes).map(([value, label]) => `<option value="${value}" ${child && child.type === value ? 'selected' : ''}>${label}</option>`).join('');
-        const childOptions = child ? (() => {
-            const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz', 'product'].includes(child.type);
-            return `<div class="webform-child-editor webform-container-child" data-child-index="${selectedChildIndex}">
-                <div class="webform-child-editor-heading">
-                    <div><span>CHILD FIELD ${selectedChildIndex + 1}</span><h4>${escapeHtml(child.label || containerChildTypes[child.type] || 'Field')}</h4></div>
-                    <button type="button" class="button-link webform-close-child-editor" aria-label="Return to container settings">Done</button>
-                </div>
-                <div class="webform-child-editor-grid">
-                    <label>Field label<input type="text" data-child-prop="label" value="${escapeHtml(child.label || '')}" placeholder="Field label"></label>
-                    <label>Field type<select data-child-prop="type">${typeOptions}</select></label>
-                </div>
-                ${!['radio','checkbox','select','consent','hidden','poll','quiz','product','html','heading','rich_text','divider','price'].includes(child.type) ? `<label>Placeholder<input type="text" data-child-prop="placeholder" value="${escapeHtml(child.placeholder || '')}" placeholder="Optional helper text"></label>` : ''}
-                ${choices ? `<label>Options <small>One per line</small><textarea rows="5" data-child-prop="options">${escapeHtml((child.options || []).join('\n'))}</textarea></label>` : ''}
-                ${child.type === 'textarea' ? `<label>Visible rows<input type="number" min="2" max="30" data-child-prop="rows" value="${Number(child.rows || 4)}"></label>` : ''}
-                ${['number','slider','currency'].includes(child.type) ? `<div class="webform-child-editor-grid"><label>Minimum<input type="number" data-child-prop="min" value="${escapeHtml(child.min ?? '')}"></label><label>Maximum<input type="number" data-child-prop="max" value="${escapeHtml(child.max ?? '')}"></label><label>Step<input type="number" step="any" data-child-prop="step" value="${escapeHtml(child.step || '1')}"></label></div>` : ''}
-                ${child.type === 'hidden' ? `<label>Default value<input type="text" data-child-prop="default_value" value="${escapeHtml(child.default_value || '')}"></label>` : ''}
-                ${child.type === 'html' ? `<label>Safe HTML<textarea rows="6" data-child-prop="html">${escapeHtml(child.html || '')}</textarea></label>` : ''}
-                ${child.type === 'rich_text' ? `<label>Formatted content<textarea rows="7" data-child-prop="rich_content">${escapeHtml(child.rich_content || '')}</textarea></label>` : ''}
-                ${child.type === 'price' ? `<div class="webform-child-editor-grid"><label>Amount<input type="number" min="0" step="0.01" data-child-prop="price_amount" value="${Number(child.price_amount || 0)}"></label><label>Currency<input type="text" maxlength="3" data-child-prop="currency_code" value="${escapeHtml(child.currency_code || 'USD')}"></label></div>` : ''}
-                ${child.type === 'currency' ? `<label>Currency symbol<input type="text" maxlength="5" data-child-prop="currency_symbol" value="${escapeHtml(child.currency_symbol || '$')}"></label>` : ''}
-                ${child.type === 'calculation' ? `<label>Formula<input type="text" data-child-prop="formula" value="${escapeHtml(child.formula || '')}"></label>` : ''}
-                ${!['heading','hidden','html','rich_text','divider','price','calculation'].includes(child.type) ? `<label class="webform-check"><input type="checkbox" data-child-prop="required" ${child.required ? 'checked' : ''}> Required field</label>` : ''}
-                <div class="webform-child-editor-actions">
-                    <button type="button" class="button webform-child-move-out"><span class="dashicons dashicons-external"></span>Move to main form</button>
-                    <button type="button" class="button-link-delete webform-remove-container-child">Remove child field</button>
-                </div>
-            </div>`;
-        })() : `<div class="webform-child-editor-empty"><span class="dashicons dashicons-edit"></span><strong>Select a child field to edit</strong><p>Click a field inside the group on the live builder, or choose one below.</p></div>`;
         return `<div class="webform-container-field-settings">
             <div class="webform-container-field-heading"><div><h3>${field.type === 'repeater' ? 'Fields in each repeated row' : 'Fields inside this group'}</h3><p>Choose a field below or click it directly on the live form.</p></div>${children.length < 20 ? '<button type="button" class="button webform-add-container-child"><span class="dashicons dashicons-plus-alt2"></span>Add field</button>' : ''}</div>
-            ${legacy ? `<div class="webform-container-legacy"><strong>Legacy ${field.type === 'repeater' ? 'single-field repeater' : 'field group'}</strong><p>Convert this container to edit multiple child fields.</p><button type="button" class="button button-primary webform-convert-container">Convert container</button></div>` : `<div class="webform-child-navigator" role="list" aria-label="Child fields">${children.map((item, index) => `<button type="button" class="webform-select-child ${selectedChildIndex === index ? 'is-active' : ''}" data-child-index="${index}" role="listitem"><span class="dashicons dashicons-${item.type === 'textarea' ? 'text' : item.type === 'email' ? 'email' : 'edit'}"></span><span><strong>${escapeHtml(item.label || containerChildTypes[item.type] || 'Field')}</strong><small>${escapeHtml(containerChildTypes[item.type] || item.type)}</small></span><span class="dashicons dashicons-arrow-right-alt2"></span></button>`).join('')}</div>${childOptions}<p class="webform-container-builder-tip"><span class="dashicons dashicons-move"></span>Drag compatible fields from the main canvas into this container. Use each child’s handle on the canvas to reorder it.</p>`}
+            ${legacy ? `<div class="webform-container-legacy"><strong>Legacy ${field.type === 'repeater' ? 'single-field repeater' : 'field group'}</strong><p>Convert this container to edit multiple child fields.</p><button type="button" class="button button-primary webform-convert-container">Convert container</button></div>` : `<div class="webform-child-navigator" role="list" aria-label="Child fields">${children.map((item, index) => `<button type="button" class="webform-select-child ${selectedChildIndex === index ? 'is-active' : ''}" data-child-index="${index}" role="listitem" aria-haspopup="dialog"><span class="dashicons dashicons-${item.type === 'textarea' ? 'text' : item.type === 'email' ? 'email' : 'edit'}"></span><span><strong>${escapeHtml(item.label || containerChildTypes[item.type] || 'Field')}</strong><small>${escapeHtml(containerChildTypes[item.type] || item.type)}</small></span><span class="dashicons dashicons-arrow-right-alt2"></span></button>`).join('')}</div><p class="webform-container-builder-tip"><span class="dashicons dashicons-move"></span>Drag compatible fields from the main canvas into this container. Click any child field to edit it in a larger workspace.</p>`}
         </div>`;
     }
 
@@ -960,7 +1021,11 @@
     }
     $(document).on('click', '.webform-open-field-picker', openFieldPicker);
     $(document).on('click', '.webform-field-picker-close, .webform-field-picker-backdrop', closeFieldPicker);
-    $(document).on('keydown', function (event) { if (event.key === 'Escape') closeFieldPicker(); });
+    $(document).on('keydown', function (event) {
+        if (event.key !== 'Escape') return;
+        closeFieldPicker();
+        closeChildEditor();
+    });
     $(document).on('click', '.webform-palette-item', function () { addField($(this).data('type')); closeFieldPicker(); });
     function updateRecaptchaPanels() {
         const mode = $('#webform-recaptcha-mode').val() || 'enterprise';
@@ -988,10 +1053,7 @@
         event.stopPropagation();
         const parent = containerFromElement(this);
         if (!parent || !WebformAdmin.proActive) return;
-        selectedId = parent.id;
-        selectedChildIndex = Number($(this).data('child-index'));
-        render();
-        $('.webform-property-tabs button[data-panel="field"]').trigger('click');
+        openChildEditor(parent, Number($(this).data('child-index')));
     });
     $(document).on('click', '.webform-live-container', function (event) {
         if ($(event.target).closest('.webform-container-preview-child,.webform-live-container-drop,.webform-container-preview-add').length) return;
@@ -1085,7 +1147,7 @@
         field.children.push(createContainerChild('text'));
         selectedChildIndex = field.children.length - 1;
         dirty = true;
-        render();
+        openChildEditor(field, selectedChildIndex);
     });
     $(document).on('click', '.webform-live-container-drop', function (event) {
         event.preventDefault();
@@ -1097,7 +1159,7 @@
         selectedChildIndex = field.children.length - 1;
         dirty = true;
         scheduleHistory(0);
-        render();
+        openChildEditor(field, selectedChildIndex);
     });
     $(document).on('input', '.webform-live-container-title', function (event) {
         event.stopPropagation();
@@ -1155,25 +1217,21 @@
         const field = selectedField();
         if (!field) return;
         const index = Number($(this).closest('.webform-container-child').data('child-index'));
+        closeChildEditor();
         removeContainerChild(field, index);
     });
     $(document).on('click', '.webform-child-move-out', function () {
         const field = selectedField();
         if (!field || selectedChildIndex === null) return;
+        closeChildEditor();
         moveContainerChildOut(field, selectedChildIndex);
     });
     $(document).on('click', '.webform-select-child', function () {
         const field = selectedField();
         if (!field) return;
-        selectedChildIndex = Number($(this).data('child-index'));
-        render();
-        $('.webform-property-tabs button[data-panel="field"]').trigger('click');
+        openChildEditor(field, Number($(this).data('child-index')));
     });
-    $(document).on('click', '.webform-close-child-editor', function () {
-        selectedChildIndex = null;
-        renderSettings();
-        $('#webform-canvas .is-child-selected').removeClass('is-child-selected');
-    });
+    $(document).on('click', '.webform-child-editor-close,.webform-child-editor-backdrop,.webform-child-editor-done', closeChildEditor);
     $(document).on('click', '.webform-convert-container', function () {
         const field = selectedField();
         if (!field) return;
@@ -1196,9 +1254,9 @@
         }
         selectedChildIndex = 0;
         dirty = true;
-        render();
+        openChildEditor(field, 0);
     });
-    $(document).on('input change', '#webform-field-settings [data-child-prop]', function () {
+    $(document).on('input change', '#webform-child-editor-modal [data-child-prop]', function () {
         const field = selectedField();
         if (!field) return;
         const index = Number($(this).closest('.webform-container-child').data('child-index'));
@@ -1212,9 +1270,15 @@
             child.options = child.type === 'product' ? ['Standard|19.99', 'Premium|39.99'] : ['Option 1', 'Option 2'];
         }
         dirty = true;
+        scheduleHistory();
         if (prop === 'type') {
             render();
+            refreshChildEditorModal();
             return;
+        }
+        if (prop === 'label') {
+            $('#webform-child-editor-title').text(`Edit ${child.label || containerChildTypes[child.type] || 'child field'}`);
+            $('#webform-child-editor-modal .webform-child-editor-heading h4').text(child.label || containerChildTypes[child.type] || 'Field');
         }
         $('#webform-canvas').html(schema[activeStage].fields.map(fieldCard).join(''));
         initializeLiveContainers();
