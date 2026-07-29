@@ -17,7 +17,7 @@ class Webform_Mailer {
     }
 
     public function menu() {
-        add_submenu_page('formorbit', __('Email Delivery', 'formorbit'), __('Email Delivery', 'formorbit'), 'manage_options', 'formorbit-email-delivery', array($this, 'page'), 2);
+        add_submenu_page('formorbit', __('Email Delivery', 'formorbit'), __('Email Delivery', 'formorbit'), 'manage_options', 'formorbit-email-delivery', array($this, 'page'), 5);
     }
 
     public function configure($phpmailer) {
