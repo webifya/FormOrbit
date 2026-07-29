@@ -109,7 +109,7 @@ class Webform_Public {
         );
         $custom_html = apply_filters('webform_custom_field_html', '', $field, $id, $name);
         if ($custom_html !== '') {
-            echo wp_kses($custom_html, array(
+            $allowed_custom_html = apply_filters('webform_custom_field_allowed_html', array(
                 'div' => array('class' => true, 'data-*' => true),
                 'fieldset' => array('class' => true, 'data-*' => true),
                 'legend' => array(),
@@ -121,7 +121,8 @@ class Webform_Public {
                 'strong' => array('class' => true),
                 'em' => array('class' => true),
                 'small' => array(),
-            ));
+            ), $field);
+            echo wp_kses($custom_html, $allowed_custom_html);
             return;
         }
         if ($field['type'] === 'hidden') {
@@ -140,6 +141,19 @@ class Webform_Public {
         $describedby = $id . '-error';
         $condition = !empty($field['condition']['enabled']) ? $field['condition'] : array();
         $condition_attr = ' data-field-id="' . esc_attr($field['id']) . '"' . ($condition ? ' data-condition="' . esc_attr(wp_json_encode($condition)) . '"' : '');
+        if ($field['type'] === 'name') {
+            ?>
+            <fieldset class="webform-field webform-field-name <?php echo esc_attr($field_class); ?>"<?php echo $condition_attr; ?>>
+                <legend><?php echo $label_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></legend>
+                <div class="webform-name-fields">
+                    <label for="<?php echo esc_attr($id . '-first'); ?>"><span><?php esc_html_e('First name', 'webform'); ?></span><input id="<?php echo esc_attr($id . '-first'); ?>" type="text" name="<?php echo esc_attr($name . '[first]'); ?>" maxlength="100" autocomplete="given-name" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $required; ?>></label>
+                    <label for="<?php echo esc_attr($id . '-last'); ?>"><span><?php esc_html_e('Last name', 'webform'); ?></span><input id="<?php echo esc_attr($id . '-last'); ?>" type="text" name="<?php echo esc_attr($name . '[last]'); ?>" maxlength="100" autocomplete="family-name" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $required; ?>></label>
+                </div>
+                <span class="webform-error" id="<?php echo esc_attr($describedby); ?>"></span>
+            </fieldset>
+            <?php
+            return;
+        }
         if (in_array($field['type'], array('radio', 'checkbox', 'poll', 'quiz'), true)) {
             $input_type = $field['type'] === 'checkbox' ? 'checkbox' : 'radio';
             ?>
@@ -256,8 +270,17 @@ class Webform_Public {
                 if ($field['type'] === 'captcha' && $this->google_recaptcha_enabled()) $value = '__recaptcha__';
                 if ($field['type'] === 'file') $value = !empty($_FILES['fields']['name'][$field['id']]) ? '__pending_upload__' : '';
                 $value = apply_filters('webform_raw_submission_value', $value, $field, $form_id, $posted);
+                $name_incomplete = false;
+                if ($field['type'] === 'name') {
+                    $first_name = is_array($value) ? sanitize_text_field($value['first'] ?? '') : '';
+                    $last_name = is_array($value) ? sanitize_text_field($value['last'] ?? '') : '';
+                    $name_incomplete = !empty($field['required']) && (!$first_name || !$last_name);
+                    $value = trim($first_name . ' ' . $last_name);
+                }
                 $value = is_array($value) ? array_slice(array_map('sanitize_text_field', $value), 0, 100) : substr(sanitize_textarea_field($value), 0, 10000);
-                if (!empty($field['required']) && (empty($value) && $value !== '0')) {
+                if ($name_incomplete) {
+                    $errors[$field['id']] = sprintf(__('Enter a complete %s.', 'webform'), $field['label']);
+                } elseif (!empty($field['required']) && (empty($value) && $value !== '0')) {
                     $errors[$field['id']] = sprintf(__('%s is required.', 'webform'), $field['label']);
                 } elseif ($field['type'] === 'email' && $value && !is_email($value)) {
                     $errors[$field['id']] = __('Enter a valid email address.', 'webform');
@@ -366,7 +389,7 @@ class Webform_Public {
     }
 
     private function field_type_enabled($field) {
-        $pro_types = array('calculation', 'field_group', 'signature', 'address', 'repeater', 'appointment', 'nps', 'currency', 'product', 'price');
+        $pro_types = array('calculation', 'field_group', 'signature', 'rich_text', 'address', 'repeater', 'appointment', 'nps', 'currency', 'product', 'price');
         return !in_array($field['type'] ?? '', $pro_types, true) || (bool) apply_filters('webform_pro_field_enabled', false, $field);
     }
 
