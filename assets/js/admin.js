@@ -1,7 +1,7 @@
 (function ($) {
     'use strict';
 
-    const defaults = { name: 'Name', text: 'Text', email: 'Email', textarea: 'Long text', select: 'Dropdown', radio: 'Radio', checkbox: 'Checkbox', number: 'Number', date: 'Date', time: 'Time', phone: 'Phone', url: 'Website', file: 'File upload', consent: 'I agree to the terms', poll: 'Poll question', quiz: 'Quiz question', rating: 'Rating', slider: 'Slider', hidden: 'Hidden field', html: 'HTML content', captcha: 'Security check', calculation: 'Calculation', signature: 'Signature', rich_text: 'Rich text', field_group: 'Field group', address: 'Address', repeater: 'Repeater', appointment: 'Appointment', nps: 'NPS score', currency: 'Currency', product: 'Product selector', price: 'Price', heading: 'Heading' };
+    const defaults = { name: 'Name', text: 'Text', email: 'Email', textarea: 'Long text', select: 'Dropdown', radio: 'Radio', checkbox: 'Checkbox', number: 'Number', date: 'Date', time: 'Time', phone: 'Phone', url: 'Website', file: 'File upload', consent: 'I agree to the terms', poll: 'Poll question', quiz: 'Quiz question', rating: 'Rating', slider: 'Slider', hidden: 'Hidden field', html: 'HTML content', captcha: 'Security check', calculation: 'Calculation', signature: 'Signature', rich_text: 'Rich text', divider: 'Divider', field_group: 'Field group', address: 'Address', repeater: 'Repeater', appointment: 'Appointment', nps: 'NPS score', currency: 'Currency', product: 'Product selector', price: 'Price', heading: 'Heading' };
     const fieldIcons = {
         '': ['No icon', 'dashicons-minus'],
         user: ['Person', 'dashicons-admin-users'],
@@ -72,7 +72,7 @@
 
     function renderFreeProCatalog() {
         if (WebformAdmin.proInstalled || WebformAdmin.proStyling || $('.webform-free-pro-catalog').length) return;
-        const fields = ['Calculation', 'Field group', 'E-signature', 'Rich text / contracts', 'Address', 'Repeater', 'Appointment', 'NPS score', 'Currency', 'Product selector', 'Price', 'Advanced upload'];
+        const fields = ['Calculation', 'Field group', 'E-signature', 'Rich text / contracts', 'Divider', 'Address', 'Repeater', 'Appointment', 'NPS score', 'Currency', 'Product selector', 'Price', 'Advanced upload'];
         const integrations = {
             'Email marketing & CRM': ['Mailchimp', 'Brevo', 'ActiveCampaign', 'Kit', 'GetResponse', 'LeadConnector / GoHighLevel'],
             'Payments': ['Stripe', 'PayPal', 'Square', 'Bank transfer'],
@@ -157,6 +157,7 @@
             field_group: `<div class="webform-preview-group" style="--preview-columns:${Math.max(1, Math.min(4, Number(field.group_columns || 2)))}">${Array.from({ length: Math.max(1, Math.min(6, Number(field.group_count || 2))) }, (_, index) => `<span><small>Grouped field ${index + 1}</small><i></i></span>`).join('')}</div>`,
             signature: '<div class="webform-preview-signature"><span>Sign here</span><svg viewBox="0 0 240 48" aria-hidden="true"><path d="M8 38c30-4 31-30 43-23 10 6-8 22-2 24 11 4 21-25 29-20 6 4-7 18 0 20 9 2 13-13 20-11 5 2 3 9 13 9 16 0 24-8 39-5"/></svg><small>Clear signature</small></div>',
             rich_text: `<div class="webform-preview-rich-text">${safeRichPreview(field.rich_content || '<h3>Agreement terms</h3><p>Add your contract or agreement content here.</p>')}</div>`,
+            divider: '<div class="webform-preview-divider" aria-hidden="true"><span></span></div>',
             address: '<div class="webform-preview-address"><i>Street address</i><i>City</i><i>State / Province</i><i>Postal code</i><i>Country</i></div>',
             repeater: '<div class="webform-preview-repeater"><div><i></i><button type="button">×</button></div><div><i></i><button type="button">×</button></div><small>＋ Add another</small></div>',
             appointment: '<div class="webform-preview-control webform-preview-with-icon"><span>Select date and time</span><span class="dashicons dashicons-calendar-alt"></span></div>',
@@ -304,13 +305,15 @@
             return;
         }
         const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz', 'product'].includes(field.type);
-        const candidates = schema.flatMap(stage => stage.fields).filter(item => item.id !== field.id && !['heading','file','html','rich_text'].includes(item.type));
+        const candidates = schema.flatMap(stage => stage.fields).filter(item => item.id !== field.id && !['heading','file','html','rich_text','divider'].includes(item.type));
         const condition = field.condition || { enabled: false, field_id: '', operator: 'equals', value: '' };
         const selectedIcon = fieldIcons[field.icon] || fieldIcons[''];
         $('#webform-field-settings').html(`
             <p class="description">Field ID: <code>${escapeHtml(field.id)}</code></p>
             <label>Label<input type="text" data-prop="label" value="${escapeHtml(field.label)}"></label>
-            ${WebformAdmin.proActive && !['hidden','html','rich_text'].includes(field.type) ? `<div class="webform-icon-property"><label>Field icon <small>Shown beside the label</small></label><button type="button" class="webform-open-icon-gallery"><span class="dashicons ${escapeHtml(selectedIcon[1])}" aria-hidden="true"></span><span>${escapeHtml(selectedIcon[0])}</span><span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span></button></div>` : ''}
+            ${!['hidden','html','rich_text','divider','heading','consent','captcha'].includes(field.type) ? `<label class="webform-check"><input type="checkbox" data-prop="hide_label" ${field.hide_label ? 'checked' : ''}> Hide label on public form <small>The label remains available to screen readers.</small></label>` : ''}
+            ${['html','rich_text','divider'].includes(field.type) ? '<p class="description">The editor label helps identify this element and is already hidden on the public form.</p>' : ''}
+            ${WebformAdmin.proActive && !['hidden','html','rich_text','divider'].includes(field.type) ? `<div class="webform-icon-property"><label>Field icon <small>Shown beside the label</small></label><button type="button" class="webform-open-icon-gallery"><span class="dashicons ${escapeHtml(selectedIcon[1])}" aria-hidden="true"></span><span>${escapeHtml(selectedIcon[0])}</span><span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span></button></div>` : ''}
             ${!['name','heading','consent','file','hidden','html','rich_text','captcha','rating','slider'].includes(field.type) && !choices ? `<label>Placeholder<input type="text" data-prop="placeholder" value="${escapeHtml(field.placeholder || '')}"></label>` : ''}
             ${choices ? `<label>Options <small>One per line</small><textarea rows="6" data-prop="options">${escapeHtml((field.options || []).join('\n'))}</textarea></label>` : ''}
             ${field.type === 'quiz' ? `<label>Correct answer<select data-prop="correct_answer"><option value="">Choose answer</option>${(field.options || []).map(option => `<option value="${escapeHtml(option)}" ${field.correct_answer === option ? 'selected' : ''}>${escapeHtml(option)}</option>`).join('')}</select></label><label>Points<input type="number" min="1" max="100" data-prop="points" value="${Number(field.points || 1)}"></label>` : ''}
@@ -328,7 +331,7 @@
             ${field.type === 'currency' ? `<label>Currency symbol<input type="text" maxlength="5" data-prop="currency_symbol" value="${escapeHtml(field.currency_symbol || '$')}"></label><label>Minimum<input type="number" step="0.01" data-prop="min" value="${Number(field.min ?? 0)}"></label><label>Maximum<input type="number" step="0.01" data-prop="max" value="${Number(field.max ?? 999999999)}"></label>` : ''}
             ${field.type === 'product' ? `<p class="description">Enter each product as <code>Product name|19.99</code>.</p>` : ''}
             ${field.type === 'price' ? `<label>Amount<input type="number" min="0" step="0.01" data-prop="price_amount" value="${Number(field.price_amount || 0)}"></label><label>Currency<select data-prop="currency_code">${['USD','EUR','GBP','CAD','AUD','BDT'].map(code => `<option ${field.currency_code === code ? 'selected' : ''}>${code}</option>`).join('')}</select></label>` : ''}
-            ${!['heading','hidden','html','rich_text'].includes(field.type) ? `<label class="webform-check"><input type="checkbox" data-prop="required" ${field.required ? 'checked' : ''}> Required field</label>` : ''}
+            ${!['heading','hidden','html','rich_text','divider'].includes(field.type) ? `<label class="webform-check"><input type="checkbox" data-prop="required" ${field.required ? 'checked' : ''}> Required field</label>` : ''}
             ${field.type !== 'heading' && candidates.length ? `<hr><h3>Conditional display</h3>
                 <label class="webform-check"><input type="checkbox" data-condition="enabled" ${condition.enabled ? 'checked' : ''}> Show this field conditionally</label>
                 <div class="webform-condition-settings ${condition.enabled ? '' : 'is-hidden'}">
@@ -357,7 +360,7 @@
             return;
         }
         const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz', 'product'].includes(type);
-        const field = { id: uid('field'), type, label: defaults[type] || 'Field', icon: '', placeholder: '', required: ['consent','captcha','signature'].includes(type), options: choices ? (type === 'product' ? ['Standard|19.99', 'Premium|39.99'] : ['Option 1', 'Option 2']) : [], allowed_extensions: 'jpg,jpeg,png,pdf,doc,docx', max_size: 5, correct_answer: '', points: 1, default_value: '', html: '<p>Add your content here.</p>', rich_content: type === 'rich_text' ? '<h3>Agreement terms</h3><p>Describe the terms, responsibilities, and conditions of this agreement.</p><p><strong>Acceptance:</strong> Add a Consent field and E-signature below this agreement.</p>' : '', rows: 5, date_rule: 'any', date_min: '', date_max: '', min: 0, max: type === 'currency' ? 999999999 : 100, step: 1, formula: '', decimal_places: 2, group_count: 2, group_columns: 2, repeater_min: 1, repeater_max: 10, repeater_button: 'Add another', currency_symbol: '$', price_amount: 0, currency_code: 'USD', min_date: '', max_date: '', style: { width: WebformAdmin.proActive ? 'auto' : '100' }, condition: { enabled: false, field_id: '', operator: 'equals', value: '' } };
+        const field = { id: uid('field'), type, label: defaults[type] || 'Field', icon: '', placeholder: '', hide_label: false, required: ['consent','captcha','signature'].includes(type), options: choices ? (type === 'product' ? ['Standard|19.99', 'Premium|39.99'] : ['Option 1', 'Option 2']) : [], allowed_extensions: 'jpg,jpeg,png,pdf,doc,docx', max_size: 5, correct_answer: '', points: 1, default_value: '', html: '<p>Add your content here.</p>', rich_content: type === 'rich_text' ? '<h3>Agreement terms</h3><p>Describe the terms, responsibilities, and conditions of this agreement.</p><p><strong>Acceptance:</strong> Add a Consent field and E-signature below this agreement.</p>' : '', rows: 5, date_rule: 'any', date_min: '', date_max: '', min: 0, max: type === 'currency' ? 999999999 : 100, step: 1, formula: '', decimal_places: 2, group_count: 2, group_columns: 2, repeater_min: 1, repeater_max: 10, repeater_button: 'Add another', currency_symbol: '$', price_amount: 0, currency_code: 'USD', min_date: '', max_date: '', style: { width: WebformAdmin.proActive ? 'auto' : '100' }, condition: { enabled: false, field_id: '', operator: 'equals', value: '' } };
         schema[activeStage].fields.push(field);
         selectedId = field.id;
         dirty = true;
@@ -435,11 +438,11 @@
         const field = selectedField();
         if (!field) return;
         const prop = $(this).data('prop');
-        field[prop] = prop === 'required' ? $(this).is(':checked') : prop === 'options' ? $(this).val().split('\n').map(v => v.trim()).filter(Boolean) : $(this).val();
+        field[prop] = ['required', 'hide_label'].includes(prop) ? $(this).is(':checked') : prop === 'options' ? $(this).val().split('\n').map(v => v.trim()).filter(Boolean) : $(this).val();
         dirty = true;
         const caret = this.selectionStart;
         $('#webform-canvas').html(schema[activeStage].fields.map(fieldCard).join(''));
-        if (prop !== 'required') {
+        if (!['required', 'hide_label'].includes(prop)) {
             const input = document.querySelector(`#webform-field-settings [data-prop="${prop}"]`);
             if (input && caret != null) input.setSelectionRange(caret, caret);
         }
@@ -633,7 +636,7 @@
             $('#webform-id').val(response.data.id);
             dirty = false;
             $('#webform-save-status').html(`Saved · <code>${escapeHtml(response.data.shortcode)}</code>`);
-            window.history.replaceState({}, '', `admin.php?page=webform-builder&form_id=${response.data.id}`);
+            window.history.replaceState({}, '', `admin.php?page=formorbit-builder&form_id=${response.data.id}`);
         }).fail(function (xhr) {
             const message = xhr.responseJSON && xhr.responseJSON.data ? xhr.responseJSON.data.message : 'Save failed.';
             $('#webform-save-status').text(message);
