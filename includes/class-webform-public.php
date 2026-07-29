@@ -13,7 +13,7 @@ class Webform_Public {
     }
 
     public function preview() {
-        $form_id = isset($_GET['webform_preview']) ? absint($_GET['webform_preview']) : 0;
+        $form_id = isset($_GET['formorbit_preview']) ? absint($_GET['formorbit_preview']) : (isset($_GET['webform_preview']) ? absint($_GET['webform_preview']) : 0);
         if (!$form_id) {
             return;
         }
@@ -36,7 +36,7 @@ class Webform_Public {
             <?php wp_head(); ?>
             <style>.webform-preview-page{background:#f0f2f5;margin:0;padding:32px 18px}.webform-preview-toolbar{align-items:center;display:flex;justify-content:space-between;margin:0 auto 18px;max-width:900px}.webform-preview-toolbar strong{font:600 16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.webform-preview-toolbar a{background:#2271b1;border-radius:4px;color:#fff;font:600 13px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:10px 14px;text-decoration:none}.webform-preview-frame{margin:auto;max-width:900px}</style>
         </head><body class="webform-preview-page">
-            <div class="webform-preview-toolbar"><strong><?php echo esc_html(sprintf(__('Previewing “%s”', 'formorbit'), $form->post_title)); ?></strong><a href="<?php echo esc_url(admin_url('admin.php?page=webform-builder&form_id=' . $form_id)); ?>"><?php esc_html_e('Back to editor', 'formorbit'); ?></a></div>
+            <div class="webform-preview-toolbar"><strong><?php echo esc_html(sprintf(__('Previewing “%s”', 'formorbit'), $form->post_title)); ?></strong><a href="<?php echo esc_url(admin_url('admin.php?page=formorbit-builder&form_id=' . $form_id)); ?>"><?php esc_html_e('Back to editor', 'formorbit'); ?></a></div>
             <main class="webform-preview-frame"><?php echo do_shortcode('[formorbit id="' . absint($form_id) . '"]'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></main>
             <?php wp_footer(); ?>
         </body></html>
@@ -109,6 +109,7 @@ class Webform_Public {
             apply_filters('webform_field_label_html', esc_html($field['label']), $field),
             array('span' => array('class' => true, 'aria-hidden' => true))
         );
+        $label_class = !empty($field['hide_label']) ? ' class="screen-reader-text"' : '';
         $custom_html = apply_filters('webform_custom_field_html', '', $field, $id, $name);
         if ($custom_html !== '') {
             $allowed_custom_html = apply_filters('webform_custom_field_allowed_html', array(
@@ -146,7 +147,7 @@ class Webform_Public {
         if ($field['type'] === 'name') {
             ?>
             <fieldset class="webform-field webform-field-name <?php echo esc_attr($field_class); ?>"<?php echo $condition_attr; ?>>
-                <legend><?php echo $label_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></legend>
+                <legend<?php echo $label_class; ?>><?php echo $label_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></legend>
                 <div class="webform-name-fields">
                     <label for="<?php echo esc_attr($id . '-first'); ?>"><span><?php esc_html_e('First name', 'formorbit'); ?></span><input id="<?php echo esc_attr($id . '-first'); ?>" type="text" name="<?php echo esc_attr($name . '[first]'); ?>" maxlength="100" autocomplete="given-name" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $required; ?>></label>
                     <label for="<?php echo esc_attr($id . '-last'); ?>"><span><?php esc_html_e('Last name', 'formorbit'); ?></span><input id="<?php echo esc_attr($id . '-last'); ?>" type="text" name="<?php echo esc_attr($name . '[last]'); ?>" maxlength="100" autocomplete="family-name" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $required; ?>></label>
@@ -160,7 +161,7 @@ class Webform_Public {
             $input_type = $field['type'] === 'checkbox' ? 'checkbox' : 'radio';
             ?>
             <fieldset class="webform-field webform-field-<?php echo esc_attr($field['type'] . ' ' . $field_class); ?>"<?php echo $condition_attr; ?>>
-                <legend><?php echo $label_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></legend>
+                <legend<?php echo $label_class; ?>><?php echo $label_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></legend>
                 <div class="webform-choices" <?php echo $field['type'] === 'checkbox' && $required ? 'data-required="true"' : ''; ?>>
                     <?php foreach ($field['options'] as $index => $option) : $option_id = $id . '-' . $index; ?>
                         <label for="<?php echo esc_attr($option_id); ?>"><input id="<?php echo esc_attr($option_id); ?>" type="<?php echo esc_attr($input_type); ?>" name="<?php echo esc_attr($name . ($input_type === 'checkbox' ? '[]' : '')); ?>" value="<?php echo esc_attr($option); ?>" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $input_type === 'radio' && $required && $index === 0 ? ' required' : ''; ?>> <?php echo esc_html($option); ?></label>
@@ -203,13 +204,13 @@ class Webform_Public {
         }
         if ($field['type'] === 'rating') {
             ?>
-            <fieldset class="webform-field webform-field-rating <?php echo esc_attr($field_class); ?>"<?php echo $condition_attr; ?>><legend><?php echo $label_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></legend><div class="webform-rating"><?php for ($rating = 5; $rating >= 1; $rating--) : ?><input id="<?php echo esc_attr($id . '-' . $rating); ?>" type="radio" name="<?php echo esc_attr($name); ?>" value="<?php echo esc_attr($rating); ?>" <?php echo $required && $rating === 1 ? 'required' : ''; ?>><label for="<?php echo esc_attr($id . '-' . $rating); ?>" aria-label="<?php echo esc_attr(sprintf(__('%d stars', 'formorbit'), $rating)); ?>">★</label><?php endfor; ?></div><span class="webform-error" id="<?php echo esc_attr($describedby); ?>"></span></fieldset>
+            <fieldset class="webform-field webform-field-rating <?php echo esc_attr($field_class); ?>"<?php echo $condition_attr; ?>><legend<?php echo $label_class; ?>><?php echo $label_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></legend><div class="webform-rating"><?php for ($rating = 5; $rating >= 1; $rating--) : ?><input id="<?php echo esc_attr($id . '-' . $rating); ?>" type="radio" name="<?php echo esc_attr($name); ?>" value="<?php echo esc_attr($rating); ?>" <?php echo $required && $rating === 1 ? 'required' : ''; ?>><label for="<?php echo esc_attr($id . '-' . $rating); ?>" aria-label="<?php echo esc_attr(sprintf(__('%d stars', 'formorbit'), $rating)); ?>">★</label><?php endfor; ?></div><span class="webform-error" id="<?php echo esc_attr($describedby); ?>"></span></fieldset>
             <?php
             return;
         }
         ?>
         <div class="webform-field webform-field-<?php echo esc_attr($field['type'] . ' ' . $field_class); ?>"<?php echo $condition_attr; ?>>
-            <label for="<?php echo esc_attr($id); ?>"><?php echo $label_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></label>
+            <label for="<?php echo esc_attr($id); ?>"<?php echo $label_class; ?>><?php echo $label_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></label>
             <?php if ($field['type'] === 'textarea') : ?>
                 <textarea id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" rows="<?php echo esc_attr(min(30, max(2, absint($field['rows'] ?? 5)))); ?>" maxlength="10000" aria-describedby="<?php echo esc_attr($describedby); ?>" placeholder="<?php echo esc_attr($field['placeholder']); ?>"<?php echo $required; ?>></textarea>
             <?php elseif ($field['type'] === 'select') : ?>
