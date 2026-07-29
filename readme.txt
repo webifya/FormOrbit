@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 4.0.0
+Stable tag: 4.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -47,6 +47,12 @@ FormOrbit is created by Mahfuzar Rahman. Advanced automation, payment, document,
 5. Copy the generated `[formorbit id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 4.1.0 =
+* Added the advanced Divider design panel used by FormOrbit Pro.
+* Added live Divider previews for labels, solid, dashed, dotted, and double rules.
+* Expanded the searchable Pro field-icon gallery with 28 additional business, content, device, and workflow icons.
+* Added a Pro-only one-click field duplication shortcut in the builder.
 
 = 4.0.0 =
 * Completed the FormOrbit filename transition by removing the legacy webform.php entry file.
