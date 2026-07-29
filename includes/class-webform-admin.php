@@ -8,6 +8,8 @@ class Webform_Admin {
         add_action('admin_enqueue_scripts', array($this, 'assets'));
         add_action('wp_ajax_webform_save_form', array($this, 'save_form'));
         add_action('wp_ajax_webform_delete_form', array($this, 'delete_form'));
+        add_action('admin_post_webform_restore_form', array($this, 'restore_form'));
+        add_action('admin_post_webform_permanently_delete_form', array($this, 'permanently_delete_form'));
         add_action('admin_post_webform_duplicate_form', array($this, 'duplicate_form'));
         add_action('admin_post_webform_export_entries', array($this, 'export_entries'));
         add_action('admin_post_webform_delete_entry', array($this, 'delete_entry'));
@@ -66,7 +68,11 @@ class Webform_Admin {
         if (!current_user_can('manage_options')) {
             return;
         }
-        $forms = get_posts(array('post_type' => 'webform_form', 'posts_per_page' => -1, 'post_status' => array('publish', 'draft'), 'orderby' => 'modified', 'order' => 'DESC'));
+        $current_view = isset($_GET['form_status']) && sanitize_key(wp_unslash($_GET['form_status'])) === 'trash' ? 'trash' : 'all';
+        $post_counts = wp_count_posts('webform_form');
+        $active_count = absint($post_counts->publish ?? 0) + absint($post_counts->draft ?? 0);
+        $trash_count = absint($post_counts->trash ?? 0);
+        $forms = get_posts(array('post_type' => 'webform_form', 'posts_per_page' => -1, 'post_status' => $current_view === 'trash' ? 'trash' : array('publish', 'draft'), 'orderby' => 'modified', 'order' => 'DESC'));
         $embed_counts = $this->embed_counts();
         ?>
         <div class="wrap webform-wrap">
@@ -74,9 +80,13 @@ class Webform_Admin {
                 <div><h1><?php esc_html_e('Webforms', 'webform'); ?></h1><p><?php esc_html_e('Build and manage forms without code.', 'webform'); ?></p></div>
                 <a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=webform-builder')); ?>"><?php esc_html_e('Create form', 'webform'); ?></a>
             </div>
+            <ul class="subsubsub">
+                <li><a href="<?php echo esc_url(admin_url('admin.php?page=webform')); ?>" class="<?php echo $current_view === 'all' ? 'current' : ''; ?>"><?php esc_html_e('All', 'webform'); ?> <span class="count">(<?php echo esc_html($active_count); ?>)</span></a> | </li>
+                <li><a href="<?php echo esc_url(admin_url('admin.php?page=webform&form_status=trash')); ?>" class="<?php echo $current_view === 'trash' ? 'current' : ''; ?>"><?php esc_html_e('Trash', 'webform'); ?> <span class="count">(<?php echo esc_html($trash_count); ?>)</span></a></li>
+            </ul>
             <div class="webform-card">
                 <?php if (!$forms) : ?>
-                    <div class="webform-empty"><span class="dashicons dashicons-feedback"></span><h2><?php esc_html_e('Create your first form', 'webform'); ?></h2><p><?php esc_html_e('Add fields, arrange stages, and publish it with a shortcode.', 'webform'); ?></p></div>
+                    <div class="webform-empty"><span class="dashicons <?php echo $current_view === 'trash' ? 'dashicons-trash' : 'dashicons-feedback'; ?>"></span><h2><?php echo $current_view === 'trash' ? esc_html__('Trash is empty', 'webform') : esc_html__('Create your first form', 'webform'); ?></h2><p><?php echo $current_view === 'trash' ? esc_html__('Deleted forms will appear here until they are restored or permanently removed.', 'webform') : esc_html__('Add fields, arrange stages, and publish it with a shortcode.', 'webform'); ?></p></div>
                 <?php else : ?>
                     <table class="wp-list-table widefat fixed striped table-view-list webform-forms-table"><thead><tr>
                         <th class="column-primary"><?php esc_html_e('Form', 'webform'); ?></th><th class="column-shortcode"><?php esc_html_e('Shortcode', 'webform'); ?></th><th><?php esc_html_e('Entries', 'webform'); ?></th><th><?php esc_html_e('Embeds', 'webform'); ?></th><th><?php esc_html_e('Status', 'webform'); ?></th><th><?php esc_html_e('Created', 'webform'); ?></th><th><?php esc_html_e('Updated', 'webform'); ?></th>
@@ -84,14 +94,18 @@ class Webform_Admin {
                     <?php foreach ($forms as $form) : ?>
                         <?php $edit_url = admin_url('admin.php?page=webform-builder&form_id=' . $form->ID); ?>
                         <tr>
-                            <td class="column-primary" data-colname="<?php esc_attr_e('Form', 'webform'); ?>"><strong><a class="row-title" href="<?php echo esc_url($edit_url); ?>"><?php echo esc_html($form->post_title); ?></a></strong>
-                                <div class="row-actions"><span><a href="<?php echo esc_url($edit_url); ?>"><?php esc_html_e('Edit', 'webform'); ?></a> | </span><span><a href="<?php echo esc_url(add_query_arg('panel', 'confirmation', $edit_url)); ?>"><?php esc_html_e('Settings', 'webform'); ?></a> | </span><span><a href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=webform_duplicate_form&form_id=' . $form->ID), 'webform_duplicate_' . $form->ID)); ?>"><?php esc_html_e('Duplicate', 'webform'); ?></a> | </span><span class="trash"><button type="button" class="button-link-delete webform-delete" data-id="<?php echo esc_attr($form->ID); ?>"><?php esc_html_e('Trash', 'webform'); ?></button> | </span><span><a href="<?php echo esc_url(wp_nonce_url(add_query_arg('webform_preview', $form->ID, home_url('/')), 'webform_preview_' . $form->ID)); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Preview', 'webform'); ?></a></span></div>
+                            <td class="column-primary" data-colname="<?php esc_attr_e('Form', 'webform'); ?>"><strong><?php if ($current_view === 'trash') : ?><?php echo esc_html($form->post_title); ?><?php else : ?><a class="row-title" href="<?php echo esc_url($edit_url); ?>"><?php echo esc_html($form->post_title); ?></a><?php endif; ?></strong>
+                                <?php if ($current_view === 'trash') : ?>
+                                    <div class="row-actions"><span><a href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=webform_restore_form&form_id=' . $form->ID), 'webform_restore_' . $form->ID)); ?>"><?php esc_html_e('Restore', 'webform'); ?></a> | </span><span class="delete"><a onclick="return confirm('<?php echo esc_js(__('Permanently delete this form and all of its entries?', 'webform')); ?>')" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=webform_permanently_delete_form&form_id=' . $form->ID), 'webform_permanently_delete_' . $form->ID)); ?>"><?php esc_html_e('Delete Permanently', 'webform'); ?></a></span></div>
+                                <?php else : ?>
+                                    <div class="row-actions"><span><a href="<?php echo esc_url($edit_url); ?>"><?php esc_html_e('Edit', 'webform'); ?></a> | </span><span><a href="<?php echo esc_url(add_query_arg('panel', 'confirmation', $edit_url)); ?>"><?php esc_html_e('Settings', 'webform'); ?></a> | </span><span><a href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=webform_duplicate_form&form_id=' . $form->ID), 'webform_duplicate_' . $form->ID)); ?>"><?php esc_html_e('Duplicate', 'webform'); ?></a> | </span><span class="trash"><button type="button" class="button-link-delete webform-delete" data-id="<?php echo esc_attr($form->ID); ?>"><?php esc_html_e('Trash', 'webform'); ?></button> | </span><span><a href="<?php echo esc_url(wp_nonce_url(add_query_arg('webform_preview', $form->ID, home_url('/')), 'webform_preview_' . $form->ID)); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Preview', 'webform'); ?></a></span></div>
+                                <?php endif; ?>
                                 <button type="button" class="toggle-row"><span class="screen-reader-text"><?php esc_html_e('Show more details', 'webform'); ?></span></button>
                             </td>
                             <td data-colname="<?php esc_attr_e('Shortcode', 'webform'); ?>"><code>[webform id="<?php echo esc_attr($form->ID); ?>"]</code></td>
                             <td data-colname="<?php esc_attr_e('Entries', 'webform'); ?>"><?php echo esc_html($this->entry_count($form->ID)); ?></td>
                             <td data-colname="<?php esc_attr_e('Embeds', 'webform'); ?>"><?php echo esc_html($embed_counts[$form->ID] ?? 0); ?></td>
-                            <td data-colname="<?php esc_attr_e('Status', 'webform'); ?>"><span class="webform-status webform-status-<?php echo esc_attr($form->post_status); ?>"><?php echo esc_html($form->post_status === 'publish' ? __('Published', 'webform') : __('Draft', 'webform')); ?></span></td>
+                            <td data-colname="<?php esc_attr_e('Status', 'webform'); ?>"><span class="webform-status webform-status-<?php echo esc_attr($form->post_status); ?>"><?php echo esc_html($form->post_status === 'trash' ? __('Trashed', 'webform') : ($form->post_status === 'publish' ? __('Published', 'webform') : __('Draft', 'webform'))); ?></span></td>
                             <td data-colname="<?php esc_attr_e('Created', 'webform'); ?>" title="<?php echo esc_attr(get_the_date('c', $form)); ?>"><?php echo esc_html(get_the_date(get_option('date_format'), $form)); ?></td>
                             <td data-colname="<?php esc_attr_e('Updated', 'webform'); ?>" title="<?php echo esc_attr(get_the_modified_date('c', $form)); ?>"><?php echo esc_html(get_the_modified_date(get_option('date_format'), $form)); ?></td>
                         </tr>
@@ -222,10 +236,12 @@ class Webform_Admin {
                     <?php $webhook_allowed = (bool) apply_filters('webform_allow_webhook_confirmation', false); ?>
                     <label><?php esc_html_e('After submission', 'webform'); ?><select id="webform-confirmation-type"><option value="message" <?php selected($settings['confirmation_type'] ?? 'message', 'message'); ?>><?php esc_html_e('Show confirmation message', 'webform'); ?></option><option value="redirect" <?php selected($settings['confirmation_type'] ?? '', 'redirect'); ?>><?php esc_html_e('Redirect to URL', 'webform'); ?></option><option value="webhook" <?php selected($settings['confirmation_type'] ?? '', 'webhook'); ?> <?php disabled(!$webhook_allowed); ?>><?php echo $webhook_allowed ? esc_html__('Send to webhook', 'webform') : esc_html__('Send to webhook — Pro', 'webform'); ?></option></select></label>
                     <div class="webform-confirmation-option" data-confirmation-option="message"><label><?php esc_html_e('Success message', 'webform'); ?></label><?php if (has_action('webform_confirmation_message_editor')) : do_action('webform_confirmation_message_editor', $settings); else : ?><textarea id="webform-success-message" rows="3"><?php echo esc_textarea(isset($settings['success_message']) ? $settings['success_message'] : __('Thanks! Your response has been submitted.', 'webform')); ?></textarea><div class="webform-pro-readonly-note">🔒 <?php esc_html_e('Rich-text confirmation messages are available in Pro.', 'webform'); ?></div><?php endif; ?></div>
-                    <label><?php esc_html_e('Notification email', 'webform'); ?><input type="email" id="webform-notification-email" value="<?php echo esc_attr(isset($settings['notification_email']) ? $settings['notification_email'] : get_option('admin_email')); ?>"></label>
+                    <label><?php esc_html_e('Admin notification email', 'webform'); ?><input type="email" id="webform-notification-email" value="<?php echo esc_attr(isset($settings['notification_email']) ? $settings['notification_email'] : get_option('admin_email')); ?>"><small><?php esc_html_e('Receives the standard submission notice and optional admin PDF.', 'webform'); ?></small></label>
                     <label><?php esc_html_e('Submit button text', 'webform'); ?><input type="text" id="webform-submit-label" value="<?php echo esc_attr(isset($settings['submit_label']) ? $settings['submit_label'] : __('Submit', 'webform')); ?>"></label>
                     <div class="webform-confirmation-option" data-confirmation-option="redirect"><label><?php esc_html_e('Redirect URL', 'webform'); ?><input type="url" id="webform-redirect-url" value="<?php echo esc_attr($settings['redirect_url'] ?? ''); ?>"></label></div>
                     <div class="webform-confirmation-option" data-confirmation-option="webhook"><label><?php esc_html_e('Webhook URL', 'webform'); ?><input type="url" id="webform-webhook-url" value="<?php echo esc_attr($settings['webhook_url'] ?? ''); ?>"></label><p class="description"><?php esc_html_e('The entry is saved before the JSON webhook is dispatched.', 'webform'); ?></p></div>
+                    <?php do_action('webform_builder_confirmation_controls', $form_id, $settings); ?>
+                    <?php if (!$this->is_pro_active()) : ?><div class="webform-pro-readonly-note"><strong><?php esc_html_e('More confirmation tools in Webform Pro', 'webform'); ?></strong><ul><li><?php esc_html_e('Save & Continue with secure resume links', 'webform'); ?></li><li><?php esc_html_e('Custom confirmation emails for visitors', 'webform'); ?></li><li><?php esc_html_e('PDF submission attachments', 'webform'); ?></li></ul></div><?php endif; ?>
                     </div><div class="webform-property-panel" data-panel="access"><h2><?php esc_html_e('Access and limits', 'webform'); ?></h2>
                     <label class="webform-check"><input type="checkbox" id="webform-require-login" <?php checked(!empty($settings['require_login'])); ?>> <?php esc_html_e('Require visitors to log in', 'webform'); ?></label>
                     <label><?php esc_html_e('Maximum total entries', 'webform'); ?><input type="number" min="0" id="webform-submission-limit" value="<?php echo esc_attr(absint($settings['submission_limit'] ?? 0)); ?>"><small><?php esc_html_e('Use 0 for unlimited.', 'webform'); ?></small></label>
@@ -411,6 +427,28 @@ class Webform_Admin {
         }
         wp_trash_post($form_id);
         wp_send_json_success();
+    }
+
+    public function restore_form() {
+        if (!current_user_can('manage_options')) wp_die(esc_html__('Permission denied.', 'webform'));
+        $form_id = isset($_GET['form_id']) ? absint($_GET['form_id']) : 0;
+        check_admin_referer('webform_restore_' . $form_id);
+        if (!$form_id || get_post_type($form_id) !== 'webform_form' || get_post_status($form_id) !== 'trash') wp_die(esc_html__('Trashed form not found.', 'webform'));
+        wp_untrash_post($form_id);
+        wp_safe_redirect(admin_url('admin.php?page=webform&form_status=trash'));
+        exit;
+    }
+
+    public function permanently_delete_form() {
+        if (!current_user_can('manage_options')) wp_die(esc_html__('Permission denied.', 'webform'));
+        $form_id = isset($_GET['form_id']) ? absint($_GET['form_id']) : 0;
+        check_admin_referer('webform_permanently_delete_' . $form_id);
+        if (!$form_id || get_post_type($form_id) !== 'webform_form' || get_post_status($form_id) !== 'trash') wp_die(esc_html__('Trashed form not found.', 'webform'));
+        $entry_ids = get_posts(array('post_type' => 'webform_entry', 'post_status' => 'private', 'posts_per_page' => -1, 'fields' => 'ids', 'meta_key' => '_webform_form_id', 'meta_value' => $form_id));
+        foreach ($entry_ids as $entry_id) wp_delete_post($entry_id, true);
+        wp_delete_post($form_id, true);
+        wp_safe_redirect(admin_url('admin.php?page=webform&form_status=trash'));
+        exit;
     }
 
     public function duplicate_form() {
