@@ -397,7 +397,7 @@ class Webform_Public {
     }
 
     private function field_type_enabled($field) {
-        $pro_types = array('calculation', 'field_group', 'signature', 'rich_text', 'address', 'repeater', 'appointment', 'nps', 'currency', 'product', 'price');
+        $pro_types = array('calculation', 'field_group', 'signature', 'rich_text', 'divider', 'address', 'repeater', 'appointment', 'nps', 'currency', 'product', 'price');
         return !in_array($field['type'] ?? '', $pro_types, true) || (bool) apply_filters('webform_pro_field_enabled', false, $field);
     }
 
