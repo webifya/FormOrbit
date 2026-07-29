@@ -553,7 +553,7 @@
     $(document).on('click', '#webform-save-theme', function () {
         const name = window.prompt('Theme name');
         if (!name || !name.trim()) return;
-        $.post(WebformAdmin.ajaxUrl, { action: 'webform_pro_save_theme', nonce: WebformAdmin.nonce, name: name.trim(), settings: JSON.stringify(currentThemeSettings()) }).done(function (response) {
+        $.post(WebformAdmin.ajaxUrl, { action: 'formorbit_pro_save_theme', nonce: WebformAdmin.nonce, name: name.trim(), settings: JSON.stringify(currentThemeSettings()) }).done(function (response) {
             if (!response.success) return;
             WebformAdmin.savedThemes = response.data.themes;
             $('#webform-saved-theme').append(`<option value="${escapeHtml(response.data.id)}">${escapeHtml(name.trim())}</option>`).val(response.data.id);
@@ -563,7 +563,7 @@
     $(document).on('click', '#webform-delete-theme', function () {
         const id = $('#webform-saved-theme').val();
         if (!id || !window.confirm('Delete this saved theme?')) return;
-        $.post(WebformAdmin.ajaxUrl, { action: 'webform_pro_delete_theme', nonce: WebformAdmin.nonce, theme_id: id }).done(function (response) {
+        $.post(WebformAdmin.ajaxUrl, { action: 'formorbit_pro_delete_theme', nonce: WebformAdmin.nonce, theme_id: id }).done(function (response) {
             if (!response.success) return;
             WebformAdmin.savedThemes = response.data.themes;
             $('#webform-saved-theme option:selected').remove();
@@ -625,7 +625,7 @@
         };
         document.dispatchEvent(new CustomEvent('webform:collect-settings', { detail: formSettings }));
         $.post(WebformAdmin.ajaxUrl, {
-            action: 'webform_save_form',
+            action: 'formorbit_save_form',
             nonce: WebformAdmin.nonce,
             form_id: $('#webform-id').val(),
             name: $('#webform-name').val(),
@@ -709,7 +709,7 @@
     $(document).on('click', '.webform-delete', function () {
         if (!window.confirm('Move this form to the trash?')) return;
         const row = $(this).closest('tr');
-        $.post(WebformAdmin.ajaxUrl, { action: 'webform_delete_form', nonce: WebformAdmin.nonce, form_id: $(this).data('id') }).done(function (response) {
+        $.post(WebformAdmin.ajaxUrl, { action: 'formorbit_delete_form', nonce: WebformAdmin.nonce, form_id: $(this).data('id') }).done(function (response) {
             if (response.success) row.fadeOut(200, function () { row.remove(); });
         });
     });
