@@ -199,6 +199,8 @@ class Webform_Admin {
             $schema = isset($templates[$template_key]) ? $templates[$template_key]['schema'] : '';
         }
         $settings = $form ? get_post_meta($form_id, '_webform_settings', true) : array();
+        $shortcode = $form_id ? '[formorbit id="' . $form_id . '"]' : '';
+        $php_embed = $form_id ? "<?php echo do_shortcode( '[formorbit id=\"" . $form_id . "\"]' ); ?>" : '';
         ?>
         <div class="wrap webform-wrap webform-builder-wrap">
             <div class="webform-page-head">
@@ -208,6 +210,21 @@ class Webform_Admin {
             <input type="hidden" id="webform-id" value="<?php echo esc_attr($form_id); ?>">
             <input type="hidden" id="webform-schema" value="<?php echo esc_attr(wp_json_encode($schema ? $schema : array())); ?>">
             <input type="hidden" id="webform-settings" value="<?php echo esc_attr(wp_json_encode($settings ? $settings : array())); ?>">
+            <section id="webform-embed-panel" class="webform-editor-embed"<?php echo $form_id ? '' : ' hidden'; ?>>
+                <div class="webform-editor-embed-head"><span class="dashicons dashicons-editor-code" aria-hidden="true"></span><div><strong><?php esc_html_e('Embed this form', 'formorbit'); ?></strong><small><?php esc_html_e('Copy the format that matches where you are adding the form.', 'formorbit'); ?></small></div></div>
+                <div class="webform-editor-embed-options">
+                    <div class="webform-editor-embed-option">
+                        <div><strong><?php esc_html_e('WordPress shortcode', 'formorbit'); ?></strong><small><?php esc_html_e('Use in posts, pages, widgets, and shortcode blocks.', 'formorbit'); ?></small></div>
+                        <code id="webform-editor-shortcode"><?php echo esc_html($shortcode); ?></code>
+                        <button type="button" class="button webform-copy-embed" data-copy-target="webform-editor-shortcode"><span class="dashicons dashicons-admin-page" aria-hidden="true"></span><span class="webform-copy-label"><?php esc_html_e('Copy', 'formorbit'); ?></span></button>
+                    </div>
+                    <div class="webform-editor-embed-option">
+                        <div><strong><?php esc_html_e('PHP template code', 'formorbit'); ?></strong><small><?php esc_html_e('Use only inside a trusted theme or plugin PHP template.', 'formorbit'); ?></small></div>
+                        <code id="webform-editor-php"><?php echo esc_html($php_embed); ?></code>
+                        <button type="button" class="button webform-copy-embed" data-copy-target="webform-editor-php"><span class="dashicons dashicons-admin-page" aria-hidden="true"></span><span class="webform-copy-label"><?php esc_html_e('Copy', 'formorbit'); ?></span></button>
+                    </div>
+                </div>
+            </section>
             <div class="webform-name-row">
                 <label for="webform-name"><?php esc_html_e('Form name', 'formorbit'); ?></label>
                 <input id="webform-name" class="regular-text" value="<?php echo esc_attr($form ? $form->post_title : __('Untitled form', 'formorbit')); ?>">
