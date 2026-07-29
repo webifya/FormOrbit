@@ -10,6 +10,8 @@ class Webform_Public {
         add_action('template_redirect', array($this, 'preview'));
         add_action('wp_ajax_webform_submit', array($this, 'submit'));
         add_action('wp_ajax_nopriv_webform_submit', array($this, 'submit'));
+        add_action('wp_ajax_formorbit_submit', array($this, 'submit'));
+        add_action('wp_ajax_nopriv_formorbit_submit', array($this, 'submit'));
     }
 
     public function preview() {
@@ -73,7 +75,7 @@ class Webform_Public {
         <div id="webform-<?php echo esc_attr($form_id); ?>" class="webform-public webform-style-<?php echo esc_attr($preset); ?>" style="<?php echo esc_attr($inline_style); ?>" data-form-id="<?php echo esc_attr($form_id); ?>">
             <?php if (count($schema) > 1) : ?><div class="webform-progress" role="progressbar" aria-valuemin="1" aria-valuemax="<?php echo esc_attr(count($schema)); ?>" aria-valuenow="1"><div class="webform-progress-bar"></div></div><ol class="webform-steps"><?php foreach ($schema as $index => $stage) : ?><li class="<?php echo $index === 0 ? 'is-active' : ''; ?>" <?php echo $index === 0 ? 'aria-current="step"' : ''; ?>><?php echo esc_html($stage['title']); ?></li><?php endforeach; ?></ol><?php endif; ?>
             <form novalidate enctype="multipart/form-data">
-                <input type="hidden" name="action" value="webform_submit">
+                <input type="hidden" name="action" value="formorbit_submit">
                 <input type="hidden" name="form_id" value="<?php echo esc_attr($form_id); ?>">
                 <input type="hidden" name="nonce" value="<?php echo esc_attr(wp_create_nonce('webform_submit_' . $form_id)); ?>">
                 <input type="hidden" name="started_at" value="<?php echo esc_attr(time()); ?>">
