@@ -5,6 +5,7 @@ defined('ABSPATH') || exit;
 class Webform_Admin {
     public function __construct() {
         add_action('admin_menu', array($this, 'menu'));
+        add_action('admin_init', array($this, 'redirect_legacy_pages'));
         add_action('admin_enqueue_scripts', array($this, 'assets'));
         add_action('wp_ajax_webform_save_form', array($this, 'save_form'));
         add_action('wp_ajax_webform_delete_form', array($this, 'delete_form'));
@@ -23,24 +24,49 @@ class Webform_Admin {
             __('FormOrbit', 'formorbit'),
             __('FormOrbit', 'formorbit'),
             'manage_options',
-            'webform',
+            'formorbit',
             array($this, 'forms_page'),
             'dashicons-feedback',
             26
         );
-        add_submenu_page('webform', __('All Forms', 'formorbit'), __('All Forms', 'formorbit'), 'manage_options', 'webform', array($this, 'forms_page'), 0);
-        add_submenu_page('webform', __('Add New', 'formorbit'), __('Add New', 'formorbit'), 'manage_options', 'webform-builder', array($this, 'builder_page'), 1);
-        add_submenu_page('webform', __('Form Templates', 'formorbit'), __('Templates', 'formorbit'), 'manage_options', 'webform-templates', array($this, 'templates_page'), 3);
-        add_submenu_page('webform', __('Entries', 'formorbit'), __('Entries', 'formorbit'), 'manage_options', 'webform-entries', array($this, 'entries_page'), 4);
-        add_submenu_page('webform', __('Import and Export Forms', 'formorbit'), __('Import / Export', 'formorbit'), 'manage_options', 'webform-import', array($this, 'import_page'), 5);
-        add_submenu_page('webform', __('FormOrbit Settings', 'formorbit'), __('Settings', 'formorbit'), 'manage_options', 'webform-settings', array($this, 'settings_page'), 6);
+        add_submenu_page('formorbit', __('All Forms', 'formorbit'), __('All Forms', 'formorbit'), 'manage_options', 'formorbit', array($this, 'forms_page'), 0);
+        add_submenu_page('formorbit', __('Add New', 'formorbit'), __('Add New', 'formorbit'), 'manage_options', 'formorbit-builder', array($this, 'builder_page'), 1);
+        add_submenu_page('formorbit', __('Form Templates', 'formorbit'), __('Templates', 'formorbit'), 'manage_options', 'formorbit-templates', array($this, 'templates_page'), 3);
+        add_submenu_page('formorbit', __('Entries', 'formorbit'), __('Entries', 'formorbit'), 'manage_options', 'formorbit-entries', array($this, 'entries_page'), 4);
+        add_submenu_page('formorbit', __('Import and Export Forms', 'formorbit'), __('Import / Export', 'formorbit'), 'manage_options', 'formorbit-import', array($this, 'import_page'), 5);
+        add_submenu_page('formorbit', __('FormOrbit Settings', 'formorbit'), __('Settings', 'formorbit'), 'manage_options', 'formorbit-settings', array($this, 'settings_page'), 6);
         if (!$this->is_pro_active()) {
-            add_submenu_page('webform', __('FormOrbit Pro', 'formorbit'), __('Upgrade to Pro', 'formorbit'), 'manage_options', 'webform-pro', array($this, 'pro_page'), 7);
+            add_submenu_page('formorbit', __('FormOrbit Pro', 'formorbit'), __('Upgrade to Pro', 'formorbit'), 'manage_options', 'formorbit-pro', array($this, 'pro_page'), 7);
         }
     }
 
+    public function redirect_legacy_pages() {
+        if (!is_admin() || !current_user_can('manage_options') || empty($_GET['page'])) {
+            return;
+        }
+        $legacy = array(
+            'webform' => 'formorbit',
+            'webform-builder' => 'formorbit-builder',
+            'webform-templates' => 'formorbit-templates',
+            'webform-entries' => 'formorbit-entries',
+            'webform-import' => 'formorbit-import',
+            'webform-settings' => 'formorbit-settings',
+            'webform-pro' => 'formorbit-pro',
+            'webform-email-delivery' => 'formorbit-email-delivery',
+        );
+        $page = sanitize_key(wp_unslash($_GET['page']));
+        if (!isset($legacy[$page])) {
+            return;
+        }
+        $query = wp_unslash($_GET);
+        $query['page'] = $legacy[$page];
+        wp_safe_redirect(add_query_arg(map_deep($query, 'sanitize_text_field'), admin_url('admin.php')));
+        exit;
+    }
+
     public function assets($hook) {
-        if (strpos($hook, 'webform') === false) {
+        $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+        if (strpos($page, 'formorbit') !== 0 && strpos($hook, 'formorbit') === false) {
             return;
         }
         wp_enqueue_style('webform-admin', WEBFORM_URL . 'assets/css/admin.css', array(), WEBFORM_VERSION);
@@ -55,10 +81,10 @@ class Webform_Admin {
         wp_localize_script('webform-admin', 'WebformAdmin', apply_filters('webform_admin_script_data', array(
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('webform_admin'),
-            'formsUrl' => admin_url('admin.php?page=webform'),
+            'formsUrl' => admin_url('admin.php?page=formorbit'),
             'proInstalled' => false,
             'proActive' => false,
-            'proFieldTypes' => array('calculation', 'field_group', 'signature', 'rich_text', 'address', 'repeater', 'appointment', 'nps', 'currency', 'product', 'price'),
+            'proFieldTypes' => array('calculation', 'field_group', 'signature', 'rich_text', 'divider', 'address', 'repeater', 'appointment', 'nps', 'currency', 'product', 'price'),
             'proStyling' => false,
             'savedThemes' => array(),
         )));
@@ -78,13 +104,13 @@ class Webform_Admin {
         <div class="wrap webform-wrap">
             <div class="webform-page-head">
                 <div><h1><?php esc_html_e('FormOrbit', 'formorbit'); ?></h1><p><?php esc_html_e('Build and manage forms without code.', 'formorbit'); ?></p></div>
-                <a class="button button-primary webform-create-button" href="<?php echo esc_url(admin_url('admin.php?page=webform-builder')); ?>"><span class="dashicons dashicons-plus-alt2"></span><?php esc_html_e('Create form', 'formorbit'); ?></a>
+                <a class="button button-primary webform-create-button" href="<?php echo esc_url(admin_url('admin.php?page=formorbit-builder')); ?>"><span class="dashicons dashicons-plus-alt2"></span><?php esc_html_e('Create form', 'formorbit'); ?></a>
             </div>
             <div class="webform-card webform-list-card">
                 <div class="webform-list-toolbar">
                     <nav class="webform-list-tabs" aria-label="<?php esc_attr_e('Form views', 'formorbit'); ?>">
-                        <a href="<?php echo esc_url(admin_url('admin.php?page=webform')); ?>" class="<?php echo $current_view === 'all' ? 'is-active' : ''; ?>"><span class="dashicons dashicons-feedback"></span><?php esc_html_e('All forms', 'formorbit'); ?><strong><?php echo esc_html($active_count); ?></strong></a>
-                        <a href="<?php echo esc_url(admin_url('admin.php?page=webform&form_status=trash')); ?>" class="<?php echo $current_view === 'trash' ? 'is-active' : ''; ?>"><span class="dashicons dashicons-trash"></span><?php esc_html_e('Trash', 'formorbit'); ?><strong><?php echo esc_html($trash_count); ?></strong></a>
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=formorbit')); ?>" class="<?php echo $current_view === 'all' ? 'is-active' : ''; ?>"><span class="dashicons dashicons-feedback"></span><?php esc_html_e('All forms', 'formorbit'); ?><strong><?php echo esc_html($active_count); ?></strong></a>
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=formorbit&form_status=trash')); ?>" class="<?php echo $current_view === 'trash' ? 'is-active' : ''; ?>"><span class="dashicons dashicons-trash"></span><?php esc_html_e('Trash', 'formorbit'); ?><strong><?php echo esc_html($trash_count); ?></strong></a>
                     </nav>
                     <?php if ($forms) : ?><label class="webform-list-search"><span class="dashicons dashicons-search"></span><span class="screen-reader-text"><?php esc_html_e('Search forms', 'formorbit'); ?></span><input type="search" id="webform-form-search" placeholder="<?php esc_attr_e('Search forms…', 'formorbit'); ?>" autocomplete="off"></label><?php endif; ?>
                 </div>
@@ -95,7 +121,7 @@ class Webform_Admin {
                         <th class="column-primary"><?php esc_html_e('Form', 'formorbit'); ?></th><th class="column-shortcode"><?php esc_html_e('Shortcode', 'formorbit'); ?></th><th class="column-number"><?php esc_html_e('Entries', 'formorbit'); ?></th><th class="column-number"><?php esc_html_e('Embeds', 'formorbit'); ?></th><th class="column-status"><?php esc_html_e('Status', 'formorbit'); ?></th><th class="column-date"><?php esc_html_e('Created', 'formorbit'); ?></th><th class="column-date"><?php esc_html_e('Updated', 'formorbit'); ?></th>
                     </tr></thead><tbody>
                     <?php foreach ($forms as $form) : ?>
-                        <?php $edit_url = admin_url('admin.php?page=webform-builder&form_id=' . $form->ID); $preview_url = wp_nonce_url(add_query_arg('webform_preview', $form->ID, home_url('/')), 'webform_preview_' . $form->ID); $schema = (array) get_post_meta($form->ID, '_webform_schema', true); $stage_count = max(1, count($schema)); $shortcode = '[formorbit id="' . $form->ID . '"]'; ?>
+                        <?php $edit_url = admin_url('admin.php?page=formorbit-builder&form_id=' . $form->ID); $preview_url = wp_nonce_url(add_query_arg('formorbit_preview', $form->ID, home_url('/')), 'webform_preview_' . $form->ID); $schema = (array) get_post_meta($form->ID, '_webform_schema', true); $stage_count = max(1, count($schema)); $shortcode = '[formorbit id="' . $form->ID . '"]'; ?>
                         <tr data-form-title="<?php echo esc_attr(strtolower($form->post_title . ' ' . $form->ID)); ?>">
                             <td class="column-primary" data-colname="<?php esc_attr_e('Form', 'formorbit'); ?>"><div class="webform-form-cell"><span class="webform-form-icon"><span class="dashicons dashicons-feedback"></span></span><div class="webform-form-summary"><strong class="webform-form-title"><?php if ($current_view === 'trash') : ?><?php echo esc_html($form->post_title); ?><?php else : ?><a class="row-title" href="<?php echo esc_url($edit_url); ?>"><?php echo esc_html($form->post_title); ?></a><a class="webform-title-preview" href="<?php echo esc_url($preview_url); ?>" target="_blank" rel="noopener noreferrer" title="<?php esc_attr_e('Preview form', 'formorbit'); ?>" aria-label="<?php esc_attr_e('Preview form', 'formorbit'); ?>"><span class="dashicons dashicons-visibility" aria-hidden="true"></span></a><?php endif; ?></strong><small><?php echo esc_html(sprintf(_n('ID %1$d · %2$d stage', 'ID %1$d · %2$d stages', $stage_count, 'formorbit'), $form->ID, $stage_count)); ?></small>
                                 <?php if ($current_view === 'trash') : ?>
@@ -107,7 +133,7 @@ class Webform_Admin {
                                 <button type="button" class="toggle-row"><span class="screen-reader-text"><?php esc_html_e('Show more details', 'formorbit'); ?></span></button>
                             </td>
                             <td data-colname="<?php esc_attr_e('Shortcode', 'formorbit'); ?>"><span class="webform-shortcode"><code><?php echo esc_html($shortcode); ?></code><button type="button" class="webform-copy-shortcode" data-shortcode="<?php echo esc_attr($shortcode); ?>" title="<?php esc_attr_e('Copy shortcode', 'formorbit'); ?>" aria-label="<?php esc_attr_e('Copy shortcode', 'formorbit'); ?>"><span class="dashicons dashicons-admin-page"></span></button></span></td>
-                            <td data-colname="<?php esc_attr_e('Entries', 'formorbit'); ?>"><a class="webform-count-link" href="<?php echo esc_url(admin_url('admin.php?page=webform-entries&form_id=' . $form->ID)); ?>"><?php echo esc_html($this->entry_count($form->ID)); ?></a></td>
+                            <td data-colname="<?php esc_attr_e('Entries', 'formorbit'); ?>"><a class="webform-count-link" href="<?php echo esc_url(admin_url('admin.php?page=formorbit-entries&form_id=' . $form->ID)); ?>"><?php echo esc_html($this->entry_count($form->ID)); ?></a></td>
                             <td data-colname="<?php esc_attr_e('Embeds', 'formorbit'); ?>"><span class="webform-count-value"><?php echo esc_html($embed_counts[$form->ID] ?? 0); ?></span></td>
                             <td data-colname="<?php esc_attr_e('Status', 'formorbit'); ?>"><span class="webform-status webform-status-<?php echo esc_attr($form->post_status); ?>"><?php echo esc_html($form->post_status === 'trash' ? __('Trashed', 'formorbit') : ($form->post_status === 'publish' ? __('Published', 'formorbit') : __('Draft', 'formorbit'))); ?></span></td>
                             <td data-colname="<?php esc_attr_e('Created', 'formorbit'); ?>" title="<?php echo esc_attr(get_the_date('c', $form)); ?>"><span class="webform-date"><?php echo esc_html(get_the_date('M j, Y', $form)); ?></span></td>
@@ -209,7 +235,7 @@ class Webform_Admin {
                             'heading' => __('Heading', 'formorbit'),
                         );
                         $fields = apply_filters('webform_field_palette', $standard_fields);
-                        $field_icons = array('name' => 'dashicons-admin-users', 'text' => 'dashicons-editor-textcolor', 'email' => 'dashicons-email', 'textarea' => 'dashicons-editor-alignleft', 'select' => 'dashicons-arrow-down-alt2', 'radio' => 'dashicons-marker', 'checkbox' => 'dashicons-yes', 'number' => 'dashicons-editor-ol', 'date' => 'dashicons-calendar', 'time' => 'dashicons-clock', 'phone' => 'dashicons-phone', 'url' => 'dashicons-admin-links', 'file' => 'dashicons-upload', 'consent' => 'dashicons-privacy', 'poll' => 'dashicons-chart-bar', 'quiz' => 'dashicons-welcome-learn-more', 'rating' => 'dashicons-star-filled', 'slider' => 'dashicons-image-flip-horizontal', 'hidden' => 'dashicons-hidden', 'html' => 'dashicons-editor-code', 'captcha' => 'dashicons-shield', 'page_break' => 'dashicons-controls-forward', 'heading' => 'dashicons-heading', 'calculation' => 'dashicons-editor-table', 'field_group' => 'dashicons-grid-view', 'signature' => 'dashicons-edit', 'rich_text' => 'dashicons-editor-paste-word', 'address' => 'dashicons-location-alt', 'repeater' => 'dashicons-list-view', 'appointment' => 'dashicons-calendar-alt', 'nps' => 'dashicons-chart-line', 'currency' => 'dashicons-money-alt', 'product' => 'dashicons-cart', 'price' => 'dashicons-tag');
+                        $field_icons = array('name' => 'dashicons-admin-users', 'text' => 'dashicons-editor-textcolor', 'email' => 'dashicons-email', 'textarea' => 'dashicons-editor-alignleft', 'select' => 'dashicons-arrow-down-alt2', 'radio' => 'dashicons-marker', 'checkbox' => 'dashicons-yes', 'number' => 'dashicons-editor-ol', 'date' => 'dashicons-calendar', 'time' => 'dashicons-clock', 'phone' => 'dashicons-phone', 'url' => 'dashicons-admin-links', 'file' => 'dashicons-upload', 'consent' => 'dashicons-privacy', 'poll' => 'dashicons-chart-bar', 'quiz' => 'dashicons-welcome-learn-more', 'rating' => 'dashicons-star-filled', 'slider' => 'dashicons-image-flip-horizontal', 'hidden' => 'dashicons-hidden', 'html' => 'dashicons-editor-code', 'captcha' => 'dashicons-shield', 'page_break' => 'dashicons-controls-forward', 'heading' => 'dashicons-heading', 'calculation' => 'dashicons-editor-table', 'field_group' => 'dashicons-grid-view', 'signature' => 'dashicons-edit', 'rich_text' => 'dashicons-editor-paste-word', 'divider' => 'dashicons-minus', 'address' => 'dashicons-location-alt', 'repeater' => 'dashicons-list-view', 'appointment' => 'dashicons-calendar-alt', 'nps' => 'dashicons-chart-line', 'currency' => 'dashicons-money-alt', 'product' => 'dashicons-cart', 'price' => 'dashicons-tag');
                         foreach (array_intersect_key($fields, $standard_fields) as $type => $label) {
                             printf('<button type="button" class="webform-palette-item" data-type="%s"><span class="dashicons %s"></span><span>%s</span></button>', esc_attr($type), esc_attr($field_icons[$type] ?? 'dashicons-plus-alt2'), esc_html($label));
                         }
@@ -231,6 +257,7 @@ class Webform_Admin {
                                 <div><span class="dashicons dashicons-chart-line"></span><?php esc_html_e('NPS score', 'formorbit'); ?></div>
                                 <div><span class="dashicons dashicons-money-alt"></span><?php esc_html_e('Currency', 'formorbit'); ?></div>
                                 <div><span class="dashicons dashicons-editor-paste-word"></span><?php esc_html_e('Rich text / contracts', 'formorbit'); ?></div>
+                                <div><span class="dashicons dashicons-minus"></span><?php esc_html_e('Divider', 'formorbit'); ?></div>
                                 <div><span class="dashicons dashicons-lock"></span><?php esc_html_e('Advanced uploads', 'formorbit'); ?></div>
                             </div>
                         </div>
@@ -269,7 +296,7 @@ class Webform_Admin {
                     <?php do_action('webform_builder_property_panels', $form_id, $settings); ?>
                 </aside>
             </div>
-            <?php if (!$form_id && !$template_key) : ?><div class="webform-template-modal" id="webform-template-modal" role="dialog" aria-modal="true" aria-labelledby="webform-template-title"><div class="webform-template-dialog"><button type="button" class="webform-template-close" aria-label="<?php esc_attr_e('Close', 'formorbit'); ?>">×</button><h2 id="webform-template-title"><?php esc_html_e('Choose a starting template', 'formorbit'); ?></h2><p><?php esc_html_e('Select a template or start from a blank form.', 'formorbit'); ?></p><div class="webform-template-modal-grid"><a class="webform-template-choice" href="#"><strong><?php esc_html_e('Blank Form', 'formorbit'); ?></strong><span><?php esc_html_e('Build from scratch', 'formorbit'); ?></span></a><?php foreach ($this->free_templates() as $key => $template) : ?><a class="webform-template-choice" href="<?php echo esc_url(admin_url('admin.php?page=webform-builder&template=' . $key)); ?>"><strong><?php echo esc_html($template['name']); ?></strong><span><?php echo esc_html($template['description']); ?></span></a><?php endforeach; ?></div></div></div><?php endif; ?>
+            <?php if (!$form_id && !$template_key) : ?><div class="webform-template-modal" id="webform-template-modal" role="dialog" aria-modal="true" aria-labelledby="webform-template-title"><div class="webform-template-dialog"><button type="button" class="webform-template-close" aria-label="<?php esc_attr_e('Close', 'formorbit'); ?>">×</button><h2 id="webform-template-title"><?php esc_html_e('Choose a starting template', 'formorbit'); ?></h2><p><?php esc_html_e('Select a template or start from a blank form.', 'formorbit'); ?></p><div class="webform-template-modal-grid"><a class="webform-template-choice" href="#"><strong><?php esc_html_e('Blank Form', 'formorbit'); ?></strong><span><?php esc_html_e('Build from scratch', 'formorbit'); ?></span></a><?php foreach ($this->free_templates() as $key => $template) : ?><a class="webform-template-choice" href="<?php echo esc_url(admin_url('admin.php?page=formorbit-builder&template=' . $key)); ?>"><strong><?php echo esc_html($template['name']); ?></strong><span><?php echo esc_html($template['description']); ?></span></a><?php endforeach; ?></div></div></div><?php endif; ?>
         </div>
         <?php
     }
@@ -291,7 +318,7 @@ class Webform_Admin {
         ?>
         <div class="wrap webform-wrap"><div class="webform-page-head"><div><h1><?php esc_html_e('Entries', 'formorbit'); ?></h1><p><?php esc_html_e('Review, filter, export, or remove submissions.', 'formorbit'); ?></p></div>
         <a class="button" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=webform_export_entries&form_id=' . $form_filter), 'webform_export_entries')); ?>"><?php esc_html_e('Export CSV', 'formorbit'); ?></a></div>
-        <form method="get" class="webform-entry-filter"><input type="hidden" name="page" value="webform-entries"><select name="form_id"><option value="0"><?php esc_html_e('All forms', 'formorbit'); ?></option><?php foreach ($forms as $form) : ?><option value="<?php echo esc_attr($form->ID); ?>" <?php selected($form_filter, $form->ID); ?>><?php echo esc_html($form->post_title); ?></option><?php endforeach; ?></select><button class="button"><?php esc_html_e('Filter', 'formorbit'); ?></button></form>
+        <form method="get" class="webform-entry-filter"><input type="hidden" name="page" value="formorbit-entries"><select name="form_id"><option value="0"><?php esc_html_e('All forms', 'formorbit'); ?></option><?php foreach ($forms as $form) : ?><option value="<?php echo esc_attr($form->ID); ?>" <?php selected($form_filter, $form->ID); ?>><?php echo esc_html($form->post_title); ?></option><?php endforeach; ?></select><button class="button"><?php esc_html_e('Filter', 'formorbit'); ?></button></form>
         <div class="webform-card"><table class="widefat striped"><thead><tr><th><?php esc_html_e('Form', 'formorbit'); ?></th><th><?php esc_html_e('Status', 'formorbit'); ?></th><th><?php esc_html_e('Submitted data', 'formorbit'); ?></th><th><?php esc_html_e('Date', 'formorbit'); ?></th><th></th></tr></thead><tbody>
         <?php if (!$entries) : ?><tr><td colspan="5"><?php esc_html_e('No entries yet.', 'formorbit'); ?></td></tr><?php endif; ?>
         <?php foreach ($entries as $entry) : $data = get_post_meta($entry->ID, '_webform_data', true); $form_id = get_post_meta($entry->ID, '_webform_form_id', true); ?>
@@ -360,7 +387,9 @@ class Webform_Admin {
 
     private function sanitize_schema($schema) {
         $clean = array();
-        $allowed_types = apply_filters('webform_allowed_field_types', array('name', 'text', 'email', 'textarea', 'select', 'radio', 'checkbox', 'number', 'date', 'time', 'phone', 'url', 'file', 'consent', 'poll', 'quiz', 'rating', 'slider', 'hidden', 'html', 'captcha', 'heading'));
+        $base_types = array('name', 'text', 'email', 'textarea', 'select', 'radio', 'checkbox', 'number', 'date', 'time', 'phone', 'url', 'file', 'consent', 'poll', 'quiz', 'rating', 'slider', 'hidden', 'html', 'captcha', 'heading');
+        $allowed_types = apply_filters('webform_allowed_field_types', $base_types);
+        $pro_types = array_values(array_diff($allowed_types, $base_types));
         $allowed_operators = array('equals', 'not_equals', 'contains', 'starts_with', 'ends_with', 'greater_than', 'less_than', 'not_empty', 'empty');
         $seen_ids = array();
         foreach ($schema as $stage_index => $stage) {
@@ -394,6 +423,7 @@ class Webform_Admin {
                     'type' => $type,
                     'label' => substr(sanitize_text_field($field['label'] ?? ''), 0, 200),
                     'placeholder' => substr(sanitize_text_field($field['placeholder'] ?? ''), 0, 300),
+                    'hide_label' => !empty($field['hide_label']),
                     'required' => !empty($field['required']),
                     'row_start' => !empty($field['row_start']),
                     'options' => array_slice(array_values(array_filter(array_map('sanitize_text_field', (array) ($field['options'] ?? array())))), 0, 100),
@@ -466,7 +496,7 @@ class Webform_Admin {
         check_admin_referer('webform_restore_' . $form_id);
         if (!$form_id || get_post_type($form_id) !== 'webform_form' || get_post_status($form_id) !== 'trash') wp_die(esc_html__('Trashed form not found.', 'formorbit'));
         wp_untrash_post($form_id);
-        wp_safe_redirect(admin_url('admin.php?page=webform&form_status=trash'));
+        wp_safe_redirect(admin_url('admin.php?page=formorbit&form_status=trash'));
         exit;
     }
 
@@ -478,7 +508,7 @@ class Webform_Admin {
         $entry_ids = get_posts(array('post_type' => 'webform_entry', 'post_status' => 'private', 'posts_per_page' => -1, 'fields' => 'ids', 'meta_key' => '_webform_form_id', 'meta_value' => $form_id));
         foreach ($entry_ids as $entry_id) wp_delete_post($entry_id, true);
         wp_delete_post($form_id, true);
-        wp_safe_redirect(admin_url('admin.php?page=webform&form_status=trash'));
+        wp_safe_redirect(admin_url('admin.php?page=formorbit&form_status=trash'));
         exit;
     }
 
@@ -490,7 +520,7 @@ class Webform_Admin {
         $copy_id = wp_insert_post(array('post_type' => 'webform_form', 'post_status' => 'publish', 'post_title' => sprintf(__('%s (Copy)', 'formorbit'), get_the_title($form_id))));
         update_post_meta($copy_id, '_webform_schema', get_post_meta($form_id, '_webform_schema', true));
         update_post_meta($copy_id, '_webform_settings', get_post_meta($form_id, '_webform_settings', true));
-        wp_safe_redirect(admin_url('admin.php?page=webform-builder&form_id=' . $copy_id));
+        wp_safe_redirect(admin_url('admin.php?page=formorbit-builder&form_id=' . $copy_id));
         exit;
     }
 
@@ -499,7 +529,7 @@ class Webform_Admin {
         $entry_id = isset($_GET['entry_id']) ? absint($_GET['entry_id']) : 0;
         check_admin_referer('webform_delete_entry_' . $entry_id);
         if (get_post_type($entry_id) === 'webform_entry') wp_delete_post($entry_id, true);
-        wp_safe_redirect(wp_get_referer() ?: admin_url('admin.php?page=webform-entries'));
+        wp_safe_redirect(wp_get_referer() ?: admin_url('admin.php?page=formorbit-entries'));
         exit;
     }
 
@@ -542,7 +572,7 @@ class Webform_Admin {
 
     public function suppress_editor_notices() {
         $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
-        if ($page !== 'webform-builder') return;
+        if ($page !== 'formorbit-builder') return;
         remove_all_actions('admin_notices');
         remove_all_actions('all_admin_notices');
     }
@@ -578,7 +608,7 @@ class Webform_Admin {
             'recaptcha_api_key' => sanitize_text_field(wp_unslash($_POST['recaptcha_api_key'] ?? '')),
             'recaptcha_action' => preg_replace('/[^A-Za-z0-9_\\/-]/', '', wp_unslash($_POST['recaptcha_action'] ?? 'WEBFORM_SUBMIT')),
         ), false);
-        wp_safe_redirect(admin_url('admin.php?page=webform-settings'));
+        wp_safe_redirect(admin_url('admin.php?page=formorbit-settings'));
         exit;
     }
 
@@ -639,7 +669,7 @@ class Webform_Admin {
         $form_id = wp_insert_post(array('post_type' => 'webform_form', 'post_status' => 'publish', 'post_title' => sanitize_text_field($converted['name'] ?: __('Imported Form', 'formorbit'))));
         update_post_meta($form_id, '_webform_schema', $this->sanitize_schema($converted['schema']));
         update_post_meta($form_id, '_webform_settings', $this->sanitize_import_settings($converted['settings'] ?? array()));
-        wp_safe_redirect(admin_url('admin.php?page=webform-builder&form_id=' . $form_id));
+        wp_safe_redirect(admin_url('admin.php?page=formorbit-builder&form_id=' . $form_id));
         exit;
     }
 
@@ -912,9 +942,9 @@ class Webform_Admin {
         <div class="wrap webform-wrap">
             <div class="webform-page-head"><div><h1><?php esc_html_e('Form Templates', 'formorbit'); ?></h1><p><?php esc_html_e('Start with a complete form, then customize every field and stage.', 'formorbit'); ?></p></div></div>
             <div class="webform-template-grid">
-                <div class="webform-template-card"><span class="dashicons dashicons-plus-alt2"></span><h2><?php esc_html_e('Blank Form', 'formorbit'); ?></h2><p><?php esc_html_e('Start with an empty stage.', 'formorbit'); ?></p><a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=webform-builder')); ?>"><?php esc_html_e('Create', 'formorbit'); ?></a></div>
+                <div class="webform-template-card"><span class="dashicons dashicons-plus-alt2"></span><h2><?php esc_html_e('Blank Form', 'formorbit'); ?></h2><p><?php esc_html_e('Start with an empty stage.', 'formorbit'); ?></p><a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=formorbit-builder')); ?>"><?php esc_html_e('Create', 'formorbit'); ?></a></div>
                 <?php foreach ($this->free_templates() as $key => $template) : ?>
-                    <div class="webform-template-card"><?php if (!empty($template['pro'])) : ?><span class="webform-pro-badge"><?php esc_html_e('PRO', 'formorbit'); ?></span><?php else : ?><span class="dashicons <?php echo esc_attr($template['icon']); ?>"></span><?php endif; ?><h2><?php echo esc_html($template['name']); ?></h2><p><?php echo esc_html($template['description']); ?></p><a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=webform-builder&template=' . $key)); ?>"><?php esc_html_e('Use template', 'formorbit'); ?></a></div>
+                    <div class="webform-template-card"><?php if (!empty($template['pro'])) : ?><span class="webform-pro-badge"><?php esc_html_e('PRO', 'formorbit'); ?></span><?php else : ?><span class="dashicons <?php echo esc_attr($template['icon']); ?>"></span><?php endif; ?><h2><?php echo esc_html($template['name']); ?></h2><p><?php echo esc_html($template['description']); ?></p><a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=formorbit-builder&template=' . $key)); ?>"><?php esc_html_e('Use template', 'formorbit'); ?></a></div>
                 <?php endforeach; ?>
                 <?php if (!$this->is_pro_active()) : ?><div class="webform-template-card webform-template-pro"><span class="webform-pro-badge"><?php esc_html_e('PRO', 'formorbit'); ?></span><h2><?php esc_html_e('20 Premium Templates', 'formorbit'); ?></h2><p><?php esc_html_e('Payments, lead generation, bookings, applications, orders, onboarding, and advanced business workflows.', 'formorbit'); ?></p><a class="button" href="<?php echo esc_url($this->upgrade_url('templates')); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Explore Pro', 'formorbit'); ?></a></div><?php endif; ?>
             </div>
