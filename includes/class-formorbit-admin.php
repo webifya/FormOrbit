@@ -87,7 +87,8 @@ class Webform_Admin {
         wp_enqueue_style('webform-public-preview', WEBFORM_URL . 'assets/css/public.css', array('webform-field-style-upgrades'), WEBFORM_VERSION);
         wp_enqueue_style('webform-preset-preview', WEBFORM_URL . 'assets/css/preset-preview.css', array('webform-public-preview'), WEBFORM_VERSION);
         wp_enqueue_script('jquery-ui-sortable');
-        wp_enqueue_script('webform-admin', WEBFORM_URL . 'assets/js/admin.js', array('jquery', 'jquery-ui-sortable'), WEBFORM_VERSION, true);
+        wp_enqueue_script('jquery-ui-droppable');
+        wp_enqueue_script('webform-admin', WEBFORM_URL . 'assets/js/admin.js', array('jquery', 'jquery-ui-sortable', 'jquery-ui-droppable'), WEBFORM_VERSION, true);
         wp_localize_script('webform-admin', 'WebformAdmin', apply_filters('webform_admin_script_data', array(
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('webform_admin'),
@@ -429,7 +430,8 @@ class Webform_Admin {
     private function sanitize_schema($schema) {
         $clean = array();
         $base_types = array('name', 'text', 'email', 'textarea', 'select', 'radio', 'checkbox', 'number', 'date', 'time', 'phone', 'url', 'file', 'consent', 'poll', 'quiz', 'rating', 'slider', 'hidden', 'html', 'captcha', 'heading');
-        $allowed_types = apply_filters('webform_allowed_field_types', $base_types);
+        $known_pro_types = array('calculation', 'field_group', 'signature', 'rich_text', 'divider', 'address', 'repeater', 'appointment', 'nps', 'currency', 'product', 'price');
+        $allowed_types = array_unique(array_merge($base_types, $known_pro_types, apply_filters('webform_allowed_field_types', $base_types)));
         $pro_types = array_values(array_diff($allowed_types, $base_types));
         $allowed_operators = array('equals', 'not_equals', 'contains', 'starts_with', 'ends_with', 'greater_than', 'less_than', 'not_empty', 'empty');
         $seen_ids = array();
@@ -522,10 +524,10 @@ class Webform_Admin {
     }
 
     private function sanitize_container_children($children) {
-        $allowed_types = array('text', 'email', 'textarea', 'select', 'radio', 'checkbox', 'number', 'date', 'time', 'phone', 'url', 'consent', 'hidden');
+        $allowed_types = array('text', 'email', 'textarea', 'select', 'radio', 'checkbox', 'number', 'date', 'time', 'phone', 'url', 'consent', 'poll', 'quiz', 'rating', 'slider', 'hidden', 'html', 'heading', 'rich_text', 'divider', 'signature', 'appointment', 'nps', 'currency', 'product', 'price', 'calculation');
         $clean = array();
         $used_ids = array();
-        foreach (array_slice((array) $children, 0, 12) as $index => $child) {
+        foreach (array_slice((array) $children, 0, 20) as $index => $child) {
             if (!is_array($child)) continue;
             $type = sanitize_key($child['type'] ?? 'text');
             if (!in_array($type, $allowed_types, true)) $type = 'text';
@@ -550,6 +552,12 @@ class Webform_Admin {
                 'max' => is_numeric($child['max'] ?? null) ? (string) floatval($child['max']) : '',
                 'step' => is_numeric($child['step'] ?? null) && floatval($child['step']) > 0 ? (string) floatval($child['step']) : '1',
                 'default_value' => substr(sanitize_text_field($child['default_value'] ?? ''), 0, 500),
+                'html' => wp_kses_post(substr((string) ($child['html'] ?? ''), 0, 50000)),
+                'rich_content' => wp_kses_post(substr((string) ($child['rich_content'] ?? ''), 0, 100000)),
+                'currency_symbol' => substr(sanitize_text_field($child['currency_symbol'] ?? '$'), 0, 5),
+                'currency_code' => in_array(strtoupper($child['currency_code'] ?? 'USD'), array('USD', 'EUR', 'GBP', 'CAD', 'AUD', 'BDT'), true) ? strtoupper($child['currency_code']) : 'USD',
+                'price_amount' => max(0, floatval($child['price_amount'] ?? 0)),
+                'formula' => preg_replace('/[^a-zA-Z0-9_{}+\-*\/().\s]/', '', $child['formula'] ?? ''),
             );
         }
         return $clean;
