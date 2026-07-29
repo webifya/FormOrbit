@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.6.2
+Stable tag: 2.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -16,7 +16,7 @@ Webform provides a native WordPress form-building experience:
 
 * Drag-and-drop field ordering
 * Multiple stages with progress indicators
-* Text, email, textarea, dropdown, radio, checkbox, number, date, phone, URL, consent, secure file upload, and heading fields
+* Name, text, email, textarea, dropdown, radio, checkbox, number, date, phone, URL, consent, secure file upload, and heading fields
 * Conditional field visibility
 * Required-field and email validation
 * AJAX submission without page reload
@@ -48,6 +48,12 @@ Webform is created by Mahfuzar Rahman at Web Ninja LLC.
 5. Copy the generated `[webform id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 2.7.0 =
+* Added a dedicated Name field with responsive first-name and last-name inputs.
+* Added the Rich Text / Agreement field to the visible Pro field catalog.
+* Added shared builder support for Pro rich-text editing, media, previews, and safe frontend rendering.
+* Preserved Rich Text fields in locked mode when Webform Pro is unavailable.
 
 = 2.6.2 =
 * Moved the secure Preview shortcut beside each active form title.
