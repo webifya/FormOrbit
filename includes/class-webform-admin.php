@@ -58,7 +58,7 @@ class Webform_Admin {
             'formsUrl' => admin_url('admin.php?page=webform'),
             'proInstalled' => false,
             'proActive' => false,
-            'proFieldTypes' => array('calculation', 'field_group', 'signature', 'address', 'repeater', 'appointment', 'nps', 'currency', 'product', 'price'),
+            'proFieldTypes' => array('calculation', 'field_group', 'signature', 'rich_text', 'address', 'repeater', 'appointment', 'nps', 'currency', 'product', 'price'),
             'proStyling' => false,
             'savedThemes' => array(),
         )));
@@ -180,6 +180,7 @@ class Webform_Admin {
                     <div id="webform-palette" class="webform-palette">
                         <?php
                         $standard_fields = array(
+                            'name' => __('Name', 'webform'),
                             'text' => __('Text', 'webform'),
                             'email' => __('Email', 'webform'),
                             'textarea' => __('Long text', 'webform'),
@@ -204,7 +205,7 @@ class Webform_Admin {
                             'heading' => __('Heading', 'webform'),
                         );
                         $fields = apply_filters('webform_field_palette', $standard_fields);
-                        $field_icons = array('text' => 'dashicons-editor-textcolor', 'email' => 'dashicons-email', 'textarea' => 'dashicons-editor-alignleft', 'select' => 'dashicons-arrow-down-alt2', 'radio' => 'dashicons-marker', 'checkbox' => 'dashicons-yes', 'number' => 'dashicons-editor-ol', 'date' => 'dashicons-calendar', 'time' => 'dashicons-clock', 'phone' => 'dashicons-phone', 'url' => 'dashicons-admin-links', 'file' => 'dashicons-upload', 'consent' => 'dashicons-privacy', 'poll' => 'dashicons-chart-bar', 'quiz' => 'dashicons-welcome-learn-more', 'rating' => 'dashicons-star-filled', 'slider' => 'dashicons-image-flip-horizontal', 'hidden' => 'dashicons-hidden', 'html' => 'dashicons-editor-code', 'captcha' => 'dashicons-shield', 'page_break' => 'dashicons-controls-forward', 'heading' => 'dashicons-heading', 'calculation' => 'dashicons-editor-table', 'field_group' => 'dashicons-grid-view', 'signature' => 'dashicons-edit', 'address' => 'dashicons-location-alt', 'repeater' => 'dashicons-list-view', 'appointment' => 'dashicons-calendar-alt', 'nps' => 'dashicons-chart-line', 'currency' => 'dashicons-money-alt', 'product' => 'dashicons-cart', 'price' => 'dashicons-tag');
+                        $field_icons = array('name' => 'dashicons-admin-users', 'text' => 'dashicons-editor-textcolor', 'email' => 'dashicons-email', 'textarea' => 'dashicons-editor-alignleft', 'select' => 'dashicons-arrow-down-alt2', 'radio' => 'dashicons-marker', 'checkbox' => 'dashicons-yes', 'number' => 'dashicons-editor-ol', 'date' => 'dashicons-calendar', 'time' => 'dashicons-clock', 'phone' => 'dashicons-phone', 'url' => 'dashicons-admin-links', 'file' => 'dashicons-upload', 'consent' => 'dashicons-privacy', 'poll' => 'dashicons-chart-bar', 'quiz' => 'dashicons-welcome-learn-more', 'rating' => 'dashicons-star-filled', 'slider' => 'dashicons-image-flip-horizontal', 'hidden' => 'dashicons-hidden', 'html' => 'dashicons-editor-code', 'captcha' => 'dashicons-shield', 'page_break' => 'dashicons-controls-forward', 'heading' => 'dashicons-heading', 'calculation' => 'dashicons-editor-table', 'field_group' => 'dashicons-grid-view', 'signature' => 'dashicons-edit', 'rich_text' => 'dashicons-editor-paste-word', 'address' => 'dashicons-location-alt', 'repeater' => 'dashicons-list-view', 'appointment' => 'dashicons-calendar-alt', 'nps' => 'dashicons-chart-line', 'currency' => 'dashicons-money-alt', 'product' => 'dashicons-cart', 'price' => 'dashicons-tag');
                         foreach (array_intersect_key($fields, $standard_fields) as $type => $label) {
                             printf('<button type="button" class="webform-palette-item" data-type="%s"><span class="dashicons %s"></span><span>%s</span></button>', esc_attr($type), esc_attr($field_icons[$type] ?? 'dashicons-plus-alt2'), esc_html($label));
                         }
@@ -214,7 +215,7 @@ class Webform_Admin {
                         <h3 class="webform-pro-fields-title"><?php esc_html_e('PRO FIELDS', 'webform'); ?></h3>
                         <div class="webform-palette webform-pro-palette"><?php foreach ($pro_palette_fields as $type => $label) : ?><button type="button" class="webform-palette-item webform-palette-item-pro" data-type="<?php echo esc_attr($type); ?>"><span class="dashicons <?php echo esc_attr($field_icons[$type] ?? 'dashicons-plus-alt2'); ?>"></span><span><?php echo esc_html(str_replace(' (Pro)', '', $label)); ?></span></button><?php endforeach; ?></div>
                     <?php endif; ?>
-                    <?php if (!$this->is_pro_active()) : ?><div class="webform-picker-pro"><div><span class="webform-pro-badge"><?php esc_html_e('RECOMMENDED PRO', 'webform'); ?></span><h3><?php esc_html_e('Build revenue and automated workflows', 'webform'); ?></h3><p><?php esc_html_e('Upgrade for calculated totals, grouped layouts, signatures, PDF notifications, hosted payments, email marketing, automation, premium styles, and 20 business templates.', 'webform'); ?></p></div><h4><?php esc_html_e('Pro fields', 'webform'); ?></h4><div class="webform-pro-field-list"><div><span class="dashicons dashicons-editor-table"></span><?php esc_html_e('Calculations', 'webform'); ?></div><div><span class="dashicons dashicons-grid-view"></span><?php esc_html_e('Field groups', 'webform'); ?></div><div><span class="dashicons dashicons-edit"></span><?php esc_html_e('E-signatures', 'webform'); ?></div><div><span class="dashicons dashicons-media-document"></span><?php esc_html_e('PDF notifications', 'webform'); ?></div></div><h4><?php esc_html_e('Pro integrations', 'webform'); ?></h4><div class="webform-pro-field-list webform-pro-integration-fields"><div><span class="dashicons dashicons-email"></span>Mailchimp</div><div><span class="dashicons dashicons-megaphone"></span>Brevo</div><div><span class="dashicons dashicons-randomize"></span>Zapier</div><div><span class="dashicons dashicons-money-alt"></span><?php esc_html_e('Stripe / PayPal', 'webform'); ?></div></div><a class="button button-primary" href="<?php echo esc_url($this->upgrade_url('field-picker')); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('See everything in Pro — $19.99/year', 'webform'); ?></a></div><?php endif; ?>
+                    <?php if (!$this->is_pro_active()) : ?><div class="webform-picker-pro"><div><span class="webform-pro-badge"><?php esc_html_e('RECOMMENDED PRO', 'webform'); ?></span><h3><?php esc_html_e('Build revenue and automated workflows', 'webform'); ?></h3><p><?php esc_html_e('Upgrade for calculated totals, grouped layouts, signatures, PDF notifications, hosted payments, email marketing, automation, premium styles, and 20 business templates.', 'webform'); ?></p></div><h4><?php esc_html_e('Pro fields', 'webform'); ?></h4><div class="webform-pro-field-list"><div><span class="dashicons dashicons-editor-table"></span><?php esc_html_e('Calculations', 'webform'); ?></div><div><span class="dashicons dashicons-grid-view"></span><?php esc_html_e('Field groups', 'webform'); ?></div><div><span class="dashicons dashicons-edit"></span><?php esc_html_e('E-signatures', 'webform'); ?></div><div><span class="dashicons dashicons-editor-paste-word"></span><?php esc_html_e('Rich text / contracts', 'webform'); ?></div></div><h4><?php esc_html_e('Pro integrations', 'webform'); ?></h4><div class="webform-pro-field-list webform-pro-integration-fields"><div><span class="dashicons dashicons-email"></span>Mailchimp</div><div><span class="dashicons dashicons-megaphone"></span>Brevo</div><div><span class="dashicons dashicons-randomize"></span>Zapier</div><div><span class="dashicons dashicons-money-alt"></span><?php esc_html_e('Stripe / PayPal', 'webform'); ?></div></div><a class="button button-primary" href="<?php echo esc_url($this->upgrade_url('field-picker')); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('See everything in Pro — $19.99/year', 'webform'); ?></a></div><?php endif; ?>
                     </div>
                     <?php if (!$this->is_pro_active()) : ?>
                         <div class="webform-picker-pro webform-pro-field-preview-only">
@@ -225,6 +226,7 @@ class Webform_Admin {
                                 <div><span class="dashicons dashicons-calendar-alt"></span><?php esc_html_e('Appointment', 'webform'); ?></div>
                                 <div><span class="dashicons dashicons-chart-line"></span><?php esc_html_e('NPS score', 'webform'); ?></div>
                                 <div><span class="dashicons dashicons-money-alt"></span><?php esc_html_e('Currency', 'webform'); ?></div>
+                                <div><span class="dashicons dashicons-editor-paste-word"></span><?php esc_html_e('Rich text / contracts', 'webform'); ?></div>
                                 <div><span class="dashicons dashicons-lock"></span><?php esc_html_e('Advanced uploads', 'webform'); ?></div>
                             </div>
                         </div>
@@ -349,8 +351,8 @@ class Webform_Admin {
 
     private function sanitize_schema($schema) {
         $clean = array();
-        $pro_types = array('calculation', 'field_group', 'signature', 'address', 'repeater', 'appointment', 'nps', 'currency', 'product', 'price');
-        $allowed_types = apply_filters('webform_allowed_field_types', array_merge(array('text', 'email', 'textarea', 'select', 'radio', 'checkbox', 'number', 'date', 'time', 'phone', 'url', 'file', 'consent', 'poll', 'quiz', 'rating', 'slider', 'hidden', 'html', 'captcha', 'heading'), $pro_types));
+        $pro_types = array('calculation', 'field_group', 'signature', 'rich_text', 'address', 'repeater', 'appointment', 'nps', 'currency', 'product', 'price');
+        $allowed_types = apply_filters('webform_allowed_field_types', array_merge(array('name', 'text', 'email', 'textarea', 'select', 'radio', 'checkbox', 'number', 'date', 'time', 'phone', 'url', 'file', 'consent', 'poll', 'quiz', 'rating', 'slider', 'hidden', 'html', 'captcha', 'heading'), $pro_types));
         $allowed_operators = array('equals', 'not_equals', 'contains', 'starts_with', 'ends_with', 'greater_than', 'less_than', 'not_empty', 'empty');
         $seen_ids = array();
         foreach ($schema as $stage_index => $stage) {
@@ -826,7 +828,7 @@ class Webform_Admin {
 
     private function map_import_type($type) {
         $type = sanitize_key($type);
-        $map = array('name' => 'text', 'first_name' => 'text', 'last_name' => 'text', 'input' => 'text', 'phone' => 'phone', 'tel' => 'phone', 'email' => 'email', 'textarea' => 'textarea', 'paragraph' => 'textarea', 'select' => 'select', 'dropdown' => 'select', 'radio' => 'radio', 'checkbox' => 'checkbox', 'number' => 'number', 'date' => 'date', 'time' => 'time', 'url' => 'url', 'website' => 'url', 'file' => 'file', 'upload' => 'file', 'html' => 'html', 'section' => 'heading', 'divider' => 'heading', 'heading' => 'heading', 'rating' => 'rating', 'star' => 'rating', 'scale' => 'slider', 'slider' => 'slider', 'hidden' => 'hidden', 'consent' => 'consent', 'captcha' => 'captcha', 'calculation' => 'calculation', 'currency' => 'currency', 'signature' => 'signature', 'address' => 'address');
+        $map = array('name' => 'name', 'first_name' => 'text', 'last_name' => 'text', 'input' => 'text', 'phone' => 'phone', 'tel' => 'phone', 'email' => 'email', 'textarea' => 'textarea', 'paragraph' => 'textarea', 'select' => 'select', 'dropdown' => 'select', 'radio' => 'radio', 'checkbox' => 'checkbox', 'number' => 'number', 'date' => 'date', 'time' => 'time', 'url' => 'url', 'website' => 'url', 'file' => 'file', 'upload' => 'file', 'html' => 'html', 'section' => 'heading', 'divider' => 'heading', 'heading' => 'heading', 'rating' => 'rating', 'star' => 'rating', 'scale' => 'slider', 'slider' => 'slider', 'hidden' => 'hidden', 'consent' => 'consent', 'captcha' => 'captcha', 'calculation' => 'calculation', 'currency' => 'currency', 'signature' => 'signature', 'address' => 'address');
         return $map[$type] ?? 'text';
     }
 
