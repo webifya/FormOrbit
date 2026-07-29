@@ -1,26 +1,31 @@
 <?php
 /**
- * Plugin Name: FormOrbit
- * Description: A visual drag-and-drop, multi-step form builder for WordPress.
- * Version: 3.1.1
- * Author: Mahfuzar Rahman
- * Author URI: https://profiles.wordpress.org/mahfuzar/
- * License: GPLv2 or later
- * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: formorbit
- * Requires at least: 6.2
- * Requires PHP: 7.4
+ * Legacy FormOrbit loader.
+ *
+ * Keeps sites activated when upgrading from the historical webform.php entry
+ * file, then migrates WordPress to the branded formorbit.php entry file.
  */
 
 defined('ABSPATH') || exit;
 
-define('WEBFORM_VERSION', '3.1.1');
-define('WEBFORM_EDITION', 'free');
-define('WEBFORM_FILE', __FILE__);
-define('WEBFORM_PATH', plugin_dir_path(__FILE__));
-define('WEBFORM_URL', plugin_dir_url(__FILE__));
+$formorbit_legacy_plugin = plugin_basename(__FILE__);
+$formorbit_branded_plugin = dirname($formorbit_legacy_plugin) . '/formorbit.php';
 
-require_once WEBFORM_PATH . 'includes/class-webform.php';
+$formorbit_active_plugins = (array) get_option('active_plugins', array());
+$formorbit_active_index = array_search($formorbit_legacy_plugin, $formorbit_active_plugins, true);
+if ($formorbit_active_index !== false) {
+    $formorbit_active_plugins[$formorbit_active_index] = $formorbit_branded_plugin;
+    update_option('active_plugins', array_values(array_unique($formorbit_active_plugins)));
+}
 
-register_activation_hook(__FILE__, array('Webform', 'activate'));
-Webform::instance();
+if (is_multisite()) {
+    $formorbit_network_plugins = (array) get_site_option('active_sitewide_plugins', array());
+    if (isset($formorbit_network_plugins[$formorbit_legacy_plugin])) {
+        $formorbit_activated_at = $formorbit_network_plugins[$formorbit_legacy_plugin];
+        unset($formorbit_network_plugins[$formorbit_legacy_plugin]);
+        $formorbit_network_plugins[$formorbit_branded_plugin] = $formorbit_activated_at;
+        update_site_option('active_sitewide_plugins', $formorbit_network_plugins);
+    }
+}
+
+require_once __DIR__ . '/formorbit.php';
