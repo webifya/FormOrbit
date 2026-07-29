@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.5.1
+Stable tag: 2.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -48,6 +48,13 @@ Webform is created by Mahfuzar Rahman at Web Ninja LLC.
 5. Copy the generated `[webform id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 2.6.0 =
+* Added an All/Trash switch to the Forms screen with secure restore and permanent-delete actions.
+* Permanently deleting a trashed form now also removes its stored entries.
+* Consolidated confirmation-related extension controls into the Confirmation panel.
+* Added discoverable previews for Pro visitor emails, Save & Continue, and PDF attachments.
+* Clarified the difference between admin notification delivery and visitor confirmations.
 
 = 2.5.1 =
 * Fixed empty builder alignment on blank and failed-import forms.
