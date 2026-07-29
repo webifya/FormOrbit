@@ -470,6 +470,7 @@ class Webform_Admin {
                     'required' => !empty($field['required']),
                     'row_start' => !empty($field['row_start']),
                     'options' => array_slice(array_values(array_filter(array_map('sanitize_text_field', (array) ($field['options'] ?? array())))), 0, 100),
+                    'choice_columns' => min(4, max(1, absint($field['choice_columns'] ?? 1))),
                     'allowed_extensions' => preg_replace('/[^a-z0-9,\s]/', '', strtolower($field['allowed_extensions'] ?? 'jpg,jpeg,png,pdf,doc,docx')),
                     'max_size' => min(20, max(1, absint($field['max_size'] ?? 5))),
                     'correct_answer' => sanitize_text_field($field['correct_answer'] ?? ''),
@@ -491,7 +492,7 @@ class Webform_Admin {
                     ),
                 );
                 if (in_array($type, $pro_types, true)) {
-                    $clean_field['formula'] = preg_replace('/[^a-zA-Z0-9_{}+\-*\/().\s]/', '', $field['formula'] ?? '');
+                    $clean_field['formula'] = preg_replace('/[^a-zA-Z0-9_{}+\-*\/().,%^<>=!&|\s]/', '', $field['formula'] ?? '');
                     $clean_field['decimal_places'] = min(6, absint($field['decimal_places'] ?? 2));
                     $clean_field['group_count'] = min(6, max(1, absint($field['group_count'] ?? 2)));
                     $clean_field['group_columns'] = min(4, max(1, absint($field['group_columns'] ?? 2)));
@@ -547,6 +548,7 @@ class Webform_Admin {
                 'placeholder' => substr(sanitize_text_field($child['placeholder'] ?? ''), 0, 300),
                 'required' => !empty($child['required']),
                 'options' => $options,
+                'choice_columns' => min(4, max(1, absint($child['choice_columns'] ?? 1))),
                 'rows' => min(20, max(2, absint($child['rows'] ?? 4))),
                 'min' => is_numeric($child['min'] ?? null) ? (string) floatval($child['min']) : '',
                 'max' => is_numeric($child['max'] ?? null) ? (string) floatval($child['max']) : '',
@@ -557,7 +559,7 @@ class Webform_Admin {
                 'currency_symbol' => substr(sanitize_text_field($child['currency_symbol'] ?? '$'), 0, 5),
                 'currency_code' => in_array(strtoupper($child['currency_code'] ?? 'USD'), array('USD', 'EUR', 'GBP', 'CAD', 'AUD', 'BDT'), true) ? strtoupper($child['currency_code']) : 'USD',
                 'price_amount' => max(0, floatval($child['price_amount'] ?? 0)),
-                'formula' => preg_replace('/[^a-zA-Z0-9_{}+\-*\/().\s]/', '', $child['formula'] ?? ''),
+                'formula' => preg_replace('/[^a-zA-Z0-9_{}+\-*\/().,%^<>=!&|\s]/', '', $child['formula'] ?? ''),
             );
         }
         return $clean;
