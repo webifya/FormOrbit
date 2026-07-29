@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 4.2.0
+Stable tag: 4.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -47,6 +47,14 @@ FormOrbit is created by Mahfuzar Rahman. Advanced automation, payment, document,
 5. Copy the generated `[formorbit id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 4.3.0 =
+* Replaced the example-only style preview with the form currently open in the builder.
+* Added a Preview button beside Save form for opening the current unsaved form in a same-page modal.
+* Added desktop, tablet, and mobile viewport controls to the live preview.
+* Added live multi-stage navigation and current appearance settings, field layouts, Pro fields, and safely scoped custom CSS to previews.
+* Added shared Undo and Redo controls with keyboard shortcuts and a 60-step builder history.
+* Added history coverage for fields, stages, nested containers, appearance settings, confirmations, and access controls.
 
 = 4.2.0 =
 * Added nested-field builder support for true Pro Field Group and Repeater containers.
