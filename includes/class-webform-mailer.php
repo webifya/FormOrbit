@@ -15,7 +15,7 @@ class Webform_Mailer {
     }
 
     public function menu() {
-        add_submenu_page('webform', __('Email Delivery', 'formorbit'), __('Email Delivery', 'formorbit'), 'manage_options', 'webform-email-delivery', array($this, 'page'), 2);
+        add_submenu_page('formorbit', __('Email Delivery', 'formorbit'), __('Email Delivery', 'formorbit'), 'manage_options', 'formorbit-email-delivery', array($this, 'page'), 2);
     }
 
     public function configure($phpmailer) {
@@ -93,7 +93,7 @@ class Webform_Mailer {
             'force_from' => !empty($_POST['force_from']),
         );
         update_option($this->option, $settings, false);
-        wp_safe_redirect(admin_url('admin.php?page=webform-email-delivery&updated=1'));
+        wp_safe_redirect(admin_url('admin.php?page=formorbit-email-delivery&updated=1'));
         exit;
     }
 
@@ -102,7 +102,7 @@ class Webform_Mailer {
         $recipient = sanitize_email(wp_unslash($_POST['recipient'] ?? ''));
         $success = $recipient && wp_mail($recipient, __('FormOrbit email delivery test', 'formorbit'), sprintf(__("This test email was sent from %s at %s.", 'formorbit'), home_url('/'), current_time('mysql')));
         set_transient('webform_mail_notice_' . get_current_user_id(), array('success' => $success, 'message' => $success ? __('Test email was accepted by WordPress for delivery.', 'formorbit') : __('The test email failed. Verify the server, port, encryption, username, password, and From address.', 'formorbit')), MINUTE_IN_SECONDS);
-        wp_safe_redirect(admin_url('admin.php?page=webform-email-delivery'));
+        wp_safe_redirect(admin_url('admin.php?page=formorbit-email-delivery'));
         exit;
     }
 
