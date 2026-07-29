@@ -369,6 +369,18 @@ class Webform_Admin {
                     $field_id = 'field_' . ($stage_index + 1) . '_' . ($field_index + 1) . '_' . wp_generate_password(6, false, false);
                 }
                 $seen_ids[$field_id] = true;
+                $date_rule = in_array($field['date_rule'] ?? 'any', array('any', 'future', 'past', 'custom'), true) ? $field['date_rule'] : 'any';
+                $date_min = sanitize_text_field($field['date_min'] ?? '');
+                $date_max = sanitize_text_field($field['date_max'] ?? '');
+                $date_min_object = DateTime::createFromFormat('!Y-m-d', $date_min);
+                $date_max_object = DateTime::createFromFormat('!Y-m-d', $date_max);
+                $date_min = $date_min_object && $date_min_object->format('Y-m-d') === $date_min ? $date_min : '';
+                $date_max = $date_max_object && $date_max_object->format('Y-m-d') === $date_max ? $date_max : '';
+                if ($date_min && $date_max && $date_min > $date_max) {
+                    $date_swap = $date_min;
+                    $date_min = $date_max;
+                    $date_max = $date_swap;
+                }
                 $clean_field = array(
                     'id' => $field_id,
                     'type' => $type,
@@ -383,6 +395,10 @@ class Webform_Admin {
                     'points' => min(100, max(1, absint($field['points'] ?? 1))),
                     'default_value' => sanitize_text_field($field['default_value'] ?? ''),
                     'html' => wp_kses_post($field['html'] ?? ''),
+                    'rows' => min(30, max(2, absint($field['rows'] ?? 5))),
+                    'date_rule' => $date_rule,
+                    'date_min' => $date_min,
+                    'date_max' => $date_max,
                     'min' => floatval($field['min'] ?? 0),
                     'max' => floatval($field['max'] ?? 100),
                     'step' => max(0.01, floatval($field['step'] ?? 1)),
