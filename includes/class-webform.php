@@ -18,22 +18,17 @@ final class Webform {
         require_once WEBFORM_PATH . 'includes/class-webform-mailer.php';
 
         add_action('init', array($this, 'register_post_types'));
-        add_action('plugins_loaded', array($this, 'load_textdomain'));
         new Webform_Admin();
         new Webform_Public();
         new Webform_Mailer();
         do_action('webform_loaded', $this);
     }
 
-    public function load_textdomain() {
-        load_plugin_textdomain('webform', false, dirname(plugin_basename(WEBFORM_FILE)) . '/languages');
-    }
-
     public function register_post_types() {
         register_post_type('webform_form', array(
             'labels' => array(
-                'name' => __('Webforms', 'webform'),
-                'singular_name' => __('Webform', 'webform'),
+                'name' => __('Mahfuzar Forms', 'mahfuzar-form-builder'),
+                'singular_name' => __('Mahfuzar Form', 'mahfuzar-form-builder'),
             ),
             'public' => false,
             'show_ui' => false,
@@ -44,8 +39,8 @@ final class Webform {
 
         register_post_type('webform_entry', array(
             'labels' => array(
-                'name' => __('Entries', 'webform'),
-                'singular_name' => __('Entry', 'webform'),
+                'name' => __('Entries', 'mahfuzar-form-builder'),
+                'singular_name' => __('Entry', 'mahfuzar-form-builder'),
             ),
             'public' => false,
             'show_ui' => false,

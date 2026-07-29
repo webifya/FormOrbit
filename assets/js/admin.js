@@ -607,58 +607,27 @@
         syncRichTextEditor();
         const $button = $(this).prop('disabled', true);
         $('#webform-save-status').text('Saving…');
+        const formSettings = {
+            success_message: $('#webform-success-message').val(),
+            confirmation_type: $('#webform-confirmation-type').val(),
+            notification_email: $('#webform-notification-email').val(),
+            submit_label: $('#webform-submit-label').val(),
+            redirect_url: $('#webform-redirect-url').val(),
+            require_login: $('#webform-require-login').is(':checked'),
+            submission_limit: $('#webform-submission-limit').val(),
+            closed_message: $('#webform-closed-message').val(),
+            style_preset: $('#webform-style-preset').val(),
+            accent_color: $('#webform-accent-color').val(),
+            button_text_color: $('#webform-button-text-color').val()
+        };
+        document.dispatchEvent(new CustomEvent('webform:collect-settings', { detail: formSettings }));
         $.post(WebformAdmin.ajaxUrl, {
             action: 'webform_save_form',
             nonce: WebformAdmin.nonce,
             form_id: $('#webform-id').val(),
             name: $('#webform-name').val(),
             schema: JSON.stringify(schema),
-            settings: JSON.stringify({
-                success_message: $('#webform-success-message').val(),
-                confirmation_type: $('#webform-confirmation-type').val(),
-                notification_email: $('#webform-notification-email').val(),
-                submit_label: $('#webform-submit-label').val(),
-                redirect_url: $('#webform-redirect-url').val(),
-                webhook_url: $('#webform-webhook-url').val(),
-                require_login: $('#webform-require-login').is(':checked'),
-                submission_limit: $('#webform-submission-limit').val(),
-                closed_message: $('#webform-closed-message').val(),
-                open_at: $('#webform-open-at').val(),
-                close_at: $('#webform-close-at').val(),
-                per_user_limit: $('#webform-per-user-limit').val(),
-                allowed_roles: $('[name="webform_allowed_roles"]:checked').map(function () { return $(this).val(); }).get(),
-                hide_after_submit: $('#webform-hide-after-submit').is(':checked'),
-                save_progress_enabled: $('#webform-save-progress-enabled').is(':checked'),
-                save_progress_days: $('#webform-save-progress-days').val(),
-                save_progress_label: $('#webform-save-progress-label').val(),
-                user_notification_enabled: $('#webform-user-notification-enabled').is(':checked'),
-                user_notification_email_field: $('#webform-user-notification-email-field').val(),
-                user_notification_subject: $('#webform-user-notification-subject').val(),
-                user_notification_body: $('#webform-user-notification-body').val(),
-                user_notification_pdf: $('#webform-user-notification-pdf').is(':checked'),
-                style_preset: $('#webform-style-preset').val(),
-                accent_color: $('#webform-accent-color').val(),
-                button_text_color: $('#webform-button-text-color').val(),
-                font_family: $('#webform-font-family').val(),
-                base_font_size: $('#webform-base-font-size').val(),
-                label_font_size: $('#webform-label-font-size').val(),
-                text_color: $('#webform-text-color').val(),
-                form_background: $('#webform-form-background').val(),
-                field_background: $('#webform-field-background').val(),
-                border_color: $('#webform-border-color').val(),
-                form_max_width: $('#webform-form-max-width').val(),
-                field_spacing: $('#webform-field-spacing').val(),
-                field_radius: $('#webform-field-radius').val(),
-                button_radius: $('#webform-button-radius').val(),
-                button_padding: $('#webform-button-padding').val(),
-                custom_css: $('#webform-custom-css').val(),
-                pdf_notifications: $('#webform-pdf-notifications').is(':checked'),
-                mailchimp_list: $('#webform-mailchimp-list').val(),
-                brevo_list: $('#webform-brevo-list').val(),
-                activecampaign_list: $('#webform-activecampaign-list').val(),
-                leadconnector_enabled: $('#webform-leadconnector-enabled').is(':checked'),
-                payment_provider: $('#webform-payment-provider').val()
-            })
+            settings: JSON.stringify(formSettings)
         }).done(function (response) {
             if (!response.success) throw new Error(response.data && response.data.message);
             $('#webform-id').val(response.data.id);
@@ -670,7 +639,7 @@
             $('#webform-save-status').text(message);
         }).always(function () { $button.prop('disabled', false); });
     });
-    $('#webform-name,#webform-success-message,#webform-notification-email,#webform-submit-label,#webform-redirect-url,#webform-webhook-url,#webform-require-login,#webform-submission-limit,#webform-closed-message,#webform-style-preset,#webform-accent-color,#webform-button-text-color').on('input change', function () { dirty = true; });
+    $('#webform-name,#webform-success-message,#webform-notification-email,#webform-submit-label,#webform-redirect-url,#webform-require-login,#webform-submission-limit,#webform-closed-message,#webform-style-preset,#webform-accent-color,#webform-button-text-color').on('input change', function () { dirty = true; });
     $(document).on('change', '#webform-require-login', function () {
         const enabled = $(this).is(':checked');
         $('#webform-role-controls').toggleClass('is-disabled', !enabled).find('input[type="checkbox"]').prop('disabled', !enabled);

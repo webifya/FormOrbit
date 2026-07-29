@@ -1,21 +1,20 @@
 <?php
 /**
- * Plugin Name: Webform
- * Plugin URI: https://www.webninjallc.com/
+ * Plugin Name: Mahfuzar Form Builder
  * Description: A visual drag-and-drop, multi-step form builder for WordPress.
- * Version: 2.7.1
+ * Version: 3.0.0
  * Author: Mahfuzar Rahman
  * Author URI: https://profiles.wordpress.org/mahfuzar/
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: webform
+ * Text Domain: mahfuzar-form-builder
  * Requires at least: 6.2
  * Requires PHP: 7.4
  */
 
 defined('ABSPATH') || exit;
 
-define('WEBFORM_VERSION', '2.7.1');
+define('WEBFORM_VERSION', '3.0.0');
 define('WEBFORM_EDITION', 'free');
 define('WEBFORM_FILE', __FILE__);
 define('WEBFORM_PATH', plugin_dir_path(__FILE__));

@@ -1,10 +1,10 @@
-=== Webform ===
-Contributors: webifya
+=== Mahfuzar Form Builder ===
+Contributors: mahfuzar
 Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.7.1
+Stable tag: 3.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,7 @@ A visual drag-and-drop, multi-step form builder for WordPress.
 
 == Description ==
 
-Webform provides a native WordPress form-building experience:
+Mahfuzar Form Builder provides a native WordPress form-building experience:
 
 * Drag-and-drop field ordering
 * Multiple stages with progress indicators
@@ -25,7 +25,6 @@ Webform provides a native WordPress form-building experience:
 * Entry filtering, pagination, deletion, and CSV export
 * One-click form duplication
 * Configurable submit labels and confirmation redirects
-* JSON webhook delivery for integrations and automation
 * Shortcode embedding
 * Nonces, capability checks, sanitization, escaping, and a spam honeypot
 * Login requirements and total submission limits
@@ -37,17 +36,25 @@ Webform provides a native WordPress form-building experience:
 * Optional Google reCAPTCHA v2 verification
 * Import converters for WPForms, Gravity Forms, Fluent Forms, and Contact Form 7
 
-Webform is created by Mahfuzar Rahman at Web Ninja LLC.
+Mahfuzar Form Builder is created by Mahfuzar Rahman. Advanced automation, payment, document, and marketing features are available in a separately distributed Pro add-on.
 
 == Installation ==
 
-1. Upload the `Webform` folder to `/wp-content/plugins/`.
-2. Activate Webform in the Plugins screen.
-3. Open Webform > Add New.
+1. Upload the `mahfuzar-form-builder` folder to `/wp-content/plugins/`.
+2. Activate Mahfuzar Form Builder in the Plugins screen.
+3. Open Mahfuzar Forms > Add New.
 4. Build and save your form.
 5. Copy the generated `[webform id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 3.0.0 =
+* Renamed the plugin to Mahfuzar Form Builder with the unique `mahfuzar-form-builder` text domain.
+* Moved webhook delivery completely into the separately distributed Pro add-on.
+* Sanitized submitted field values before validation, conditions, and extension hooks.
+* Hardened decoded builder settings and form schemas before storage.
+* Expanded the Google reCAPTCHA external-service disclosure.
+* Updated the WordPress.org contributor identity and removed the unavailable generic plugin URI.
 
 = 2.7.1 =
 * Added past-only, future-only, unrestricted, and custom ranges for Date fields.
@@ -179,7 +186,6 @@ Webform is created by Mahfuzar Rahman at Web Ninja LLC.
 * Added secure file uploads with extension and size restrictions.
 * Added URL and consent fields.
 * Added configurable submit labels and confirmation redirects.
-* Added asynchronous JSON webhooks for external integrations.
 
 = 1.1.0 =
 * Added entry filtering, pagination, deletion, and safe CSV export.
@@ -194,4 +200,16 @@ Webform is created by Mahfuzar Rahman at Web Ninja LLC.
 
 == External services ==
 
-When Google reCAPTCHA is enabled, form pages load Google's reCAPTCHA script. Classic or migrated v2 submissions are sent to Google's SiteVerify API. Google Cloud mode sends the response token, configured site key and action, visitor IP address, and browser user agent to the reCAPTCHA Enterprise assessments API. Site owners are responsible for disclosing this service in their privacy policy and complying with Google's terms, privacy policy, quotas, and billing requirements.
+This plugin can use Google reCAPTCHA to detect automated or abusive submissions. The service is contacted only when a site administrator enables reCAPTCHA, supplies credentials, and places a CAPTCHA field in a form.
+
+On a page containing an enabled CAPTCHA field, the browser loads the Google reCAPTCHA script from `google.com`. When the form is submitted, classic or migrated v2 mode sends the reCAPTCHA response token and visitor IP address to Google's SiteVerify API. Google Cloud reCAPTCHA Enterprise mode sends the response token, configured site key and action, visitor IP address, and browser user agent to the reCAPTCHA Enterprise assessments API.
+
+Google reCAPTCHA service information: https://www.google.com/recaptcha/about/
+
+Google Terms of Service: https://policies.google.com/terms
+
+Google Privacy Policy: https://policies.google.com/privacy
+
+Google Cloud Service Terms: https://cloud.google.com/terms/service-terms
+
+Site owners are responsible for disclosing this service in their own privacy policy and complying with Google's terms, privacy policy, quotas, and billing requirements.
