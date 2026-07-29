@@ -128,7 +128,7 @@
         const phpEmbed = `<?php echo do_shortcode( '${embedShortcode}' ); ?>`;
         $('#webform-editor-shortcode').text(embedShortcode);
         $('#webform-editor-php').text(phpEmbed);
-        $('#webform-embed-panel').prop('hidden', false);
+        $('#webform-open-embed').prop('hidden', false);
     }
 
     function copyToClipboard(button, text) {
@@ -804,6 +804,49 @@
     $(document).on('click', '.webform-copy-embed', function () {
         const target = document.getElementById(String($(this).data('copy-target') || ''));
         copyToClipboard(this, target ? target.textContent : '');
+    });
+    let embedReturnFocus = null;
+    function openEmbedDialog() {
+        const panel = document.getElementById('webform-embed-panel');
+        if (!panel || $('#webform-open-embed').prop('hidden')) return;
+        embedReturnFocus = document.activeElement;
+        panel.hidden = false;
+        panel.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('webform-embed-is-open');
+        const closeButton = panel.querySelector('.webform-editor-embed-close');
+        if (closeButton) window.setTimeout(() => closeButton.focus(), 0);
+    }
+    function closeEmbedDialog() {
+        const panel = document.getElementById('webform-embed-panel');
+        if (!panel || panel.hidden) return;
+        panel.hidden = true;
+        panel.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('webform-embed-is-open');
+        if (embedReturnFocus && typeof embedReturnFocus.focus === 'function') embedReturnFocus.focus();
+        embedReturnFocus = null;
+    }
+    $(document).on('click', '#webform-open-embed', openEmbedDialog);
+    $(document).on('click', '.webform-editor-embed-close,.webform-editor-embed-backdrop', closeEmbedDialog);
+    $(document).on('keydown', function (event) {
+        const panel = document.getElementById('webform-embed-panel');
+        if (event.key === 'Escape' && panel && !panel.hidden) {
+            event.preventDefault();
+            closeEmbedDialog();
+            return;
+        }
+        if (event.key === 'Tab' && panel && !panel.hidden) {
+            const focusable = Array.from(panel.querySelectorAll('.webform-editor-embed-dialog button:not([disabled]),.webform-editor-embed-dialog [href],.webform-editor-embed-dialog input:not([disabled]),.webform-editor-embed-dialog select:not([disabled]),.webform-editor-embed-dialog textarea:not([disabled]),.webform-editor-embed-dialog [tabindex]:not([tabindex="-1"])')).filter(element => element.offsetParent !== null);
+            if (!focusable.length) return;
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        }
     });
     $(document).on('click', '.webform-delete', function () {
         if (!window.confirm('Move this form to the trash?')) return;
