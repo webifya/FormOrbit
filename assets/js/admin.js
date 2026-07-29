@@ -2,7 +2,47 @@
     'use strict';
 
     const defaults = { name: 'Name', text: 'Text', email: 'Email', textarea: 'Long text', select: 'Dropdown', radio: 'Radio', checkbox: 'Checkbox', number: 'Number', date: 'Date', time: 'Time', phone: 'Phone', url: 'Website', file: 'File upload', consent: 'I agree to the terms', poll: 'Poll question', quiz: 'Quiz question', rating: 'Rating', slider: 'Slider', hidden: 'Hidden field', html: 'HTML content', captcha: 'Security check', calculation: 'Calculation', signature: 'Signature', rich_text: 'Rich text', field_group: 'Field group', address: 'Address', repeater: 'Repeater', appointment: 'Appointment', nps: 'NPS score', currency: 'Currency', product: 'Product selector', price: 'Price', heading: 'Heading' };
-    const fieldIcons = { '': ['No icon', 'dashicons-minus'], email: ['Email', 'dashicons-email-alt'], user: ['Person', 'dashicons-admin-users'], phone: ['Phone', 'dashicons-phone'], location: ['Location', 'dashicons-location-alt'], calendar: ['Calendar', 'dashicons-calendar-alt'], clock: ['Clock', 'dashicons-clock'], link: ['Link', 'dashicons-admin-links'], cart: ['Cart', 'dashicons-cart'], money: ['Payment', 'dashicons-money-alt'], heart: ['Heart', 'dashicons-heart'], star: ['Star', 'dashicons-star-filled'], shield: ['Security', 'dashicons-shield'], clipboard: ['Clipboard', 'dashicons-clipboard'], business: ['Business', 'dashicons-building'], edit: ['Signature', 'dashicons-edit'] };
+    const fieldIcons = {
+        '': ['No icon', 'dashicons-minus'],
+        user: ['Person', 'dashicons-admin-users'],
+        groups: ['People', 'dashicons-groups'],
+        email: ['Email', 'dashicons-email-alt'],
+        phone: ['Phone', 'dashicons-phone'],
+        location: ['Location', 'dashicons-location-alt'],
+        home: ['Home', 'dashicons-admin-home'],
+        business: ['Business', 'dashicons-building'],
+        calendar: ['Calendar', 'dashicons-calendar-alt'],
+        clock: ['Clock', 'dashicons-clock'],
+        link: ['Link', 'dashicons-admin-links'],
+        cart: ['Cart', 'dashicons-cart'],
+        money: ['Payment', 'dashicons-money-alt'],
+        portfolio: ['Portfolio', 'dashicons-portfolio'],
+        clipboard: ['Clipboard', 'dashicons-clipboard'],
+        document: ['Document', 'dashicons-media-document'],
+        book: ['Book', 'dashicons-book'],
+        edit: ['Signature', 'dashicons-edit'],
+        upload: ['Upload', 'dashicons-upload'],
+        download: ['Download', 'dashicons-download'],
+        image: ['Image', 'dashicons-format-image'],
+        camera: ['Camera', 'dashicons-camera'],
+        video: ['Video', 'dashicons-video-alt3'],
+        audio: ['Audio', 'dashicons-format-audio'],
+        chart: ['Chart', 'dashicons-chart-bar'],
+        trend: ['Trend', 'dashicons-chart-line'],
+        ticket: ['Ticket', 'dashicons-tickets-alt'],
+        heart: ['Heart', 'dashicons-heart'],
+        star: ['Star', 'dashicons-star-filled'],
+        shield: ['Security', 'dashicons-shield'],
+        info: ['Information', 'dashicons-info-outline'],
+        warning: ['Warning', 'dashicons-warning'],
+        check: ['Approved', 'dashicons-yes-alt'],
+        website: ['Website', 'dashicons-admin-site-alt3'],
+        network: ['Network', 'dashicons-admin-multisite'],
+        feedback: ['Message', 'dashicons-feedback'],
+        food: ['Food', 'dashicons-food'],
+        pets: ['Pets', 'dashicons-pets'],
+        travel: ['Travel', 'dashicons-airplane']
+    };
     let schema = [];
     let activeStage = 0;
     let selectedId = null;
@@ -27,6 +67,7 @@
         if (!Array.isArray(schema) || !schema.length) schema = [{ id: uid('stage'), title: 'Stage 1', fields: [] }];
         render();
         renderFreeProCatalog();
+        if (WebformAdmin.proActive) ensureIconGallery();
     }
 
     function renderFreeProCatalog() {
@@ -52,6 +93,24 @@
         return $('<div>').text(value == null ? '' : value).html();
     }
 
+    function ensureIconGallery() {
+        if ($('#webform-icon-gallery').length) return;
+        const icons = Object.entries(fieldIcons).map(([value, icon]) => `<button type="button" data-icon="${escapeHtml(value)}" data-label="${escapeHtml(icon[0].toLowerCase())}"><span class="dashicons ${escapeHtml(icon[1])}" aria-hidden="true"></span><span>${escapeHtml(icon[0])}</span></button>`).join('');
+        $('body').append(`<div id="webform-icon-gallery" class="webform-icon-gallery" aria-hidden="true">
+            <button type="button" class="webform-icon-gallery-backdrop" tabindex="-1" aria-label="Close icon gallery"></button>
+            <div class="webform-icon-gallery-dialog" role="dialog" aria-modal="true" aria-labelledby="webform-icon-gallery-title">
+                <div class="webform-icon-gallery-head"><div><h2 id="webform-icon-gallery-title">Choose a field icon</h2><p>Icons appear beside the field label.</p></div><button type="button" class="webform-icon-gallery-close" aria-label="Close">×</button></div>
+                <label class="webform-icon-gallery-search"><span class="dashicons dashicons-search" aria-hidden="true"></span><span class="screen-reader-text">Search icons</span><input type="search" placeholder="Search icons…" autocomplete="off"></label>
+                <div class="webform-icon-gallery-grid">${icons}</div>
+                <p class="webform-icon-gallery-empty" hidden>No matching icons.</p>
+            </div>
+        </div>`);
+    }
+
+    function closeIconGallery() {
+        $('#webform-icon-gallery').removeClass('is-open').attr('aria-hidden', 'true');
+    }
+
     function safeRichPreview(value) {
         const container = document.createElement('div');
         container.innerHTML = String(value || '');
@@ -75,12 +134,12 @@
             name: '<div class="webform-preview-name"><span><small>First name</small><i></i></span><span><small>Last name</small><i></i></span></div>',
             text: `<div class="webform-preview-control"><span>${placeholder || 'Enter text'}</span></div>`,
             email: `<div class="webform-preview-control webform-preview-with-icon"><span class="dashicons dashicons-email-alt"></span><span>${placeholder || 'name@example.com'}</span></div>`,
-            textarea: `<div class="webform-preview-control webform-preview-textarea"><span>${placeholder || 'Enter a detailed response'}</span></div>`,
+            textarea: `<div class="webform-preview-control webform-preview-textarea" style="height:${Math.max(70, Math.min(240, Number(field.rows || 5) * 18))}px"><span>${placeholder || 'Enter a detailed response'}</span></div>`,
             select: `<div class="webform-preview-control webform-preview-select"><span>${option}</span><span class="dashicons dashicons-arrow-down-alt2"></span></div>`,
             radio: `<div class="webform-preview-choices">${previewOptions(field, 'radio')}</div>`,
             checkbox: `<div class="webform-preview-choices">${previewOptions(field, 'check')}</div>`,
             number: `<div class="webform-preview-control webform-preview-number"><span>${placeholder || '0'}</span><span class="webform-preview-steppers">⌃<br>⌄</span></div>`,
-            date: '<div class="webform-preview-control webform-preview-with-icon"><span>yyyy-mm-dd</span><span class="dashicons dashicons-calendar-alt"></span></div>',
+            date: `<div class="webform-preview-control webform-preview-with-icon"><span>${field.date_rule === 'future' ? 'Today or later' : field.date_rule === 'past' ? 'Today or earlier' : field.date_rule === 'custom' ? 'Custom date range' : 'yyyy-mm-dd'}</span><span class="dashicons dashicons-calendar-alt"></span></div>`,
             time: '<div class="webform-preview-control webform-preview-with-icon"><span>--:-- --</span><span class="dashicons dashicons-clock"></span></div>',
             phone: `<div class="webform-preview-control webform-preview-with-icon"><span class="dashicons dashicons-phone"></span><span>${placeholder || '(555) 123-4567'}</span></div>`,
             url: `<div class="webform-preview-control webform-preview-with-icon"><span class="dashicons dashicons-admin-links"></span><span>${placeholder || 'https://example.com'}</span></div>`,
@@ -247,10 +306,11 @@
         const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz', 'product'].includes(field.type);
         const candidates = schema.flatMap(stage => stage.fields).filter(item => item.id !== field.id && !['heading','file','html','rich_text'].includes(item.type));
         const condition = field.condition || { enabled: false, field_id: '', operator: 'equals', value: '' };
+        const selectedIcon = fieldIcons[field.icon] || fieldIcons[''];
         $('#webform-field-settings').html(`
             <p class="description">Field ID: <code>${escapeHtml(field.id)}</code></p>
             <label>Label<input type="text" data-prop="label" value="${escapeHtml(field.label)}"></label>
-            ${WebformAdmin.proActive ? `<label>Field icon <small>Shown beside the label</small><select data-prop="icon">${Object.entries(fieldIcons).map(([value, icon]) => `<option value="${value}" ${String(field.icon || '') === value ? 'selected' : ''}>${icon[0]}</option>`).join('')}</select></label>` : ''}
+            ${WebformAdmin.proActive && !['hidden','html','rich_text'].includes(field.type) ? `<div class="webform-icon-property"><label>Field icon <small>Shown beside the label</small></label><button type="button" class="webform-open-icon-gallery"><span class="dashicons ${escapeHtml(selectedIcon[1])}" aria-hidden="true"></span><span>${escapeHtml(selectedIcon[0])}</span><span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span></button></div>` : ''}
             ${!['name','heading','consent','file','hidden','html','rich_text','captcha','rating','slider'].includes(field.type) && !choices ? `<label>Placeholder<input type="text" data-prop="placeholder" value="${escapeHtml(field.placeholder || '')}"></label>` : ''}
             ${choices ? `<label>Options <small>One per line</small><textarea rows="6" data-prop="options">${escapeHtml((field.options || []).join('\n'))}</textarea></label>` : ''}
             ${field.type === 'quiz' ? `<label>Correct answer<select data-prop="correct_answer"><option value="">Choose answer</option>${(field.options || []).map(option => `<option value="${escapeHtml(option)}" ${field.correct_answer === option ? 'selected' : ''}>${escapeHtml(option)}</option>`).join('')}</select></label><label>Points<input type="number" min="1" max="100" data-prop="points" value="${Number(field.points || 1)}"></label>` : ''}
@@ -258,6 +318,8 @@
             ${field.type === 'hidden' ? `<label>Default value<input type="text" data-prop="default_value" value="${escapeHtml(field.default_value || '')}"></label>` : ''}
             ${field.type === 'html' ? `<label>Safe HTML content<textarea rows="8" data-prop="html">${escapeHtml(field.html || '')}</textarea></label>` : ''}
             ${field.type === 'rich_text' ? `<div class="webform-rich-text-editor"><label for="webform-rich-text-content">Contract or agreement content <small>Format text, add links, lists, tables, and media.</small></label><textarea id="webform-rich-text-content" rows="14">${escapeHtml(field.rich_content || '')}</textarea></div>` : ''}
+            ${field.type === 'textarea' ? `<label>Visible rows <small>Adjust the starting height of the long-text box.</small><input type="number" min="2" max="30" data-prop="rows" value="${Math.max(2, Math.min(30, Number(field.rows || 5)))}"></label>` : ''}
+            ${field.type === 'date' ? `<label>Allowed dates<select data-prop="date_rule"><option value="any" ${(field.date_rule || 'any') === 'any' ? 'selected' : ''}>Any date</option><option value="future" ${field.date_rule === 'future' ? 'selected' : ''}>Today and future dates</option><option value="past" ${field.date_rule === 'past' ? 'selected' : ''}>Today and past dates</option><option value="custom" ${field.date_rule === 'custom' ? 'selected' : ''}>Custom date range</option></select></label><div class="webform-date-custom-range" ${field.date_rule === 'custom' ? '' : 'hidden'}><label>Earliest date<input type="date" data-prop="date_min" value="${escapeHtml(field.date_min || '')}"></label><label>Latest date<input type="date" data-prop="date_max" value="${escapeHtml(field.date_max || '')}"></label></div>` : ''}
             ${field.type === 'slider' ? `<label>Minimum<input type="number" data-prop="min" value="${Number(field.min ?? 0)}"></label><label>Maximum<input type="number" data-prop="max" value="${Number(field.max ?? 100)}"></label><label>Step<input type="number" min="0.01" step="0.01" data-prop="step" value="${Number(field.step || 1)}"></label>` : ''}
             ${field.type === 'calculation' ? `<label>Formula <small>Use field IDs in braces, for example {price} * {quantity}</small><input type="text" data-prop="formula" value="${escapeHtml(field.formula || '')}"></label><label>Decimal places<input type="number" min="0" max="6" data-prop="decimal_places" value="${Number(field.decimal_places ?? 2)}"></label>` : ''}
             ${field.type === 'field_group' ? `<label>Fields to group<input type="number" min="1" max="6" data-prop="group_count" value="${Number(field.group_count || 2)}"></label><label>Columns<input type="number" min="1" max="4" data-prop="group_columns" value="${Number(field.group_columns || 2)}"></label>` : ''}
@@ -295,7 +357,7 @@
             return;
         }
         const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz', 'product'].includes(type);
-        const field = { id: uid('field'), type, label: defaults[type] || 'Field', icon: '', placeholder: '', required: ['consent','captcha','signature'].includes(type), options: choices ? (type === 'product' ? ['Standard|19.99', 'Premium|39.99'] : ['Option 1', 'Option 2']) : [], allowed_extensions: 'jpg,jpeg,png,pdf,doc,docx', max_size: 5, correct_answer: '', points: 1, default_value: '', html: '<p>Add your content here.</p>', rich_content: type === 'rich_text' ? '<h3>Agreement terms</h3><p>Describe the terms, responsibilities, and conditions of this agreement.</p><p><strong>Acceptance:</strong> Add a Consent field and E-signature below this agreement.</p>' : '', min: 0, max: type === 'currency' ? 999999999 : 100, step: 1, formula: '', decimal_places: 2, group_count: 2, group_columns: 2, repeater_min: 1, repeater_max: 10, repeater_button: 'Add another', currency_symbol: '$', price_amount: 0, currency_code: 'USD', min_date: '', max_date: '', style: { width: WebformAdmin.proActive ? 'auto' : '100' }, condition: { enabled: false, field_id: '', operator: 'equals', value: '' } };
+        const field = { id: uid('field'), type, label: defaults[type] || 'Field', icon: '', placeholder: '', required: ['consent','captcha','signature'].includes(type), options: choices ? (type === 'product' ? ['Standard|19.99', 'Premium|39.99'] : ['Option 1', 'Option 2']) : [], allowed_extensions: 'jpg,jpeg,png,pdf,doc,docx', max_size: 5, correct_answer: '', points: 1, default_value: '', html: '<p>Add your content here.</p>', rich_content: type === 'rich_text' ? '<h3>Agreement terms</h3><p>Describe the terms, responsibilities, and conditions of this agreement.</p><p><strong>Acceptance:</strong> Add a Consent field and E-signature below this agreement.</p>' : '', rows: 5, date_rule: 'any', date_min: '', date_max: '', min: 0, max: type === 'currency' ? 999999999 : 100, step: 1, formula: '', decimal_places: 2, group_count: 2, group_columns: 2, repeater_min: 1, repeater_max: 10, repeater_button: 'Add another', currency_symbol: '$', price_amount: 0, currency_code: 'USD', min_date: '', max_date: '', style: { width: WebformAdmin.proActive ? 'auto' : '100' }, condition: { enabled: false, field_id: '', operator: 'equals', value: '' } };
         schema[activeStage].fields.push(field);
         selectedId = field.id;
         dirty = true;
@@ -381,6 +443,41 @@
             const input = document.querySelector(`#webform-field-settings [data-prop="${prop}"]`);
             if (input && caret != null) input.setSelectionRange(caret, caret);
         }
+    });
+    $(document).on('change', '#webform-field-settings [data-prop="date_rule"]', function () {
+        $('.webform-date-custom-range').prop('hidden', $(this).val() !== 'custom');
+    });
+    $(document).on('click', '.webform-open-icon-gallery', function () {
+        ensureIconGallery();
+        const field = selectedField();
+        if (!field || !WebformAdmin.proActive) return;
+        const gallery = $('#webform-icon-gallery');
+        gallery.find('[data-icon]').removeClass('is-selected').filter(function () { return String($(this).data('icon')) === String(field.icon || ''); }).addClass('is-selected');
+        gallery.find('.webform-icon-gallery-search input').val('').trigger('input');
+        gallery.addClass('is-open').attr('aria-hidden', 'false');
+        window.setTimeout(function () { gallery.find('.webform-icon-gallery-search input').trigger('focus'); }, 30);
+    });
+    $(document).on('click', '.webform-icon-gallery-close,.webform-icon-gallery-backdrop', closeIconGallery);
+    $(document).on('input', '.webform-icon-gallery-search input', function () {
+        const query = String($(this).val() || '').trim().toLowerCase();
+        let visible = 0;
+        $('#webform-icon-gallery [data-icon]').each(function () {
+            const match = !query || String($(this).data('label') || '').includes(query);
+            $(this).prop('hidden', !match);
+            if (match) visible++;
+        });
+        $('.webform-icon-gallery-empty').prop('hidden', visible > 0);
+    });
+    $(document).on('click', '#webform-icon-gallery [data-icon]', function () {
+        const field = selectedField();
+        if (!field || !WebformAdmin.proActive) return;
+        field.icon = String($(this).data('icon') || '');
+        dirty = true;
+        closeIconGallery();
+        render();
+    });
+    $(document).on('keydown', function (event) {
+        if (event.key === 'Escape' && $('#webform-icon-gallery').hasClass('is-open')) closeIconGallery();
     });
     $(document).on('input change', '#webform-field-settings [data-condition]', function () {
         const field = selectedField();
