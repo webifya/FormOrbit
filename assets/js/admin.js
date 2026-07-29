@@ -2,6 +2,7 @@
     'use strict';
 
     const defaults = { text: 'Text', email: 'Email', textarea: 'Long text', select: 'Dropdown', radio: 'Radio', checkbox: 'Checkbox', number: 'Number', date: 'Date', time: 'Time', phone: 'Phone', url: 'Website', file: 'File upload', consent: 'I agree to the terms', poll: 'Poll question', quiz: 'Quiz question', rating: 'Rating', slider: 'Slider', hidden: 'Hidden field', html: 'HTML content', captcha: 'Security check', calculation: 'Calculation', signature: 'Signature', field_group: 'Field group', address: 'Address', repeater: 'Repeater', appointment: 'Appointment', nps: 'NPS score', currency: 'Currency', product: 'Product selector', price: 'Price', heading: 'Heading' };
+    const fieldIcons = { '': ['No icon', 'dashicons-minus'], email: ['Email', 'dashicons-email-alt'], user: ['Person', 'dashicons-admin-users'], phone: ['Phone', 'dashicons-phone'], location: ['Location', 'dashicons-location-alt'], calendar: ['Calendar', 'dashicons-calendar-alt'], clock: ['Clock', 'dashicons-clock'], link: ['Link', 'dashicons-admin-links'], cart: ['Cart', 'dashicons-cart'], money: ['Payment', 'dashicons-money-alt'], heart: ['Heart', 'dashicons-heart'], star: ['Star', 'dashicons-star-filled'], shield: ['Security', 'dashicons-shield'], clipboard: ['Clipboard', 'dashicons-clipboard'], business: ['Business', 'dashicons-building'], edit: ['Signature', 'dashicons-edit'] };
     let schema = [];
     let activeStage = 0;
     let selectedId = null;
@@ -149,9 +150,11 @@
         const widthMode = String(style.width || '100');
         const widthText = widthMode === 'auto' ? 'Fit' : `${widthMode}%`;
         const widthControls = WebformAdmin.proActive && !locked && field.id === selectedId ? `<div class="webform-card-widths" aria-label="Field layout"><button type="button" data-card-resize="-1" title="Make field narrower" aria-label="Make field narrower">−</button><button type="button" data-card-width="auto" class="${widthMode === 'auto' ? 'is-active' : ''}" title="Fit available row space" aria-label="Fit available row space"><span class="dashicons dashicons-editor-expand"></span>${widthText}</button><button type="button" data-card-resize="1" title="Make field wider" aria-label="Make field wider">＋</button><button type="button" data-card-row="1" class="${field.row_start ? 'is-active' : ''}" title="Start a new row" aria-label="Start a new row"><span class="dashicons dashicons-arrow-down-alt"></span></button></div>` : '';
+        const selectedIcon = fieldIcons[field.icon] || fieldIcons[''];
+        const iconPreview = WebformAdmin.proActive && field.icon ? `<span class="dashicons ${selectedIcon[1]} webform-builder-label-icon" aria-hidden="true"></span>` : '';
         return `${field.row_start ? '<span class="webform-row-break" aria-hidden="true"></span>' : ''}<div class="webform-field-card webform-field-card-${escapeHtml(field.type)} ${widthMode === 'auto' ? 'is-width-auto' : ''} ${locked ? 'is-pro-locked' : ''} ${field.id === selectedId ? 'is-selected' : ''}" data-id="${field.id}" style="${cardStyle}">
             <span class="dashicons ${locked ? 'dashicons-lock' : 'dashicons-menu'} webform-drag"></span>
-            <div class="webform-field-preview"><strong>${escapeHtml(field.label)}${field.required ? ' <em>*</em>' : ''}</strong>
+            <div class="webform-field-preview"><strong>${iconPreview}${escapeHtml(field.label)}${field.required ? ' <em>*</em>' : ''}</strong>
             ${fieldPreview(field)}</div>
             ${widthControls}
             <span class="webform-type">${locked ? 'PRO LOCKED' : escapeHtml(typeName)}</span>
@@ -179,6 +182,7 @@
         $('#webform-field-settings').html(`
             <p class="description">Field ID: <code>${escapeHtml(field.id)}</code></p>
             <label>Label<input type="text" data-prop="label" value="${escapeHtml(field.label)}"></label>
+            ${WebformAdmin.proActive ? `<label>Field icon <small>Shown beside the label</small><select data-prop="icon">${Object.entries(fieldIcons).map(([value, icon]) => `<option value="${value}" ${String(field.icon || '') === value ? 'selected' : ''}>${icon[0]}</option>`).join('')}</select></label>` : ''}
             ${!['heading','consent','file','hidden','html','captcha','rating','slider'].includes(field.type) && !choices ? `<label>Placeholder<input type="text" data-prop="placeholder" value="${escapeHtml(field.placeholder || '')}"></label>` : ''}
             ${choices ? `<label>Options <small>One per line</small><textarea rows="6" data-prop="options">${escapeHtml((field.options || []).join('\n'))}</textarea></label>` : ''}
             ${field.type === 'quiz' ? `<label>Correct answer<select data-prop="correct_answer"><option value="">Choose answer</option>${(field.options || []).map(option => `<option value="${escapeHtml(option)}" ${field.correct_answer === option ? 'selected' : ''}>${escapeHtml(option)}</option>`).join('')}</select></label><label>Points<input type="number" min="1" max="100" data-prop="points" value="${Number(field.points || 1)}"></label>` : ''}
@@ -221,7 +225,7 @@
             return;
         }
         const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz', 'product'].includes(type);
-        const field = { id: uid('field'), type, label: defaults[type] || 'Field', placeholder: '', required: ['consent','captcha','signature'].includes(type), options: choices ? (type === 'product' ? ['Standard|19.99', 'Premium|39.99'] : ['Option 1', 'Option 2']) : [], allowed_extensions: 'jpg,jpeg,png,pdf,doc,docx', max_size: 5, correct_answer: '', points: 1, default_value: '', html: '<p>Add your content here.</p>', min: 0, max: type === 'currency' ? 999999999 : 100, step: 1, formula: '', decimal_places: 2, group_count: 2, group_columns: 2, repeater_min: 1, repeater_max: 10, repeater_button: 'Add another', currency_symbol: '$', price_amount: 0, currency_code: 'USD', min_date: '', max_date: '', style: { width: WebformAdmin.proActive ? 'auto' : '100' }, condition: { enabled: false, field_id: '', operator: 'equals', value: '' } };
+        const field = { id: uid('field'), type, label: defaults[type] || 'Field', icon: '', placeholder: '', required: ['consent','captcha','signature'].includes(type), options: choices ? (type === 'product' ? ['Standard|19.99', 'Premium|39.99'] : ['Option 1', 'Option 2']) : [], allowed_extensions: 'jpg,jpeg,png,pdf,doc,docx', max_size: 5, correct_answer: '', points: 1, default_value: '', html: '<p>Add your content here.</p>', min: 0, max: type === 'currency' ? 999999999 : 100, step: 1, formula: '', decimal_places: 2, group_count: 2, group_columns: 2, repeater_min: 1, repeater_max: 10, repeater_button: 'Add another', currency_symbol: '$', price_amount: 0, currency_code: 'USD', min_date: '', max_date: '', style: { width: WebformAdmin.proActive ? 'auto' : '100' }, condition: { enabled: false, field_id: '', operator: 'equals', value: '' } };
         schema[activeStage].fields.push(field);
         selectedId = field.id;
         dirty = true;
