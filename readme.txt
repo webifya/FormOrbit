@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 4.4.4
+Stable tag: 4.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -47,6 +47,13 @@ FormOrbit is created by Mahfuzar Rahman. Advanced automation, payment, document,
 5. Copy the generated `[formorbit id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 4.5.0 =
+* Kept the stage and Add field toolbar visible while scrolling long forms.
+* Added responsive one-to-four-column option layouts for checkbox, radio, poll, and quiz fields.
+* Expanded the native icon gallery with common business, communication, product, scheduling, accessibility, and social icons.
+* Improved the live builder and real-form preview for option-column layouts.
+* Added a guided advanced-calculation editor for FormOrbit Pro.
 
 = 4.4.4 =
 * Fixed the Group and Repeater child-field popup layout so controls remain organized and responsive.
