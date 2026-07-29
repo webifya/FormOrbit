@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 3.0.3
+Stable tag: 3.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -47,6 +47,12 @@ FormOrbit is created by Mahfuzar Rahman. Advanced automation, payment, document,
 5. Copy the generated `[formorbit id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 3.1.0 =
+* Renamed all user-facing admin page URLs from webform to formorbit, with safe redirects for saved legacy links.
+* Added an accessible Hide label on public form option for supported fields.
+* Added compatibility support for the new Pro Divider element.
+* Fixed Pro field schema sanitization when premium field types are enabled.
 
 = 3.0.3 =
 * Changed the generated and displayed shortcode to `[formorbit id="123"]`.
