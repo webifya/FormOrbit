@@ -498,6 +498,9 @@ class Webform_Admin {
                     $clean_field['currency_code'] = in_array(strtoupper($field['currency_code'] ?? 'USD'), array('USD', 'EUR', 'GBP', 'CAD', 'AUD', 'BDT'), true) ? strtoupper($field['currency_code']) : 'USD';
                     $clean_field['min_date'] = sanitize_text_field($field['min_date'] ?? '');
                     $clean_field['max_date'] = sanitize_text_field($field['max_date'] ?? '');
+                    if (in_array($type, array('field_group', 'repeater'), true)) {
+                        $clean_field['children'] = $this->sanitize_container_children($field['children'] ?? array());
+                    }
                     $clean_field['style'] = array(
                         'width' => in_array((string) ($field['style']['width'] ?? '100'), array('auto', '100', '75', '50', '33'), true) ? (string) $field['style']['width'] : '100',
                         'label_color' => sanitize_hex_color($field['style']['label_color'] ?? '') ?: '#1d2327',
@@ -511,6 +514,40 @@ class Webform_Admin {
                 $clean_stage['fields'][] = apply_filters('webform_sanitize_field', $clean_field, $field);
             }
             $clean[] = $clean_stage;
+        }
+        return $clean;
+    }
+
+    private function sanitize_container_children($children) {
+        $allowed_types = array('text', 'email', 'textarea', 'select', 'radio', 'checkbox', 'number', 'date', 'time', 'phone', 'url', 'consent', 'hidden');
+        $clean = array();
+        $used_ids = array();
+        foreach (array_slice((array) $children, 0, 12) as $index => $child) {
+            if (!is_array($child)) continue;
+            $type = sanitize_key($child['type'] ?? 'text');
+            if (!in_array($type, $allowed_types, true)) $type = 'text';
+            $id = sanitize_key($child['id'] ?? '');
+            if (!$id || isset($used_ids[$id])) $id = 'child_' . ($index + 1) . '_' . substr(md5(wp_json_encode($child)), 0, 6);
+            $used_ids[$id] = true;
+            $options = array();
+            foreach (array_slice((array) ($child['options'] ?? array()), 0, 50) as $option) {
+                if (is_array($option)) continue;
+                $option = substr(sanitize_text_field($option), 0, 200);
+                if ($option !== '') $options[] = $option;
+            }
+            $clean[] = array(
+                'id' => $id,
+                'type' => $type,
+                'label' => substr(sanitize_text_field($child['label'] ?? ucfirst($type)), 0, 200),
+                'placeholder' => substr(sanitize_text_field($child['placeholder'] ?? ''), 0, 300),
+                'required' => !empty($child['required']),
+                'options' => $options,
+                'rows' => min(20, max(2, absint($child['rows'] ?? 4))),
+                'min' => is_numeric($child['min'] ?? null) ? (string) floatval($child['min']) : '',
+                'max' => is_numeric($child['max'] ?? null) ? (string) floatval($child['max']) : '',
+                'step' => is_numeric($child['step'] ?? null) && floatval($child['step']) > 0 ? (string) floatval($child['step']) : '1',
+                'default_value' => substr(sanitize_text_field($child['default_value'] ?? ''), 0, 500),
+            );
         }
         return $clean;
     }
