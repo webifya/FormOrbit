@@ -95,7 +95,22 @@
         phone: 'Phone',
         url: 'Website',
         consent: 'Consent',
-        hidden: 'Hidden'
+        poll: 'Poll',
+        quiz: 'Quiz',
+        rating: 'Rating',
+        slider: 'Slider',
+        hidden: 'Hidden',
+        html: 'HTML content',
+        heading: 'Heading',
+        rich_text: 'Rich text',
+        divider: 'Divider',
+        signature: 'E-signature',
+        appointment: 'Appointment',
+        nps: 'NPS score',
+        currency: 'Currency',
+        product: 'Product selector',
+        price: 'Price',
+        calculation: 'Calculation'
     };
 
     function isLockedProField(field) {
@@ -216,7 +231,7 @@
 
     function createContainerChild(type, label) {
         const childType = containerChildTypes[type] ? type : 'text';
-        const choices = ['select', 'radio', 'checkbox'].includes(childType);
+        const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz', 'product'].includes(childType);
         return {
             id: uid('child'),
             type: childType,
@@ -228,8 +243,32 @@
             min: '',
             max: '',
             step: '1',
-            default_value: ''
+            default_value: '',
+            html: childType === 'html' ? '<p>Add your content here.</p>' : '',
+            rich_content: childType === 'rich_text' ? '<p>Add your formatted content here.</p>' : '',
+            currency_symbol: '$',
+            currency_code: 'USD',
+            price_amount: 0,
+            formula: ''
         };
+    }
+
+    function fieldToContainerChildren(source) {
+        if (!source) return [];
+        if (source.type === 'name') {
+            return [createContainerChild('text', 'First name'), createContainerChild('text', 'Last name')];
+        }
+        if (source.type === 'address') {
+            return ['Street address', 'City', 'State / Province', 'Postal code', 'Country'].map(label => createContainerChild('text', label));
+        }
+        if (!containerChildTypes[source.type]) return [];
+        const child = JSON.parse(JSON.stringify(source));
+        child.id = uid('child');
+        delete child.children;
+        delete child.condition;
+        delete child.row_start;
+        delete child.style;
+        return [child];
     }
 
     function defaultContainerChildren(type) {
@@ -242,15 +281,27 @@
         return Array.isArray(field.children) ? field.children : [];
     }
 
-    function containerChildPreview(child) {
+    function containerChildPreview(child, index, editable) {
         const label = escapeHtml(child.label || containerChildTypes[child.type] || 'Field');
         const required = child.required ? '<em>*</em>' : '';
         let control = '<i class="webform-container-preview-input"></i>';
         if (child.type === 'textarea') control = '<i class="webform-container-preview-input is-textarea"></i>';
         if (child.type === 'select') control = '<i class="webform-container-preview-input is-select"></i>';
-        if (['radio', 'checkbox', 'consent'].includes(child.type)) control = `<i class="webform-container-preview-options">${(child.options || ['Option 1', 'Option 2']).slice(0, 2).map(option => `<span>○ ${escapeHtml(option)}</span>`).join('') || '<span>□ Consent</span>'}</i>`;
+        if (['radio', 'checkbox', 'consent', 'poll', 'quiz', 'product'].includes(child.type)) control = `<i class="webform-container-preview-options">${(child.options || ['Option 1', 'Option 2']).slice(0, 2).map(option => `<span>○ ${escapeHtml(String(option).split('|')[0])}</span>`).join('') || '<span>□ Consent</span>'}</i>`;
+        if (child.type === 'rating') control = '<i class="webform-container-preview-rating">★★★★★</i>';
+        if (child.type === 'slider') control = '<i class="webform-container-preview-slider"><span></span></i>';
+        if (['heading', 'html', 'rich_text'].includes(child.type)) control = `<i class="webform-container-preview-content">${child.type === 'heading' ? 'Section heading' : 'Formatted content'}</i>`;
+        if (child.type === 'divider') control = '<i class="webform-container-preview-divider"></i>';
+        if (child.type === 'signature') control = '<i class="webform-container-preview-signature">Sign here</i>';
+        if (child.type === 'nps') control = '<i class="webform-container-preview-nps">0 · 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10</i>';
+        if (['price', 'calculation'].includes(child.type)) control = `<i class="webform-container-preview-value">${child.type === 'price' ? escapeHtml(child.currency_code || 'USD') + ' ' + Number(child.price_amount || 0).toFixed(2) : '0.00'}</i>`;
         if (child.type === 'hidden') control = '<i class="webform-container-preview-hidden">Hidden value</i>';
-        return `<span class="webform-container-preview-child"><small>${label} ${required}</small>${control}</span>`;
+        return `<span class="webform-container-preview-child ${editable ? 'is-editable' : ''}" data-child-index="${index}">
+            ${editable ? '<span class="dashicons dashicons-menu webform-live-child-drag" title="Drag to reorder"></span>' : ''}
+            ${editable ? `<input class="webform-live-child-label" value="${label}" aria-label="Child field label">` : `<small>${label} ${required}</small>`}
+            ${control}
+            ${editable ? `<button type="button" class="webform-live-eject-child" title="Move to main form" aria-label="Move ${label} to main form"><span class="dashicons dashicons-external"></span></button><button type="button" class="webform-live-remove-child" aria-label="Remove ${label}">×</button>` : ''}
+        </span>`;
     }
 
     function containerPreview(field) {
@@ -262,10 +313,73 @@
             return '<div class="webform-preview-repeater is-legacy"><div><i></i><button type="button">×</button></div><small>Legacy single-value row</small></div>';
         }
         const columns = field.type === 'field_group' ? Math.max(1, Math.min(4, Number(field.group_columns || 2))) : Math.min(2, Math.max(1, children.length));
-        return `<div class="webform-preview-container webform-preview-container-${escapeHtml(field.type)}" style="--preview-columns:${columns}">
-            ${children.map(containerChildPreview).join('')}
+        const editable = WebformAdmin.proActive && field.id === selectedId;
+        return `<div class="webform-preview-container webform-live-container webform-preview-container-${escapeHtml(field.type)} ${editable ? 'is-editable' : ''}" data-container-id="${escapeHtml(field.id)}" style="--preview-columns:${columns}">
+            ${children.map((child, index) => containerChildPreview(child, index, editable)).join('')}
+            ${editable ? '<button type="button" class="webform-live-container-drop"><span class="dashicons dashicons-move"></span><strong>Drop a field here</strong><small>or add a basic field</small></button>' : ''}
             ${field.type === 'repeater' ? `<span class="webform-container-preview-add">＋ ${escapeHtml(field.repeater_button || 'Add another row')}</span>` : ''}
         </div>`;
+    }
+
+    function initializeLiveContainers() {
+        if (!WebformAdmin.proActive) return;
+        $('.webform-live-container').each(function () {
+            const container = $(this);
+            const parentId = String(container.data('container-id') || '');
+            const parent = (schema[activeStage].fields || []).find(field => field.id === parentId);
+            if (!parent) return;
+            if (container.hasClass('is-editable')) {
+                container.sortable({
+                    items: '.webform-container-preview-child',
+                    handle: '.webform-live-child-drag',
+                    placeholder: 'webform-live-child-placeholder',
+                    tolerance: 'pointer',
+                    distance: 3,
+                    update: function () {
+                        const current = containerChildren(parent);
+                        const order = container.children('.webform-container-preview-child').map(function () { return Number($(this).data('child-index')); }).get();
+                        parent.children = order.map(index => current[index]).filter(Boolean);
+                        dirty = true;
+                        scheduleHistory(0);
+                        render();
+                    }
+                });
+            }
+            if ($.fn.droppable) {
+                container.droppable({
+                    accept: function (draggable) {
+                        const source = (schema[activeStage].fields || []).find(field => field.id === draggable.data('id'));
+                        return source && source.id !== parent.id;
+                    },
+                    tolerance: 'pointer',
+                    hoverClass: 'is-field-over',
+                    drop: function (event, ui) {
+                        ui.draggable.data('formorbit-container-drop', true);
+                        const sourceId = String(ui.draggable.data('id') || '');
+                        const fields = schema[activeStage].fields || [];
+                        const source = fields.find(field => field.id === sourceId);
+                        const additions = fieldToContainerChildren(source);
+                        if (!source || !additions.length) {
+                            const message = ['file', 'captcha'].includes(source?.type) ? 'Uploads and CAPTCHA stay top-level for secure processing.' : 'Groups, repeaters, and page breaks cannot be nested.';
+                            container.addClass('is-drop-rejected').find('.webform-live-container-drop strong').text(message);
+                            window.setTimeout(function () { container.removeClass('is-drop-rejected'); render(); }, 1800);
+                            return;
+                        }
+                        if (containerChildren(parent).length + additions.length > 20) {
+                            container.addClass('is-drop-rejected').find('.webform-live-container-drop strong').text('A container can hold up to 20 fields.');
+                            window.setTimeout(function () { container.removeClass('is-drop-rejected'); render(); }, 1800);
+                            return;
+                        }
+                        parent.children = containerChildren(parent).concat(additions);
+                        schema[activeStage].fields = fields.filter(field => field.id !== sourceId);
+                        selectedId = parent.id;
+                        dirty = true;
+                        scheduleHistory(0);
+                        render();
+                    }
+                });
+            }
+        });
     }
 
     function containerChildrenSettings(field) {
@@ -273,9 +387,9 @@
         const legacy = !children.length;
         const typeOptions = Object.entries(containerChildTypes).map(([value, label]) => `<option value="${value}">${label}</option>`);
         return `<div class="webform-container-field-settings">
-            <div class="webform-container-field-heading"><div><h3>${field.type === 'repeater' ? 'Fields in each repeated row' : 'Fields inside this group'}</h3><p>Each child field is stored inside this ${field.type === 'repeater' ? 'repeating row' : 'group'}.</p></div>${children.length < 12 ? '<button type="button" class="button webform-add-container-child"><span class="dashicons dashicons-plus-alt2"></span>Add field</button>' : ''}</div>
-            ${legacy ? `<div class="webform-container-legacy"><strong>Legacy ${field.type === 'repeater' ? 'single-field repeater' : 'field group'}</strong><p>This form keeps its existing public behavior until you convert it. Conversion creates real child fields inside the container.</p><button type="button" class="button button-primary webform-convert-container">Convert to multi-field ${field.type === 'repeater' ? 'repeater' : 'group'}</button></div>` : `<div class="webform-container-children">${children.map((child, index) => {
-                const choices = ['select', 'radio', 'checkbox'].includes(child.type);
+            <div class="webform-container-field-heading"><div><h3>${field.type === 'repeater' ? 'Repeated row fields' : 'Grouped fields'}</h3><p>Edit labels and drag fields directly on the live builder.</p></div>${children.length < 20 ? '<button type="button" class="button webform-add-container-child"><span class="dashicons dashicons-plus-alt2"></span>Add basic field</button>' : ''}</div>
+            ${legacy ? `<div class="webform-container-legacy"><strong>Legacy ${field.type === 'repeater' ? 'single-field repeater' : 'field group'}</strong><p>This form keeps its existing public behavior until you convert it. Conversion creates real child fields inside the container.</p><button type="button" class="button button-primary webform-convert-container">Convert to multi-field ${field.type === 'repeater' ? 'repeater' : 'group'}</button></div>` : `<p class="webform-container-builder-tip"><span class="dashicons dashicons-move"></span>Drag any compatible field from the main canvas into the highlighted drop area. Name and Address fields expand automatically. Structural containers, file uploads, and CAPTCHA remain top-level for security.</p><details class="webform-container-advanced"><summary>Advanced child field settings <span>${children.length}</span></summary><div class="webform-container-children">${children.map((child, index) => {
+                const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz', 'product'].includes(child.type);
                 return `<div class="webform-container-child" data-child-index="${index}">
                     <span class="dashicons dashicons-menu webform-container-child-drag" title="Drag to reorder"></span>
                     <div class="webform-container-child-main">
@@ -285,15 +399,19 @@
                     <label class="webform-container-child-required"><input type="checkbox" data-child-prop="required" ${child.required ? 'checked' : ''}> Required</label>
                     <button type="button" class="webform-remove-container-child" aria-label="Remove child field">×</button>
                     <div class="webform-container-child-options">
-                        ${!['radio','checkbox','select','consent','hidden'].includes(child.type) ? `<input type="text" data-child-prop="placeholder" value="${escapeHtml(child.placeholder || '')}" placeholder="Placeholder (optional)">` : ''}
+                        ${!['radio','checkbox','select','consent','hidden','poll','quiz','product','html','heading','rich_text','divider','price'].includes(child.type) ? `<input type="text" data-child-prop="placeholder" value="${escapeHtml(child.placeholder || '')}" placeholder="Placeholder (optional)">` : ''}
                         ${choices ? `<textarea rows="3" data-child-prop="options" placeholder="One option per line">${escapeHtml((child.options || []).join('\n'))}</textarea>` : ''}
                         ${child.type === 'textarea' ? `<label>Rows <input type="number" min="2" max="20" data-child-prop="rows" value="${Number(child.rows || 4)}"></label>` : ''}
-                        ${child.type === 'number' ? `<div class="webform-container-number-options"><input type="number" data-child-prop="min" value="${escapeHtml(child.min ?? '')}" placeholder="Minimum"><input type="number" data-child-prop="max" value="${escapeHtml(child.max ?? '')}" placeholder="Maximum"><input type="number" step="any" data-child-prop="step" value="${escapeHtml(child.step || '1')}" placeholder="Step"></div>` : ''}
+                        ${['number','slider','currency'].includes(child.type) ? `<div class="webform-container-number-options"><input type="number" data-child-prop="min" value="${escapeHtml(child.min ?? '')}" placeholder="Minimum"><input type="number" data-child-prop="max" value="${escapeHtml(child.max ?? '')}" placeholder="Maximum"><input type="number" step="any" data-child-prop="step" value="${escapeHtml(child.step || '1')}" placeholder="Step"></div>` : ''}
                         ${child.type === 'hidden' ? `<input type="text" data-child-prop="default_value" value="${escapeHtml(child.default_value || '')}" placeholder="Hidden default value">` : ''}
+                        ${child.type === 'html' ? `<textarea rows="4" data-child-prop="html" placeholder="Safe HTML">${escapeHtml(child.html || '')}</textarea>` : ''}
+                        ${child.type === 'rich_text' ? `<textarea rows="5" data-child-prop="rich_content" placeholder="Formatted content">${escapeHtml(child.rich_content || '')}</textarea>` : ''}
+                        ${child.type === 'price' ? `<div class="webform-container-number-options"><input type="number" min="0" step="0.01" data-child-prop="price_amount" value="${Number(child.price_amount || 0)}" placeholder="Amount"><input type="text" maxlength="3" data-child-prop="currency_code" value="${escapeHtml(child.currency_code || 'USD')}" placeholder="USD"></div>` : ''}
+                        ${child.type === 'currency' ? `<input type="text" maxlength="5" data-child-prop="currency_symbol" value="${escapeHtml(child.currency_symbol || '$')}" placeholder="Currency symbol">` : ''}
+                        ${child.type === 'calculation' ? `<input type="text" data-child-prop="formula" value="${escapeHtml(child.formula || '')}" placeholder="Formula">` : ''}
                     </div>
                 </div>`;
-            }).join('')}</div>`}
-            ${children.length ? '<p class="description">Drag child fields by the handle to reorder them. Nested groups, uploads, payments, CAPTCHA, and signatures stay as top-level fields.</p>' : ''}
+            }).join('')}</div></details>`}
         </div>`;
     }
 
@@ -372,9 +490,16 @@
         if (child.type === 'hidden') return '';
         if (child.type === 'textarea') return `<label class="webform-container-child-field"><span>${label}${required}</span><textarea rows="${Number(child.rows || 4)}" placeholder="${placeholder}" readonly></textarea></label>`;
         if (child.type === 'select') return `<label class="webform-container-child-field"><span>${label}${required}</span><select disabled><option>${escapeHtml((child.options || [])[0] || 'Select an option')}</option></select></label>`;
-        if (['radio', 'checkbox'].includes(child.type)) return `<fieldset class="webform-container-child-field"><legend>${label}${required}</legend><div class="webform-container-choices">${(child.options || ['Option 1', 'Option 2']).map((option, index) => `<label><input type="${child.type}" ${index === 0 ? 'checked' : ''} disabled> <span>${escapeHtml(option)}</span></label>`).join('')}</div></fieldset>`;
+        if (['radio', 'checkbox', 'poll', 'quiz', 'product'].includes(child.type)) return `<fieldset class="webform-container-child-field"><legend>${label}${required}</legend><div class="webform-container-choices">${(child.options || ['Option 1', 'Option 2']).map((option, index) => `<label><input type="${child.type === 'checkbox' ? 'checkbox' : 'radio'}" ${index === 0 ? 'checked' : ''} disabled> <span>${escapeHtml(String(option).replace('|', ' — '))}</span></label>`).join('')}</div></fieldset>`;
         if (child.type === 'consent') return `<label class="webform-container-child-field webform-container-consent"><input type="checkbox" disabled><span>${label}${required}</span></label>`;
-        const type = ({email:'email',number:'number',date:'date',time:'time',phone:'tel',url:'url'})[child.type] || 'text';
+        if (child.type === 'heading') return `<div class="webform-container-child-field"><h3>${label}</h3></div>`;
+        if (child.type === 'html') return `<div class="webform-container-child-field">${safeRichPreview(child.html || '')}</div>`;
+        if (child.type === 'rich_text') return `<div class="webform-container-child-field">${safeRichPreview(child.rich_content || '')}</div>`;
+        if (child.type === 'divider') return '<div class="webform-container-child-field"><hr></div>';
+        if (child.type === 'signature') return `<fieldset class="webform-container-child-field"><legend>${label}${required}</legend><div class="webform-real-signature"><span>Sign here</span></div></fieldset>`;
+        if (['rating', 'nps'].includes(child.type)) return `<fieldset class="webform-container-child-field"><legend>${label}${required}</legend><div class="webform-container-choices">${Array.from({length:child.type === 'rating' ? 5 : 11},(_,index)=>`<label><input type="radio" disabled><span>${child.type === 'rating' ? '★' : index}</span></label>`).join('')}</div></fieldset>`;
+        if (child.type === 'price') return `<div class="webform-container-child-field webform-field-price"><span>${label}</span><strong>${escapeHtml(child.currency_code || 'USD')} ${Number(child.price_amount || 0).toFixed(2)}</strong></div>`;
+        const type = ({email:'email',number:'number',date:'date',time:'time',phone:'tel',url:'url',slider:'range',appointment:'datetime-local',currency:'number',calculation:'number'})[child.type] || 'text';
         return `<label class="webform-container-child-field"><span>${label}${required}</span><input type="${type}" placeholder="${placeholder}" readonly></label>`;
     }
 
@@ -578,6 +703,10 @@
                 $(this).removeClass('is-sorting');
             },
             update: function (event, ui) {
+                if (ui.item.data('formorbit-container-drop')) {
+                    ui.item.removeData('formorbit-container-drop');
+                    return;
+                }
                 const order = $(this).children('.webform-field-card').map(function () { return $(this).data('id'); }).get();
                 schema[activeStage].fields.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
                 const moved = schema[activeStage].fields.find(field => field.id === ui.item.data('id'));
@@ -593,6 +722,7 @@
                 render();
             }
         });
+        initializeLiveContainers();
         renderSettings();
         refreshUserEmailFields();
     }
@@ -617,9 +747,12 @@
         const widthControls = WebformAdmin.proActive && !locked && field.id === selectedId ? `<div class="webform-card-widths" aria-label="Field layout"><button type="button" data-card-resize="-1" title="Make field narrower" aria-label="Make field narrower">−</button><button type="button" data-card-width="auto" class="${widthMode === 'auto' ? 'is-active' : ''}" title="Fit available row space" aria-label="Fit available row space"><span class="dashicons dashicons-editor-expand"></span>${widthText}</button><button type="button" data-card-resize="1" title="Make field wider" aria-label="Make field wider">＋</button><button type="button" data-card-row="1" class="${field.row_start ? 'is-active' : ''}" title="Start a new row" aria-label="Start a new row"><span class="dashicons dashicons-arrow-down-alt"></span></button></div>` : '';
         const selectedIcon = fieldIcons[field.icon] || fieldIcons[''];
         const iconPreview = WebformAdmin.proActive && field.icon ? `<span class="dashicons ${selectedIcon[1]} webform-builder-label-icon" aria-hidden="true"></span>` : '';
+        const liveContainerTitle = ['field_group', 'repeater'].includes(field.type) && WebformAdmin.proActive && field.id === selectedId
+            ? `<input class="webform-live-container-title" value="${escapeHtml(field.label)}" aria-label="${field.type === 'field_group' ? 'Group label' : 'Repeater label'}">${field.required ? ' <em>*</em>' : ''}`
+            : `${iconPreview}${escapeHtml(field.label)}${field.required ? ' <em>*</em>' : ''}`;
         return `${field.row_start ? '<span class="webform-row-break" aria-hidden="true"></span>' : ''}<div class="webform-field-card webform-field-card-${escapeHtml(field.type)} ${widthMode === 'auto' ? 'is-width-auto' : ''} ${locked ? 'is-pro-locked' : ''} ${field.id === selectedId ? 'is-selected' : ''}" data-id="${field.id}" style="${cardStyle}">
             <span class="dashicons ${locked ? 'dashicons-lock' : 'dashicons-menu'} webform-drag"></span>
-            <div class="webform-field-preview"><strong>${iconPreview}${escapeHtml(field.label)}${field.required ? ' <em>*</em>' : ''}</strong>
+            <div class="webform-field-preview"><strong>${liveContainerTitle}</strong>
             ${fieldPreview(field)}</div>
             ${widthControls}
             <span class="webform-type">${locked ? 'PRO LOCKED' : escapeHtml(typeName)}</span>
@@ -692,7 +825,7 @@
         const selectedIcon = fieldIcons[field.icon] || fieldIcons[''];
         $('#webform-field-settings').html(`
             <div class="webform-field-quick-actions"><p class="description">Field ID: <code>${escapeHtml(field.id)}</code></p>${WebformAdmin.proActive ? '<button type="button" class="button webform-duplicate-field"><span class="dashicons dashicons-admin-page" aria-hidden="true"></span>Duplicate</button>' : ''}</div>
-            <label>Label<input type="text" data-prop="label" value="${escapeHtml(field.label)}"></label>
+            <label>${field.type === 'field_group' ? 'Group label' : field.type === 'repeater' ? 'Repeater label' : 'Label'}<input type="text" data-prop="label" value="${escapeHtml(field.label)}"></label>
             ${!['hidden','html','rich_text','divider','heading','consent','captcha'].includes(field.type) ? `<label class="webform-check"><input type="checkbox" data-prop="hide_label" ${field.hide_label ? 'checked' : ''}> Hide label on public form <small>The label remains available to screen readers.</small></label>` : ''}
             ${['html','rich_text'].includes(field.type) ? '<p class="description">The editor label helps identify this element and is hidden on the public form.</p>' : ''}
             ${WebformAdmin.proActive && !['hidden','html','rich_text','divider'].includes(field.type) ? `<div class="webform-icon-property"><label>Field icon <small>Shown beside the label</small></label><button type="button" class="webform-open-icon-gallery"><span class="dashicons ${escapeHtml(selectedIcon[1])}" aria-hidden="true"></span><span>${escapeHtml(selectedIcon[0])}</span><span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span></button></div>` : ''}
@@ -808,7 +941,7 @@
     $(document).on('change', '#webform-confirmation-type', updateConfirmationOptions);
     updateConfirmationOptions();
     $(document).on('click', '.webform-field-card', function (event) {
-        if ($(event.target).closest('.webform-remove-field,.webform-card-widths').length) return;
+        if ($(event.target).closest('.webform-remove-field,.webform-card-widths,.webform-live-container,.webform-live-container-title').length) return;
         selectedId = $(this).data('id');
         render();
         $('.webform-property-tabs button[data-panel="field"]').trigger('click');
@@ -871,6 +1004,7 @@
         dirty = true;
         const caret = this.selectionStart;
         $('#webform-canvas').html(schema[activeStage].fields.map(fieldCard).join(''));
+        initializeLiveContainers();
         if (!['required', 'hide_label', 'divider_show_label'].includes(prop)) {
             const input = document.querySelector(`#webform-field-settings [data-prop="${prop}"]`);
             if (input && caret != null) input.setSelectionRange(caret, caret);
@@ -880,9 +1014,72 @@
         const field = selectedField();
         if (!field || !['field_group', 'repeater'].includes(field.type)) return;
         field.children = containerChildren(field);
-        if (field.children.length >= 12) return;
+        if (field.children.length >= 20) return;
         field.children.push(createContainerChild('text'));
         dirty = true;
+        render();
+    });
+    $(document).on('click', '.webform-live-container-drop', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const field = selectedField();
+        if (!field || !['field_group', 'repeater'].includes(field.type) || containerChildren(field).length >= 20) return;
+        field.children = containerChildren(field).concat(createContainerChild('text'));
+        dirty = true;
+        scheduleHistory(0);
+        render();
+    });
+    $(document).on('input', '.webform-live-container-title', function (event) {
+        event.stopPropagation();
+        const field = selectedField();
+        if (!field || !['field_group', 'repeater'].includes(field.type)) return;
+        field.label = $(this).val();
+        const settingsLabel = document.querySelector('#webform-field-settings [data-prop="label"]');
+        if (settingsLabel) settingsLabel.value = field.label;
+        dirty = true;
+        scheduleHistory();
+    });
+    $(document).on('change', '.webform-live-container-title', function () { render(); });
+    $(document).on('input', '.webform-live-child-label', function (event) {
+        event.stopPropagation();
+        const field = selectedField();
+        const child = field && containerChildren(field)[Number($(this).closest('[data-child-index]').data('child-index'))];
+        if (!child) return;
+        child.label = $(this).val();
+        dirty = true;
+        scheduleHistory();
+    });
+    $(document).on('change', '.webform-live-child-label', function () { render(); });
+    $(document).on('click', '.webform-live-remove-child', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const field = selectedField();
+        if (!field) return;
+        const index = Number($(this).closest('[data-child-index]').data('child-index'));
+        field.children = containerChildren(field).filter((child, childIndex) => childIndex !== index);
+        dirty = true;
+        scheduleHistory(0);
+        render();
+    });
+    $(document).on('click', '.webform-live-eject-child', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const parent = selectedField();
+        if (!parent) return;
+        const index = Number($(this).closest('[data-child-index]').data('child-index'));
+        const child = containerChildren(parent)[index];
+        if (!child) return;
+        const restored = JSON.parse(JSON.stringify(child));
+        restored.id = uid('field');
+        restored.style = { width: 'auto' };
+        restored.condition = { enabled: false, field_id: '', operator: 'equals', value: '' };
+        restored.row_start = false;
+        parent.children = containerChildren(parent).filter((item, childIndex) => childIndex !== index);
+        const parentIndex = schema[activeStage].fields.indexOf(parent);
+        schema[activeStage].fields.splice(parentIndex + 1, 0, restored);
+        selectedId = restored.id;
+        dirty = true;
+        scheduleHistory(0);
         render();
     });
     $(document).on('click', '.webform-remove-container-child', function () {
@@ -903,20 +1100,9 @@
             const removeIndexes = [];
             for (let index = parentIndex + 1; index < fields.length && supported.length < Number(field.group_count || 2); index++) {
                 const source = fields[index];
-                if (!containerChildTypes[source.type]) continue;
-                supported.push({
-                    id: source.id || uid('child'),
-                    type: source.type,
-                    label: source.label || containerChildTypes[source.type],
-                    placeholder: source.placeholder || '',
-                    required: !!source.required,
-                    options: Array.isArray(source.options) ? source.options.slice() : [],
-                    rows: Number(source.rows || 4),
-                    min: source.min ?? '',
-                    max: source.max ?? '',
-                    step: source.step ?? '1',
-                    default_value: source.default_value || ''
-                });
+                const additions = fieldToContainerChildren(source);
+                if (!additions.length) continue;
+                supported.push(...additions);
                 removeIndexes.push(index);
             }
             field.children = supported.length ? supported : defaultContainerChildren(field.type);
