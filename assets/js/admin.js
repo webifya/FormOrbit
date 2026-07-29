@@ -69,7 +69,32 @@
         thumbs_up: ['Approval', 'dashicons-thumbs-up'],
         flag: ['Flag', 'dashicons-flag'],
         search: ['Search', 'dashicons-search'],
-        forms: ['Form', 'dashicons-forms']
+        forms: ['Form', 'dashicons-forms'],
+        bell: ['Notification', 'dashicons-bell'],
+        comments: ['Comments', 'dashicons-admin-comments'],
+        archive: ['Archive', 'dashicons-archive'],
+        category: ['Category', 'dashicons-category'],
+        car: ['Vehicle', 'dashicons-car'],
+        code: ['Code', 'dashicons-editor-code'],
+        ordered_list: ['Numbered list', 'dashicons-editor-ol'],
+        table: ['Table', 'dashicons-editor-table'],
+        list: ['List', 'dashicons-editor-ul'],
+        external: ['External link', 'dashicons-external'],
+        marker: ['Map pin', 'dashicons-marker'],
+        spreadsheet: ['Spreadsheet', 'dashicons-media-spreadsheet'],
+        products: ['Products', 'dashicons-products'],
+        api: ['API', 'dashicons-rest-api'],
+        schedule: ['Schedule', 'dashicons-schedule'],
+        share: ['Share', 'dashicons-share'],
+        support: ['Support', 'dashicons-sos'],
+        language: ['Language', 'dashicons-translation'],
+        accessibility: ['Accessibility', 'dashicons-universal-access'],
+        visible: ['Visible', 'dashicons-visibility'],
+        whatsapp: ['WhatsApp', 'dashicons-whatsapp'],
+        youtube: ['YouTube', 'dashicons-youtube'],
+        community: ['Community', 'dashicons-buddicons-community'],
+        activity: ['Activity', 'dashicons-buddicons-activity'],
+        private_message: ['Private message', 'dashicons-buddicons-pm']
     };
     let schema = [];
     let activeStage = 0;
@@ -242,6 +267,7 @@
             placeholder: '',
             required: false,
             options: choices ? ['Option 1', 'Option 2'] : [],
+            choice_columns: 1,
             rows: 4,
             min: '',
             max: '',
@@ -444,6 +470,7 @@
             </div>
             ${!['radio','checkbox','select','consent','hidden','poll','quiz','product','html','heading','rich_text','divider','price'].includes(child.type) ? `<label>Placeholder<input type="text" data-child-prop="placeholder" value="${escapeHtml(child.placeholder || '')}" placeholder="Optional helper text"></label>` : ''}
             ${choices ? `<label>Options <small>One per line</small><textarea rows="6" data-child-prop="options">${escapeHtml((child.options || []).join('\n'))}</textarea></label>` : ''}
+            ${['radio','checkbox','poll','quiz'].includes(child.type) ? `<label>Option columns<select data-child-prop="choice_columns">${[1,2,3,4].map(column => `<option value="${column}" ${Number(child.choice_columns || 1) === column ? 'selected' : ''}>${column}</option>`).join('')}</select></label>` : ''}
             ${child.type === 'textarea' ? `<label>Visible rows<input type="number" min="2" max="30" data-child-prop="rows" value="${Number(child.rows || 4)}"></label>` : ''}
             ${['number','slider','currency'].includes(child.type) ? `<div class="webform-child-editor-grid is-three-columns"><label>Minimum<input type="number" data-child-prop="min" value="${escapeHtml(child.min ?? '')}"></label><label>Maximum<input type="number" data-child-prop="max" value="${escapeHtml(child.max ?? '')}"></label><label>Step<input type="number" step="any" data-child-prop="step" value="${escapeHtml(child.step || '1')}"></label></div>` : ''}
             ${child.type === 'hidden' ? `<label>Default value<input type="text" data-child-prop="default_value" value="${escapeHtml(child.default_value || '')}"></label>` : ''}
@@ -644,7 +671,7 @@
         }
         else if (field.type === 'textarea') markup = `<div class="webform-field"><label${hiddenLabel}>${labelHtml}</label><textarea rows="${Number(field.rows || 5)}" placeholder="${placeholder}" readonly></textarea></div>`;
         else if (field.type === 'select') markup = `<div class="webform-field"><label${hiddenLabel}>${labelHtml}</label><select disabled><option>${escapeHtml((field.options || [])[0] || 'Select an option')}</option></select></div>`;
-        else if (['radio','checkbox','poll','quiz'].includes(field.type)) markup = `<fieldset class="webform-field"><legend${hiddenLabel}>${labelHtml}</legend><div class="webform-choices">${choices}</div></fieldset>`;
+        else if (['radio','checkbox','poll','quiz'].includes(field.type)) markup = `<fieldset class="webform-field"><legend${hiddenLabel}>${labelHtml}</legend><div class="webform-choices webform-choice-columns-${Number(field.choice_columns || 1)}">${choices}</div></fieldset>`;
         else if (field.type === 'consent') markup = `<div class="webform-field webform-field-consent"><label><input type="checkbox" disabled> ${labelHtml}</label></div>`;
         else if (field.type === 'name') markup = `<fieldset class="webform-field"><legend${hiddenLabel}>${labelHtml}</legend><div class="webform-name-fields"><label><span>First name</span><input readonly></label><label><span>Last name</span><input readonly></label></div></fieldset>`;
         else if (field.type === 'file') markup = `<div class="webform-field"><label${hiddenLabel}>${labelHtml}</label><input type="file" disabled><small>${escapeHtml(field.allowed_extensions || '')}</small></div>`;
@@ -688,7 +715,17 @@
             spacing: Number($('#webform-field-spacing').val() || 20),
             fieldRadius: Number($('#webform-field-radius').val() || 7),
             buttonRadius: Number($('#webform-button-radius').val() || 7),
-            buttonPadding: Number($('#webform-button-padding').val() || 11)
+            buttonPadding: Number($('#webform-button-padding').val() || 11),
+            submitAlignment: $('#webform-submit-alignment').val() || 'right',
+            submitFontSize: Number($('#webform-submit-font-size').val() || 16),
+            submitFontWeight: Number($('#webform-submit-font-weight').val() || 600),
+            submitPaddingX: Number($('#webform-submit-padding-x').val() || 24),
+            submitPaddingY: Number($('#webform-submit-padding-y').val() || 12),
+            submitBorderWidth: Number($('#webform-submit-border-width').val() || 0),
+            submitBackground: $('#webform-submit-background').val() || ($('#webform-accent-color').val() || palette.accent_color),
+            submitHover: $('#webform-submit-hover-background').val() || '#5235b1',
+            submitText: $('#webform-submit-text-color').val() || '#ffffff',
+            submitBorder: $('#webform-submit-border-color').val() || ($('#webform-accent-color').val() || palette.accent_color)
         };
     }
 
@@ -719,9 +756,9 @@
         const settings = previewSettings();
         previewStage = Math.min(previewStage, Math.max(0, schema.length - 1));
         const steps = schema.length > 1 ? `<div class="webform-progress"><div class="webform-progress-bar" style="width:${((previewStage + 1) / schema.length) * 100}%"></div></div><ol class="webform-steps">${schema.map((stage,index)=>`<li class="${index===previewStage?'is-active':index<previewStage?'is-complete':''}">${escapeHtml(stage.title)}</li>`).join('')}</ol>` : '';
-        const stages = schema.map((stage,index)=>`<section class="webform-stage ${index===previewStage?'is-active':''}" ${index===previewStage?'':'hidden'}><h2>${escapeHtml(stage.title)}</h2>${(stage.fields || []).map(realPreviewField).join('') || '<p class="webform-preview-empty">This stage has no fields yet.</p>'}<div class="webform-actions">${index>0?'<button type="button" class="webform-preview-prev">Back</button>':''}${index<schema.length-1?'<button type="button" class="webform-preview-next">Continue</button>':`<button type="button">${escapeHtml($('#webform-submit-label').val() || 'Submit')}</button>`}</div></section>`).join('');
+        const stages = schema.map((stage,index)=>`<section class="webform-stage ${index===previewStage?'is-active':''}" ${index===previewStage?'':'hidden'}><h2>${escapeHtml(stage.title)}</h2>${(stage.fields || []).map(realPreviewField).join('') || '<p class="webform-preview-empty">This stage has no fields yet.</p>'}<div class="webform-actions">${index>0?'<button type="button" class="webform-preview-prev">Back</button>':''}${index<schema.length-1?'<button type="button" class="webform-preview-next">Continue</button>':`<button type="button" class="webform-submit">${escapeHtml($('#webform-submit-label').val() || 'Submit')}</button>`}</div></section>`).join('');
         $('#webform-real-preview').attr('class', `webform-public webform-preset-preview-form webform-style-${escapeHtml(settings.key)}`).css({
-            '--wf-accent':settings.accent,'--wf-button-text':settings.buttonText,'--wf-text':settings.text,'--wf-form-bg':settings.formBackground,'--wf-field-bg':settings.fieldBackground,'--wf-border':settings.border,'--wf-font':settings.font,'--wf-font-size':`${settings.fontSize}px`,'--wf-label-size':`${settings.labelSize}px`,'--wf-max-width':`${settings.maxWidth}px`,'--wf-field-space':`${settings.spacing}px`,'--wf-field-radius':`${settings.fieldRadius}px`,'--wf-button-radius':`${settings.buttonRadius}px`,'--wf-button-padding':`${settings.buttonPadding}px ${settings.buttonPadding * 2}px`
+            '--wf-accent':settings.accent,'--wf-button-text':settings.buttonText,'--wf-text':settings.text,'--wf-form-bg':settings.formBackground,'--wf-field-bg':settings.fieldBackground,'--wf-border':settings.border,'--wf-font':settings.font,'--wf-font-size':`${settings.fontSize}px`,'--wf-label-size':`${settings.labelSize}px`,'--wf-max-width':`${settings.maxWidth}px`,'--wf-field-space':`${settings.spacing}px`,'--wf-field-radius':`${settings.fieldRadius}px`,'--wf-button-radius':`${settings.buttonRadius}px`,'--wf-button-padding':`${settings.buttonPadding}px ${settings.buttonPadding * 2}px`,'--wf-submit-align':settings.submitAlignment === 'left' ? 'flex-start' : settings.submitAlignment === 'center' ? 'center' : 'flex-end','--wf-submit-width':settings.submitAlignment === 'full' ? '100%' : 'auto','--wf-submit-bg':settings.submitBackground,'--wf-submit-hover':settings.submitHover,'--wf-submit-text':settings.submitText,'--wf-submit-font-size':`${settings.submitFontSize}px`,'--wf-submit-font-weight':settings.submitFontWeight,'--wf-submit-padding':`${settings.submitPaddingY}px ${settings.submitPaddingX}px`,'--wf-submit-border':`${settings.submitBorderWidth}px solid ${settings.submitBorder}`
         }).html(`${steps}${stages}`);
         previewCustomCss();
         $('#webform-preset-preview-title').text($('#webform-name').val() || 'Untitled form');
@@ -755,8 +792,8 @@
             email: `<div class="webform-preview-control webform-preview-with-icon"><span class="dashicons dashicons-email-alt"></span><span>${placeholder || 'name@example.com'}</span></div>`,
             textarea: `<div class="webform-preview-control webform-preview-textarea" style="height:${Math.max(70, Math.min(240, Number(field.rows || 5) * 18))}px"><span>${placeholder || 'Enter a detailed response'}</span></div>`,
             select: `<div class="webform-preview-control webform-preview-select"><span>${option}</span><span class="dashicons dashicons-arrow-down-alt2"></span></div>`,
-            radio: `<div class="webform-preview-choices">${previewOptions(field, 'radio')}</div>`,
-            checkbox: `<div class="webform-preview-choices">${previewOptions(field, 'check')}</div>`,
+            radio: `<div class="webform-preview-choices webform-choice-columns-${Number(field.choice_columns || 1)}">${previewOptions(field, 'radio')}</div>`,
+            checkbox: `<div class="webform-preview-choices webform-choice-columns-${Number(field.choice_columns || 1)}">${previewOptions(field, 'check')}</div>`,
             number: `<div class="webform-preview-control webform-preview-number"><span>${placeholder || '0'}</span><span class="webform-preview-steppers">⌃<br>⌄</span></div>`,
             date: `<div class="webform-preview-control webform-preview-with-icon"><span>${field.date_rule === 'future' ? 'Today or later' : field.date_rule === 'past' ? 'Today or earlier' : field.date_rule === 'custom' ? 'Custom date range' : 'yyyy-mm-dd'}</span><span class="dashicons dashicons-calendar-alt"></span></div>`,
             time: '<div class="webform-preview-control webform-preview-with-icon"><span>--:-- --</span><span class="dashicons dashicons-clock"></span></div>',
@@ -764,8 +801,8 @@
             url: `<div class="webform-preview-control webform-preview-with-icon"><span class="dashicons dashicons-admin-links"></span><span>${placeholder || 'https://example.com'}</span></div>`,
             file: `<div class="webform-preview-file"><span class="webform-preview-file-button"><span class="dashicons dashicons-upload"></span>Choose file</span><span>No file chosen</span><small>${escapeHtml(field.allowed_extensions || 'jpg, png, pdf')} · up to ${Number(field.max_size || 5)} MB</small></div>`,
             consent: `<div class="webform-preview-consent"><i class="check"></i><span>${escapeHtml(field.label || 'I agree to the terms')}</span></div>`,
-            poll: `<div class="webform-preview-choices webform-preview-poll">${previewOptions(field, 'radio')}</div>`,
-            quiz: `<div class="webform-preview-choices webform-preview-quiz">${previewOptions(field, 'radio')}<small>${Number(field.points || 1)} point${Number(field.points || 1) === 1 ? '' : 's'}</small></div>`,
+            poll: `<div class="webform-preview-choices webform-preview-poll webform-choice-columns-${Number(field.choice_columns || 1)}">${previewOptions(field, 'radio')}</div>`,
+            quiz: `<div class="webform-preview-choices webform-preview-quiz webform-choice-columns-${Number(field.choice_columns || 1)}">${previewOptions(field, 'radio')}<small>${Number(field.points || 1)} point${Number(field.points || 1) === 1 ? '' : 's'}</small></div>`,
             rating: '<div class="webform-preview-rating" aria-label="Five star rating"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>',
             slider: `<div class="webform-preview-slider"><div><span></span></div><small>${Number(field.min ?? 0)}</small><small>${Number(field.max ?? 100)}</small></div>`,
             hidden: `<div class="webform-preview-hidden"><span class="dashicons dashicons-hidden"></span><span>Hidden value</span><code>${value || 'Not set'}</code></div>`,
@@ -974,6 +1011,7 @@
             ${WebformAdmin.proActive && !['hidden','html','rich_text','divider'].includes(field.type) ? `<div class="webform-icon-property"><label>Field icon <small>Shown beside the label</small></label><button type="button" class="webform-open-icon-gallery"><span class="dashicons ${escapeHtml(selectedIcon[1])}" aria-hidden="true"></span><span>${escapeHtml(selectedIcon[0])}</span><span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span></button></div>` : ''}
             ${!['name','heading','consent','file','hidden','html','rich_text','captcha','rating','slider'].includes(field.type) && !choices ? `<label>Placeholder<input type="text" data-prop="placeholder" value="${escapeHtml(field.placeholder || '')}"></label>` : ''}
             ${choices ? `<label>Options <small>One per line</small><textarea rows="6" data-prop="options">${escapeHtml((field.options || []).join('\n'))}</textarea></label>` : ''}
+            ${['radio','checkbox','poll','quiz'].includes(field.type) ? `<label>Option columns <small>Automatically collapses on smaller screens.</small><select data-prop="choice_columns">${[1,2,3,4].map(column => `<option value="${column}" ${Number(field.choice_columns || 1) === column ? 'selected' : ''}>${column}</option>`).join('')}</select></label>` : ''}
             ${field.type === 'quiz' ? `<label>Correct answer<select data-prop="correct_answer"><option value="">Choose answer</option>${(field.options || []).map(option => `<option value="${escapeHtml(option)}" ${field.correct_answer === option ? 'selected' : ''}>${escapeHtml(option)}</option>`).join('')}</select></label><label>Points<input type="number" min="1" max="100" data-prop="points" value="${Number(field.points || 1)}"></label>` : ''}
             ${field.type === 'file' ? `<label>Allowed extensions<input type="text" data-prop="allowed_extensions" value="${escapeHtml(field.allowed_extensions || 'jpg,jpeg,png,pdf,doc,docx')}"></label><label>Maximum size (MB)<input type="number" min="1" max="20" data-prop="max_size" value="${Number(field.max_size || 5)}"></label>` : ''}
             ${field.type === 'hidden' ? `<label>Default value<input type="text" data-prop="default_value" value="${escapeHtml(field.default_value || '')}"></label>` : ''}
@@ -982,7 +1020,7 @@
             ${field.type === 'textarea' ? `<label>Visible rows <small>Adjust the starting height of the long-text box.</small><input type="number" min="2" max="30" data-prop="rows" value="${Math.max(2, Math.min(30, Number(field.rows || 5)))}"></label>` : ''}
             ${field.type === 'date' ? `<label>Allowed dates<select data-prop="date_rule"><option value="any" ${(field.date_rule || 'any') === 'any' ? 'selected' : ''}>Any date</option><option value="future" ${field.date_rule === 'future' ? 'selected' : ''}>Today and future dates</option><option value="past" ${field.date_rule === 'past' ? 'selected' : ''}>Today and past dates</option><option value="custom" ${field.date_rule === 'custom' ? 'selected' : ''}>Custom date range</option></select></label><div class="webform-date-custom-range" ${field.date_rule === 'custom' ? '' : 'hidden'}><label>Earliest date<input type="date" data-prop="date_min" value="${escapeHtml(field.date_min || '')}"></label><label>Latest date<input type="date" data-prop="date_max" value="${escapeHtml(field.date_max || '')}"></label></div>` : ''}
             ${field.type === 'slider' ? `<label>Minimum<input type="number" data-prop="min" value="${Number(field.min ?? 0)}"></label><label>Maximum<input type="number" data-prop="max" value="${Number(field.max ?? 100)}"></label><label>Step<input type="number" min="0.01" step="0.01" data-prop="step" value="${Number(field.step || 1)}"></label>` : ''}
-            ${field.type === 'calculation' ? `<label>Formula <small>Use field IDs in braces, for example {price} * {quantity}</small><input type="text" data-prop="formula" value="${escapeHtml(field.formula || '')}"></label><label>Decimal places<input type="number" min="0" max="6" data-prop="decimal_places" value="${Number(field.decimal_places ?? 2)}"></label>` : ''}
+            ${field.type === 'calculation' ? `<div class="webform-calculation-builder"><label>Formula <small>Use field IDs in braces, for example <code>round({price} * {quantity}, 2)</code></small><textarea rows="4" data-prop="formula">${escapeHtml(field.formula || '')}</textarea></label><p class="description"><strong>Functions:</strong> sum, avg, min, max, round, ceil, floor, abs, sqrt, pow, clamp and if. Operators: + − × ÷ % ^ and comparisons.</p><div class="webform-calculation-field-chips">${candidates.map(item => `<button type="button" class="button webform-insert-calculation-field" data-field-reference="{${escapeHtml(item.id)}}">${escapeHtml(item.label || item.id)}</button>`).join('')}</div><label>Decimal places<input type="number" min="0" max="6" data-prop="decimal_places" value="${Number(field.decimal_places ?? 2)}"></label></div>` : ''}
             ${field.type === 'field_group' ? `${containerChildren(field).length ? '' : `<label>Legacy fields to group<input type="number" min="1" max="6" data-prop="group_count" value="${Number(field.group_count || 2)}"></label>`}<label>Columns<input type="number" min="1" max="4" data-prop="group_columns" value="${Number(field.group_columns || 2)}"></label>${containerChildrenSettings(field)}` : ''}
             ${field.type === 'repeater' ? `<label>Minimum rows<input type="number" min="1" max="20" data-prop="repeater_min" value="${Number(field.repeater_min || 1)}"></label><label>Maximum rows<input type="number" min="1" max="50" data-prop="repeater_max" value="${Number(field.repeater_max || 10)}"></label><label>Add row button text<input type="text" data-prop="repeater_button" value="${escapeHtml(field.repeater_button || 'Add another row')}"></label>${containerChildrenSettings(field)}` : ''}
             ${field.type === 'appointment' ? `<label>Earliest date and time<input type="datetime-local" data-prop="min_date" value="${escapeHtml(field.min_date || '')}"></label><label>Latest date and time<input type="datetime-local" data-prop="max_date" value="${escapeHtml(field.max_date || '')}"></label>` : ''}
@@ -1035,7 +1073,7 @@
             return;
         }
         const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz', 'product'].includes(type);
-        const field = { id: uid('field'), type, label: defaults[type] || 'Field', icon: '', placeholder: '', hide_label: false, required: ['consent','captcha','signature'].includes(type), options: choices ? (type === 'product' ? ['Standard|19.99', 'Premium|39.99'] : ['Option 1', 'Option 2']) : [], children: ['field_group', 'repeater'].includes(type) ? defaultContainerChildren(type) : [], allowed_extensions: 'jpg,jpeg,png,pdf,doc,docx', max_size: 5, correct_answer: '', points: 1, default_value: '', html: '<p>Add your content here.</p>', rich_content: type === 'rich_text' ? '<h3>Agreement terms</h3><p>Describe the terms, responsibilities, and conditions of this agreement.</p><p><strong>Acceptance:</strong> Add a Consent field and E-signature below this agreement.</p>' : '', rows: 5, date_rule: 'any', date_min: '', date_max: '', min: 0, max: type === 'currency' ? 999999999 : 100, step: 1, formula: '', decimal_places: 2, group_count: 2, group_columns: 2, repeater_min: 1, repeater_max: 10, repeater_button: 'Add another row', currency_symbol: '$', price_amount: 0, currency_code: 'USD', min_date: '', max_date: '', divider_show_label: false, divider_label_position: 'above', divider_style: 'solid', divider_alignment: 'center', divider_width: 100, divider_thickness: 1, divider_color: '#dfe1e6', divider_margin_top: 10, divider_margin_bottom: 10, divider_padding_top: 0, divider_padding_bottom: 0, style: { width: type === 'divider' ? '100' : (WebformAdmin.proActive ? 'auto' : '100') }, condition: { enabled: false, field_id: '', operator: 'equals', value: '' } };
+        const field = { id: uid('field'), type, label: defaults[type] || 'Field', icon: '', placeholder: '', hide_label: false, required: ['consent','captcha','signature'].includes(type), options: choices ? (type === 'product' ? ['Standard|19.99', 'Premium|39.99'] : ['Option 1', 'Option 2']) : [], choice_columns: 1, children: ['field_group', 'repeater'].includes(type) ? defaultContainerChildren(type) : [], allowed_extensions: 'jpg,jpeg,png,pdf,doc,docx', max_size: 5, correct_answer: '', points: 1, default_value: '', html: '<p>Add your content here.</p>', rich_content: type === 'rich_text' ? '<h3>Agreement terms</h3><p>Describe the terms, responsibilities, and conditions of this agreement.</p><p><strong>Acceptance:</strong> Add a Consent field and E-signature below this agreement.</p>' : '', rows: 5, date_rule: 'any', date_min: '', date_max: '', min: 0, max: type === 'currency' ? 999999999 : 100, step: 1, formula: '', decimal_places: 2, group_count: 2, group_columns: 2, repeater_min: 1, repeater_max: 10, repeater_button: 'Add another row', currency_symbol: '$', price_amount: 0, currency_code: 'USD', min_date: '', max_date: '', divider_show_label: false, divider_label_position: 'above', divider_style: 'solid', divider_alignment: 'center', divider_width: 100, divider_thickness: 1, divider_color: '#dfe1e6', divider_margin_top: 10, divider_margin_bottom: 10, divider_padding_top: 0, divider_padding_bottom: 0, style: { width: type === 'divider' ? '100' : (WebformAdmin.proActive ? 'auto' : '100') }, condition: { enabled: false, field_id: '', operator: 'equals', value: '' } };
         schema[activeStage].fields.push(field);
         selectedId = field.id;
         selectedChildIndex = ['field_group', 'repeater'].includes(type) ? 0 : null;
@@ -1172,6 +1210,16 @@
             const input = document.querySelector(`#webform-field-settings [data-prop="${prop}"]`);
             if (input && caret != null) input.setSelectionRange(caret, caret);
         }
+    });
+    $(document).on('click', '.webform-insert-calculation-field', function () {
+        const textarea = document.querySelector('#webform-field-settings [data-prop="formula"]');
+        if (!textarea) return;
+        const reference = String($(this).data('field-reference') || '');
+        const start = textarea.selectionStart == null ? textarea.value.length : textarea.selectionStart;
+        const end = textarea.selectionEnd == null ? start : textarea.selectionEnd;
+        textarea.value = textarea.value.slice(0, start) + reference + textarea.value.slice(end);
+        textarea.selectionStart = textarea.selectionEnd = start + reference.length;
+        $(textarea).trigger('input').trigger('focus');
     });
     $(document).on('click', '.webform-add-container-child', function () {
         const field = selectedField();
@@ -1390,10 +1438,13 @@
             text_color: $('#webform-text-color').val(), form_background: $('#webform-form-background').val(), field_background: $('#webform-field-background').val(),
             border_color: $('#webform-border-color').val(), form_max_width: $('#webform-form-max-width').val(), field_spacing: $('#webform-field-spacing').val(),
             field_radius: $('#webform-field-radius').val(), button_radius: $('#webform-button-radius').val(), button_padding: $('#webform-button-padding').val(),
+            submit_alignment: $('#webform-submit-alignment').val(), submit_font_size: $('#webform-submit-font-size').val(), submit_font_weight: $('#webform-submit-font-weight').val(),
+            submit_padding_x: $('#webform-submit-padding-x').val(), submit_padding_y: $('#webform-submit-padding-y').val(), submit_border_width: $('#webform-submit-border-width').val(),
+            submit_background: $('#webform-submit-background').val(), submit_hover_background: $('#webform-submit-hover-background').val(), submit_text_color: $('#webform-submit-text-color').val(), submit_border_color: $('#webform-submit-border-color').val(),
             custom_css: $('#webform-custom-css').val()
         };
     }
-    const themeSelectors = { style_preset: '#webform-style-preset', accent_color: '#webform-accent-color', button_text_color: '#webform-button-text-color', font_family: '#webform-font-family', base_font_size: '#webform-base-font-size', label_font_size: '#webform-label-font-size', text_color: '#webform-text-color', form_background: '#webform-form-background', field_background: '#webform-field-background', border_color: '#webform-border-color', form_max_width: '#webform-form-max-width', field_spacing: '#webform-field-spacing', field_radius: '#webform-field-radius', button_radius: '#webform-button-radius', button_padding: '#webform-button-padding', custom_css: '#webform-custom-css' };
+    const themeSelectors = { style_preset: '#webform-style-preset', accent_color: '#webform-accent-color', button_text_color: '#webform-button-text-color', font_family: '#webform-font-family', base_font_size: '#webform-base-font-size', label_font_size: '#webform-label-font-size', text_color: '#webform-text-color', form_background: '#webform-form-background', field_background: '#webform-field-background', border_color: '#webform-border-color', form_max_width: '#webform-form-max-width', field_spacing: '#webform-field-spacing', field_radius: '#webform-field-radius', button_radius: '#webform-button-radius', button_padding: '#webform-button-padding', submit_alignment: '#webform-submit-alignment', submit_font_size: '#webform-submit-font-size', submit_font_weight: '#webform-submit-font-weight', submit_padding_x: '#webform-submit-padding-x', submit_padding_y: '#webform-submit-padding-y', submit_border_width: '#webform-submit-border-width', submit_background: '#webform-submit-background', submit_hover_background: '#webform-submit-hover-background', submit_text_color: '#webform-submit-text-color', submit_border_color: '#webform-submit-border-color', custom_css: '#webform-custom-css' };
     const presetPalettes = {
         modern:{accent_color:'#6c4bd4',button_text_color:'#ffffff',text_color:'#1d2327',form_background:'#ffffff',field_background:'#ffffff',border_color:'#dfe1e6'}, minimal:{accent_color:'#222222',button_text_color:'#ffffff',text_color:'#242424',form_background:'#ffffff',field_background:'#ffffff',border_color:'#b8b8b8'}, rounded:{accent_color:'#6750c8',button_text_color:'#ffffff',text_color:'#282334',form_background:'#fbfaff',field_background:'#ffffff',border_color:'#d9d2ed'},
         elegant:{accent_color:'#8a6438',button_text_color:'#ffffff',text_color:'#302820',form_background:'#fffdf9',field_background:'#ffffff',border_color:'#dfd3c2'}, glass:{accent_color:'#6651c9',button_text_color:'#ffffff',text_color:'#25203a',form_background:'#f4f0ff',field_background:'#ffffff',border_color:'#d8cfef'}, dark:{accent_color:'#8b72ef',button_text_color:'#ffffff',text_color:'#f6f6f8',form_background:'#20202a',field_background:'#2c2c38',border_color:'#4a4a59'},
