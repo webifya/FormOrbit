@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 4.1.0
+Stable tag: 4.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -47,6 +47,12 @@ FormOrbit is created by Mahfuzar Rahman. Advanced automation, payment, document,
 5. Copy the generated `[formorbit id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 4.1.1 =
+* Added a persistent Embed panel directly to the form editor.
+* Added one-click copying for the WordPress shortcode.
+* Added a ready-to-copy PHP template snippet for trusted theme and plugin templates.
+* Revealed both embed formats immediately after a new form is saved for the first time.
 
 = 4.1.0 =
 * Added the advanced Divider design panel used by FormOrbit Pro.
