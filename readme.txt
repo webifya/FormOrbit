@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 3.0.2
+Stable tag: 3.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -44,9 +44,14 @@ FormOrbit is created by Mahfuzar Rahman. Advanced automation, payment, document,
 2. Activate FormOrbit in the Plugins screen.
 3. Open FormOrbit > Add New.
 4. Build and save your form.
-5. Copy the generated `[webform id="123"]` shortcode into any post or page.
+5. Copy the generated `[formorbit id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 3.0.3 =
+* Changed the generated and displayed shortcode to `[formorbit id="123"]`.
+* Kept the previous shortcode available only as a compatibility alias for existing embeds.
+* Moved every upgrade action to the organized `/plugins/formorbit/` marketing page.
 
 = 3.0.2 =
 * Connected every Free upgrade action to the dedicated FormOrbit Pro marketing page.

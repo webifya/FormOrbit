@@ -95,7 +95,7 @@ class Webform_Admin {
                         <th class="column-primary"><?php esc_html_e('Form', 'formorbit'); ?></th><th class="column-shortcode"><?php esc_html_e('Shortcode', 'formorbit'); ?></th><th class="column-number"><?php esc_html_e('Entries', 'formorbit'); ?></th><th class="column-number"><?php esc_html_e('Embeds', 'formorbit'); ?></th><th class="column-status"><?php esc_html_e('Status', 'formorbit'); ?></th><th class="column-date"><?php esc_html_e('Created', 'formorbit'); ?></th><th class="column-date"><?php esc_html_e('Updated', 'formorbit'); ?></th>
                     </tr></thead><tbody>
                     <?php foreach ($forms as $form) : ?>
-                        <?php $edit_url = admin_url('admin.php?page=webform-builder&form_id=' . $form->ID); $preview_url = wp_nonce_url(add_query_arg('webform_preview', $form->ID, home_url('/')), 'webform_preview_' . $form->ID); $schema = (array) get_post_meta($form->ID, '_webform_schema', true); $stage_count = max(1, count($schema)); $shortcode = '[webform id="' . $form->ID . '"]'; ?>
+                        <?php $edit_url = admin_url('admin.php?page=webform-builder&form_id=' . $form->ID); $preview_url = wp_nonce_url(add_query_arg('webform_preview', $form->ID, home_url('/')), 'webform_preview_' . $form->ID); $schema = (array) get_post_meta($form->ID, '_webform_schema', true); $stage_count = max(1, count($schema)); $shortcode = '[formorbit id="' . $form->ID . '"]'; ?>
                         <tr data-form-title="<?php echo esc_attr(strtolower($form->post_title . ' ' . $form->ID)); ?>">
                             <td class="column-primary" data-colname="<?php esc_attr_e('Form', 'formorbit'); ?>"><div class="webform-form-cell"><span class="webform-form-icon"><span class="dashicons dashicons-feedback"></span></span><div class="webform-form-summary"><strong class="webform-form-title"><?php if ($current_view === 'trash') : ?><?php echo esc_html($form->post_title); ?><?php else : ?><a class="row-title" href="<?php echo esc_url($edit_url); ?>"><?php echo esc_html($form->post_title); ?></a><a class="webform-title-preview" href="<?php echo esc_url($preview_url); ?>" target="_blank" rel="noopener noreferrer" title="<?php esc_attr_e('Preview form', 'formorbit'); ?>" aria-label="<?php esc_attr_e('Preview form', 'formorbit'); ?>"><span class="dashicons dashicons-visibility" aria-hidden="true"></span></a><?php endif; ?></strong><small><?php echo esc_html(sprintf(_n('ID %1$d · %2$d stage', 'ID %1$d · %2$d stages', $stage_count, 'formorbit'), $form->ID, $stage_count)); ?></small>
                                 <?php if ($current_view === 'trash') : ?>
@@ -129,10 +129,14 @@ class Webform_Admin {
 
     private function embed_counts() {
         $counts = array();
-        $content_ids = get_posts(array('post_type' => 'any', 'post_status' => array('publish', 'private', 'draft', 'future'), 'posts_per_page' => 2000, 'fields' => 'ids', 's' => 'webform', 'no_found_rows' => true, 'orderby' => 'none'));
+        $content_ids = array();
+        foreach (array('formorbit', 'webform') as $shortcode_name) {
+            $content_ids = array_merge($content_ids, get_posts(array('post_type' => 'any', 'post_status' => array('publish', 'private', 'draft', 'future'), 'posts_per_page' => 2000, 'fields' => 'ids', 's' => $shortcode_name, 'no_found_rows' => true, 'orderby' => 'none')));
+        }
+        $content_ids = array_unique(array_map('absint', $content_ids));
         foreach ($content_ids as $content_id) {
             $content = (string) get_post_field('post_content', $content_id);
-            if (!preg_match_all('/\[webform\b[^\]]*\bid\s*=\s*(["\']?)(\d+)\1[^\]]*\]/i', $content, $matches)) {
+            if (!preg_match_all('/\[(?:formorbit|webform)\b[^\]]*\bid\s*=\s*(["\']?)(\d+)\1[^\]]*\]/i', $content, $matches)) {
                 continue;
             }
             foreach ($matches[2] as $embedded_form_id) {
@@ -347,7 +351,7 @@ class Webform_Admin {
             'button_text_color' => sanitize_hex_color($settings['button_text_color'] ?? '') ?: '#ffffff',
         );
         update_post_meta($form_id, '_webform_settings', apply_filters('webform_sanitize_form_settings', $clean_settings, $settings, $form_id));
-        wp_send_json_success(array('id' => $form_id, 'message' => __('Saved', 'formorbit'), 'shortcode' => '[webform id="' . $form_id . '"]'));
+        wp_send_json_success(array('id' => $form_id, 'message' => __('Saved', 'formorbit'), 'shortcode' => '[formorbit id="' . $form_id . '"]'));
     }
 
     public function sanitize_decoded_setting($value) {
@@ -983,7 +987,7 @@ class Webform_Admin {
                 'utm_medium' => 'upgrade',
                 'utm_campaign' => sanitize_key($source),
             ),
-            'https://www.webninjallc.com/formorbit/'
+            'https://www.webninjallc.com/plugins/formorbit/'
         );
         return apply_filters('webform_upgrade_url', $url, $source);
     }

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: FormOrbit
  * Description: A visual drag-and-drop, multi-step form builder for WordPress.
- * Version: 3.0.2
+ * Version: 3.0.3
  * Author: Mahfuzar Rahman
  * Author URI: https://profiles.wordpress.org/mahfuzar/
  * License: GPLv2 or later
@@ -14,7 +14,7 @@
 
 defined('ABSPATH') || exit;
 
-define('WEBFORM_VERSION', '3.0.2');
+define('WEBFORM_VERSION', '3.0.3');
 define('WEBFORM_EDITION', 'free');
 define('WEBFORM_FILE', __FILE__);
 define('WEBFORM_PATH', plugin_dir_path(__FILE__));

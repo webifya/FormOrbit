@@ -4,6 +4,8 @@ defined('ABSPATH') || exit;
 
 class Webform_Public {
     public function __construct() {
+        add_shortcode('formorbit', array($this, 'shortcode'));
+        // Keep the legacy shortcode as a compatibility alias for existing sites.
         add_shortcode('webform', array($this, 'shortcode'));
         add_action('template_redirect', array($this, 'preview'));
         add_action('wp_ajax_webform_submit', array($this, 'submit'));
@@ -35,7 +37,7 @@ class Webform_Public {
             <style>.webform-preview-page{background:#f0f2f5;margin:0;padding:32px 18px}.webform-preview-toolbar{align-items:center;display:flex;justify-content:space-between;margin:0 auto 18px;max-width:900px}.webform-preview-toolbar strong{font:600 16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.webform-preview-toolbar a{background:#2271b1;border-radius:4px;color:#fff;font:600 13px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:10px 14px;text-decoration:none}.webform-preview-frame{margin:auto;max-width:900px}</style>
         </head><body class="webform-preview-page">
             <div class="webform-preview-toolbar"><strong><?php echo esc_html(sprintf(__('Previewing “%s”', 'formorbit'), $form->post_title)); ?></strong><a href="<?php echo esc_url(admin_url('admin.php?page=webform-builder&form_id=' . $form_id)); ?>"><?php esc_html_e('Back to editor', 'formorbit'); ?></a></div>
-            <main class="webform-preview-frame"><?php echo do_shortcode('[webform id="' . absint($form_id) . '"]'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></main>
+            <main class="webform-preview-frame"><?php echo do_shortcode('[formorbit id="' . absint($form_id) . '"]'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></main>
             <?php wp_footer(); ?>
         </body></html>
         <?php
@@ -43,7 +45,7 @@ class Webform_Public {
     }
 
     public function shortcode($atts) {
-        $atts = shortcode_atts(array('id' => 0), $atts, 'webform');
+        $atts = shortcode_atts(array('id' => 0), $atts, 'formorbit');
         $form_id = absint($atts['id']);
         if (!$form_id || get_post_type($form_id) !== 'webform_form') {
             return current_user_can('manage_options') ? '<p>' . esc_html__('Form not found.', 'formorbit') . '</p>' : '';
