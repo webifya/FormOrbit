@@ -26,14 +26,14 @@ class Webform_Admin {
             'dashicons-feedback',
             26
         );
-        add_submenu_page('webform', __('All Forms', 'webform'), __('All Forms', 'webform'), 'manage_options', 'webform', array($this, 'forms_page'));
-        add_submenu_page('webform', __('Add New', 'webform'), __('Add New', 'webform'), 'manage_options', 'webform-builder', array($this, 'builder_page'));
-        add_submenu_page('webform', __('Form Templates', 'webform'), __('Templates', 'webform'), 'manage_options', 'webform-templates', array($this, 'templates_page'));
-        add_submenu_page('webform', __('Entries', 'webform'), __('Entries', 'webform'), 'manage_options', 'webform-entries', array($this, 'entries_page'));
-        add_submenu_page('webform', __('Import and Export Forms', 'webform'), __('Import / Export', 'webform'), 'manage_options', 'webform-import', array($this, 'import_page'));
-        add_submenu_page('webform', __('Webform Settings', 'webform'), __('Settings', 'webform'), 'manage_options', 'webform-settings', array($this, 'settings_page'));
+        add_submenu_page('webform', __('All Forms', 'webform'), __('All Forms', 'webform'), 'manage_options', 'webform', array($this, 'forms_page'), 0);
+        add_submenu_page('webform', __('Add New', 'webform'), __('Add New', 'webform'), 'manage_options', 'webform-builder', array($this, 'builder_page'), 1);
+        add_submenu_page('webform', __('Form Templates', 'webform'), __('Templates', 'webform'), 'manage_options', 'webform-templates', array($this, 'templates_page'), 3);
+        add_submenu_page('webform', __('Entries', 'webform'), __('Entries', 'webform'), 'manage_options', 'webform-entries', array($this, 'entries_page'), 4);
+        add_submenu_page('webform', __('Import and Export Forms', 'webform'), __('Import / Export', 'webform'), 'manage_options', 'webform-import', array($this, 'import_page'), 5);
+        add_submenu_page('webform', __('Webform Settings', 'webform'), __('Settings', 'webform'), 'manage_options', 'webform-settings', array($this, 'settings_page'), 6);
         if (!$this->is_pro_active()) {
-            add_submenu_page('webform', __('Webform Pro', 'webform'), __('Upgrade to Pro', 'webform'), 'manage_options', 'webform-pro', array($this, 'pro_page'));
+            add_submenu_page('webform', __('Webform Pro', 'webform'), __('Upgrade to Pro', 'webform'), 'manage_options', 'webform-pro', array($this, 'pro_page'), 7);
         }
     }
 
@@ -566,7 +566,7 @@ class Webform_Admin {
                 }
             }
         }
-        if (empty($converted['schema'])) wp_die(esc_html__('No supported fields were found in the export.', 'webform'));
+        if (empty($converted['schema']) || !$this->import_has_fields($converted['schema'])) wp_die(esc_html__('No supported fields were found in the export. Confirm the correct source plugin is selected and export the form structure rather than its entries.', 'webform'));
         $form_id = wp_insert_post(array('post_type' => 'webform_form', 'post_status' => 'publish', 'post_title' => sanitize_text_field($converted['name'] ?: __('Imported Form', 'webform'))));
         update_post_meta($form_id, '_webform_schema', $this->sanitize_schema($converted['schema']));
         update_post_meta($form_id, '_webform_settings', $this->sanitize_import_settings($converted['settings'] ?? array()));
@@ -654,6 +654,7 @@ class Webform_Admin {
         $name_nodes = $form_node->xpath('.//*[local-name()="name" or local-name()="title"]');
         $name = !empty($name_nodes) ? sanitize_text_field((string) $name_nodes[0]) : __('Imported Formidable Form', 'webform');
         $field_nodes = $form_node->xpath('.//*[local-name()="field"]');
+        if (empty($field_nodes)) $field_nodes = $xml->xpath('//*[local-name()="field"]');
         $fields = array();
         foreach ((array) $field_nodes as $field_node) {
             $field = json_decode(wp_json_encode($field_node), true);
@@ -684,7 +685,12 @@ class Webform_Admin {
         $stages = array(array('id' => 'stage_imported', 'title' => $name, 'fields' => array()));
         foreach ((array) $fields as $key => $field) {
             if (!is_array($field)) continue;
-            $field_options = isset($field['field_options']) && is_array($field['field_options']) ? $field['field_options'] : array();
+            $field_options = $field['field_options'] ?? array();
+            if (is_string($field_options)) {
+                $decoded_options = json_decode(html_entity_decode(wp_unslash($field_options), ENT_QUOTES, get_bloginfo('charset')), true);
+                $field_options = is_array($decoded_options) ? $decoded_options : maybe_unserialize($field_options);
+            }
+            if (!is_array($field_options)) $field_options = array();
             $raw_type = $this->import_scalar($field['type'] ?? ($field['field_type'] ?? ($field['element_type'] ?? 'text')));
             if (in_array(sanitize_key($raw_type), array('page-break', 'page_break', 'pagebreak', 'section'), true)) {
                 $stages[] = array('id' => 'stage_' . (count($stages) + 1), 'title' => sanitize_text_field($this->import_scalar($field['field_label'] ?? ($field['name'] ?? sprintf(__('Stage %d', 'webform'), count($stages) + 1)))), 'fields' => array());
@@ -692,8 +698,7 @@ class Webform_Admin {
             }
             $choices = $field['options'] ?? ($field['choices'] ?? array());
             if (isset($field_options['options'])) $choices = $field_options['options'];
-            $normalized_choices = array();
-            foreach ((array) $choices as $choice) $normalized_choices[] = sanitize_text_field($this->import_scalar(is_array($choice) ? ($choice['label'] ?? ($choice['value'] ?? ($choice['option_value'] ?? ''))) : $choice));
+            $normalized_choices = $this->normalize_import_choices($choices);
             $stages[count($stages) - 1]['fields'][] = array(
                 'id' => sanitize_key($this->import_scalar($field['element_id'] ?? ($field['field_key'] ?? ($field['id'] ?? $key)))) ?: 'field_' . wp_generate_password(6, false, false),
                 'type' => $this->map_import_type($raw_type),
@@ -704,6 +709,47 @@ class Webform_Admin {
             );
         }
         return array('name' => $name, 'schema' => $stages, 'source' => $source);
+    }
+
+    private function normalize_import_choices($choices) {
+        if (is_string($choices)) {
+            $decoded = json_decode(html_entity_decode(wp_unslash($choices), ENT_QUOTES, get_bloginfo('charset')), true);
+            if (is_array($decoded)) {
+                $choices = $decoded;
+            } else {
+                $unserialized = maybe_unserialize($choices);
+                if (is_array($unserialized)) $choices = $unserialized;
+            }
+        }
+        $normalized = array();
+        foreach ((array) $choices as $choice) {
+            if (is_string($choice)) {
+                $nested = json_decode(html_entity_decode(wp_unslash($choice), ENT_QUOTES, get_bloginfo('charset')), true);
+                if (is_array($nested)) {
+                    $normalized = array_merge($normalized, $this->normalize_import_choices($nested));
+                    continue;
+                }
+                $value = $choice;
+            } elseif (is_array($choice)) {
+                $value = $choice['label'] ?? ($choice['name'] ?? ($choice['value'] ?? ($choice['option_value'] ?? '')));
+                if (is_array($value)) {
+                    $normalized = array_merge($normalized, $this->normalize_import_choices($value));
+                    continue;
+                }
+            } else {
+                $value = '';
+            }
+            $value = trim(sanitize_text_field($this->import_scalar($value)));
+            if ($value !== '') $normalized[] = $value;
+        }
+        return array_values(array_unique($normalized));
+    }
+
+    private function import_has_fields($schema) {
+        foreach ((array) $schema as $stage) {
+            if (!empty($stage['fields']) && is_array($stage['fields'])) return true;
+        }
+        return false;
     }
 
     private function flatten_import_fields($nodes) {
@@ -768,8 +814,7 @@ class Webform_Admin {
                 continue;
             }
             $type = $this->map_import_type($type);
-            $choices = array();
-            foreach ((array) ($source['choices'] ?? ($source['options'] ?? array())) as $choice) $choices[] = sanitize_text_field(is_array($choice) ? ($choice['label'] ?? ($choice['text'] ?? ($choice['value'] ?? ''))) : $choice);
+            $choices = $this->normalize_import_choices($source['choices'] ?? ($source['options'] ?? array()));
             $stages[count($stages) - 1]['fields'][] = array('id' => sanitize_key($source['id'] ?? $key) ?: 'field_' . wp_generate_password(6, false, false), 'type' => $type, 'label' => sanitize_text_field($source['label'] ?? ($source['adminLabel'] ?? __('Imported Field', 'webform'))), 'placeholder' => sanitize_text_field($source['placeholder'] ?? ''), 'required' => !empty($source['required']) || !empty($source['isRequired']), 'options' => array_filter($choices));
         }
         return array('name' => $name, 'schema' => $stages);
