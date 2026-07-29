@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 4.3.0
+Stable tag: 4.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -47,6 +47,13 @@ FormOrbit is created by Mahfuzar Rahman. Advanced automation, payment, document,
 5. Copy the generated `[formorbit id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 4.3.1 =
+* Reorganized the FormOrbit admin menu around common form-building workflows.
+* Moved Import / Export into a consolidated Tools screen.
+* Added a Resources area with direct links to the FormOrbit changelog and product page.
+* Moved licensed Support & Feedback access into Tools to reduce sidebar clutter.
+* Preserved old Import / Export bookmarks with an automatic redirect to Tools.
 
 = 4.3.0 =
 * Replaced the example-only style preview with the form currently open in the builder.
