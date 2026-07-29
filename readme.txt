@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 4.4.1
+Stable tag: 4.4.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -47,6 +47,11 @@ FormOrbit is created by Mahfuzar Rahman. Advanced automation, payment, document,
 5. Copy the generated `[formorbit id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 4.4.2 =
+* Moved Field Group and Repeater child settings into a spacious responsive modal.
+* Made child fields on the live canvas and in the sidebar open the same focused editor.
+* Improved child-field labels, numeric controls, choices, content editors, and actions at every screen size.
 
 = 4.4.1 =
 * Added direct selection and focused editing for fields nested inside Pro groups and repeaters.
