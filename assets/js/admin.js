@@ -76,6 +76,11 @@
     let selectedId = null;
     let dirty = false;
     let richTextEditorFieldId = null;
+    let previewStage = 0;
+    let history = [];
+    let historyIndex = -1;
+    let historyTimer = null;
+    let historyApplying = false;
     const proFieldTypes = WebformAdmin.proFieldTypes || [];
     const containerChildTypes = {
         text: 'Text',
@@ -105,12 +110,85 @@
         return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     }
 
+    function editorSnapshot() {
+        syncRichTextEditor();
+        const controls = {};
+        $('.webform-property-panel input[id],.webform-property-panel select[id],.webform-property-panel textarea[id]').each(function () {
+            if (this.id === 'webform-rich-text-content') return;
+            controls[this.id] = this.type === 'checkbox' || this.type === 'radio' ? !!this.checked : $(this).val();
+        });
+        return {
+            schema: JSON.parse(JSON.stringify(schema)),
+            activeStage,
+            selectedId,
+            name: $('#webform-name').val(),
+            controls
+        };
+    }
+
+    function updateHistoryButtons() {
+        $('#webform-undo').prop('disabled', historyIndex <= 0);
+        $('#webform-redo').prop('disabled', historyIndex < 0 || historyIndex >= history.length - 1);
+    }
+
+    function pushHistory() {
+        if (historyApplying || !$('#webform-canvas').length) return;
+        const snapshot = editorSnapshot();
+        const serialized = JSON.stringify(snapshot);
+        if (historyIndex >= 0 && history[historyIndex].serialized === serialized) {
+            updateHistoryButtons();
+            return;
+        }
+        history = history.slice(0, historyIndex + 1);
+        history.push({ serialized, snapshot });
+        if (history.length > 60) history.shift();
+        historyIndex = history.length - 1;
+        updateHistoryButtons();
+    }
+
+    function scheduleHistory(delay = 180) {
+        if (historyApplying) return;
+        window.clearTimeout(historyTimer);
+        historyTimer = window.setTimeout(pushHistory, delay);
+    }
+
+    function applyHistory(index) {
+        if (!history[index]) return;
+        historyApplying = true;
+        removeRichTextEditor();
+        const snapshot = JSON.parse(JSON.stringify(history[index].snapshot));
+        schema = snapshot.schema;
+        activeStage = Math.min(snapshot.activeStage, schema.length - 1);
+        selectedId = snapshot.selectedId;
+        $('#webform-name').val(snapshot.name);
+        render();
+        Object.entries(snapshot.controls || {}).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (!element) return;
+            if (element.type === 'checkbox' || element.type === 'radio') element.checked = !!value;
+            else $(element).val(value);
+        });
+        updateConfirmationOptions();
+        updateRecaptchaPanels();
+        $('#webform-role-controls').toggleClass('is-disabled', !$('#webform-require-login').is(':checked')).find('input[type="checkbox"]').prop('disabled', !$('#webform-require-login').is(':checked'));
+        $('#webform-user-notification-options').toggleClass('is-disabled', !$('#webform-user-notification-enabled').is(':checked'));
+        updatePresetPreview();
+        historyIndex = index;
+        historyApplying = false;
+        dirty = true;
+        updateHistoryButtons();
+        if (!$('#webform-preset-preview-modal').prop('hidden')) renderRealPreview();
+    }
+
     function load() {
         try { schema = JSON.parse($('#webform-schema').val() || '[]'); } catch (e) { schema = []; }
         if (!Array.isArray(schema) || !schema.length) schema = [{ id: uid('stage'), title: 'Stage 1', fields: [] }];
         render();
         renderFreeProCatalog();
         if (WebformAdmin.proActive) ensureIconGallery();
+        history = [];
+        historyIndex = -1;
+        pushHistory();
     }
 
     function renderFreeProCatalog() {
@@ -287,6 +365,130 @@
         return container.innerHTML;
     }
 
+    function realPreviewChild(child) {
+        const label = escapeHtml(child.label || containerChildTypes[child.type] || 'Field');
+        const required = child.required ? ' <em>*</em>' : '';
+        const placeholder = escapeHtml(child.placeholder || '');
+        if (child.type === 'hidden') return '';
+        if (child.type === 'textarea') return `<label class="webform-container-child-field"><span>${label}${required}</span><textarea rows="${Number(child.rows || 4)}" placeholder="${placeholder}" readonly></textarea></label>`;
+        if (child.type === 'select') return `<label class="webform-container-child-field"><span>${label}${required}</span><select disabled><option>${escapeHtml((child.options || [])[0] || 'Select an option')}</option></select></label>`;
+        if (['radio', 'checkbox'].includes(child.type)) return `<fieldset class="webform-container-child-field"><legend>${label}${required}</legend><div class="webform-container-choices">${(child.options || ['Option 1', 'Option 2']).map((option, index) => `<label><input type="${child.type}" ${index === 0 ? 'checked' : ''} disabled> <span>${escapeHtml(option)}</span></label>`).join('')}</div></fieldset>`;
+        if (child.type === 'consent') return `<label class="webform-container-child-field webform-container-consent"><input type="checkbox" disabled><span>${label}${required}</span></label>`;
+        const type = ({email:'email',number:'number',date:'date',time:'time',phone:'tel',url:'url'})[child.type] || 'text';
+        return `<label class="webform-container-child-field"><span>${label}${required}</span><input type="${type}" placeholder="${placeholder}" readonly></label>`;
+    }
+
+    function realPreviewField(field) {
+        if (isLockedProField(field)) return '';
+        const label = escapeHtml(field.label || defaults[field.type] || 'Field');
+        const labelHtml = `${field.icon && fieldIcons[field.icon] ? `<span class="dashicons ${escapeHtml(fieldIcons[field.icon][1])} webform-field-icon" aria-hidden="true"></span>` : ''}${label}${field.required ? ' <em>*</em>' : ''}`;
+        const hiddenLabel = field.hide_label ? ' class="screen-reader-text"' : '';
+        const placeholder = escapeHtml(field.placeholder || '');
+        const choices = (field.options || ['Option 1', 'Option 2']).map((option, index) => `<label><input type="${field.type === 'checkbox' ? 'checkbox' : 'radio'}" ${index === 0 ? 'checked' : ''} disabled> ${escapeHtml(String(option).split('|')[0])}</label>`).join('');
+        const style = field.style || {};
+        const width = ({auto:'calc(50% - 1%)','100':'100%','75':'74%','50':'49%','33':'32%'})[String(style.width || '100')] || '100%';
+        const wrapperStyle = `width:${width};${style.customized ? `--preview-label:${escapeHtml(style.label_color || '')};--preview-bg:${escapeHtml(style.background_color || '')};--preview-text:${escapeHtml(style.text_color || '')};--preview-radius:${Number(style.radius || 0)}px;` : ''}`;
+        const start = field.row_start ? '<span class="webform-row-break" aria-hidden="true"></span>' : '';
+        let markup = '';
+        if (field.type === 'hidden') return '';
+        if (field.type === 'html') markup = `<div class="webform-html">${safeRichPreview(field.html || '')}</div>`;
+        else if (field.type === 'heading') markup = `<h3 class="webform-heading">${labelHtml}</h3>`;
+        else if (field.type === 'rich_text') markup = `<div class="webform-rich-text-document"><div class="webform-rich-text-content">${safeRichPreview(field.rich_content || '')}</div></div>`;
+        else if (field.type === 'divider') {
+            const lineStyle = ['solid','dashed','dotted','double'].includes(field.divider_style) ? field.divider_style : 'solid';
+            const alignment = ['left','center','right'].includes(field.divider_alignment) ? field.divider_alignment : 'center';
+            const labelPosition = field.divider_label_position === 'inline' ? 'inline' : 'above';
+            const dividerLabel = field.divider_show_label ? `<span class="webform-divider-label">${labelHtml}</span>` : '';
+            const ruleMargin = alignment === 'left' ? '0 auto 0 0' : alignment === 'right' ? '0 0 0 auto' : '0 auto';
+            const rule = `<div class="webform-divider-rule" style="width:${Number(field.divider_width || 100)}%;margin:${ruleMargin}"><hr style="border-top:${Number(field.divider_thickness || 1)}px ${lineStyle} ${escapeHtml(field.divider_color || '#dfe1e6')}">${labelPosition === 'inline' ? dividerLabel : ''}${labelPosition === 'inline' && field.divider_show_label ? `<hr style="border-top:${Number(field.divider_thickness || 1)}px ${lineStyle} ${escapeHtml(field.divider_color || '#dfe1e6')}">` : ''}</div>`;
+            markup = `<div class="webform-divider webform-real-preview-divider webform-divider-label-${labelPosition}" style="margin-top:${Number(field.divider_margin_top || 0)}px;margin-bottom:${Number(field.divider_margin_bottom || 0)}px;padding-top:${Number(field.divider_padding_top || 0)}px;padding-bottom:${Number(field.divider_padding_bottom || 0)}px">${labelPosition === 'above' ? dividerLabel : ''}${rule}</div>`;
+        }
+        else if (field.type === 'textarea') markup = `<div class="webform-field"><label${hiddenLabel}>${labelHtml}</label><textarea rows="${Number(field.rows || 5)}" placeholder="${placeholder}" readonly></textarea></div>`;
+        else if (field.type === 'select') markup = `<div class="webform-field"><label${hiddenLabel}>${labelHtml}</label><select disabled><option>${escapeHtml((field.options || [])[0] || 'Select an option')}</option></select></div>`;
+        else if (['radio','checkbox','poll','quiz'].includes(field.type)) markup = `<fieldset class="webform-field"><legend${hiddenLabel}>${labelHtml}</legend><div class="webform-choices">${choices}</div></fieldset>`;
+        else if (field.type === 'consent') markup = `<div class="webform-field webform-field-consent"><label><input type="checkbox" disabled> ${labelHtml}</label></div>`;
+        else if (field.type === 'name') markup = `<fieldset class="webform-field"><legend${hiddenLabel}>${labelHtml}</legend><div class="webform-name-fields"><label><span>First name</span><input readonly></label><label><span>Last name</span><input readonly></label></div></fieldset>`;
+        else if (field.type === 'file') markup = `<div class="webform-field"><label${hiddenLabel}>${labelHtml}</label><input type="file" disabled><small>${escapeHtml(field.allowed_extensions || '')}</small></div>`;
+        else if (field.type === 'rating') markup = `<fieldset class="webform-field"><legend${hiddenLabel}>${labelHtml}</legend><div class="webform-rating">${[5,4,3,2,1].map(value => `<label>★</label>`).join('')}</div></fieldset>`;
+        else if (field.type === 'slider') markup = `<div class="webform-field"><label${hiddenLabel}>${labelHtml}</label><input type="range" min="${Number(field.min || 0)}" max="${Number(field.max || 100)}" disabled></div>`;
+        else if (field.type === 'captcha') markup = `<div class="webform-field"><label${hiddenLabel}>${labelHtml}</label><div class="webform-preview-captcha"><i class="check"></i><span>I’m not a robot</span><span class="webform-preview-recaptcha"><span class="dashicons dashicons-update"></span><small>reCAPTCHA</small></span></div></div>`;
+        else if (field.type === 'signature') markup = `<fieldset class="webform-field webform-field-signature"><legend${hiddenLabel}>${labelHtml}</legend><div class="webform-real-signature"><span>Sign here</span></div><button type="button" disabled>Clear signature</button></fieldset>`;
+        else if (field.type === 'address') markup = `<fieldset class="webform-field webform-field-address"><legend${hiddenLabel}>${labelHtml}</legend><div class="webform-address-grid">${['Street address','City','State / Province','Postal code','Country'].map(name => `<label><span>${name}</span><input readonly></label>`).join('')}</div></fieldset>`;
+        else if (field.type === 'field_group' && containerChildren(field).length) markup = `<fieldset class="webform-field webform-pro-field-group webform-pro-nested-group webform-group-columns-${Number(field.group_columns || 2)}"><legend${hiddenLabel}>${labelHtml}</legend><div class="webform-container-grid">${containerChildren(field).map(realPreviewChild).join('')}</div></fieldset>`;
+        else if (field.type === 'repeater' && containerChildren(field).length) markup = `<fieldset class="webform-field webform-field-repeater webform-field-repeater-multi"><legend${hiddenLabel}>${labelHtml}</legend><div class="webform-repeater-rows"><div class="webform-repeater-row webform-repeater-multi-row"><div class="webform-repeater-row-head"><strong>Item 1</strong><button type="button" disabled>×</button></div><div class="webform-repeater-child-grid">${containerChildren(field).map(realPreviewChild).join('')}</div></div></div><button type="button" class="webform-repeater-add" disabled>${escapeHtml(field.repeater_button || 'Add another row')}</button></fieldset>`;
+        else if (field.type === 'field_group') markup = `<fieldset class="webform-field webform-pro-field-group"><legend${hiddenLabel}>${labelHtml}</legend><p class="webform-preview-legacy-container">This legacy group will contain the next ${Math.max(1, Number(field.group_size || 2))} field${Number(field.group_size || 2) === 1 ? '' : 's'} on the published form.</p></fieldset>`;
+        else if (field.type === 'repeater') markup = `<fieldset class="webform-field webform-field-repeater"><legend${hiddenLabel}>${labelHtml}</legend><div class="webform-repeater-rows"><div class="webform-repeater-row"><input type="text" placeholder="${placeholder}" readonly><button type="button" disabled>×</button></div></div><button type="button" class="webform-repeater-add" disabled>${escapeHtml(field.repeater_button || 'Add another row')}</button></fieldset>`;
+        else if (field.type === 'page_break') markup = `<div class="webform-preview-page-break"><span></span><strong>Page break</strong><span></span></div>`;
+        else if (field.type === 'nps') markup = `<fieldset class="webform-field webform-field-nps"><legend${hiddenLabel}>${labelHtml}</legend><div class="webform-nps-scale">${Array.from({length:11},(_,i)=>`<label><input type="radio" disabled><span>${i}</span></label>`).join('')}</div></fieldset>`;
+        else if (field.type === 'product') markup = `<fieldset class="webform-field webform-field-product"><legend${hiddenLabel}>${labelHtml}</legend><div class="webform-product-options">${(field.options || []).map((option,index)=>{const parts=String(option).split('|');return `<label><input type="radio" ${index===0?'checked':''} disabled><span><strong>${escapeHtml(parts[0])}</strong><em>${escapeHtml(parts[1] || '0.00')}</em></span></label>`}).join('')}</div></fieldset>`;
+        else if (field.type === 'price') markup = `<div class="webform-field webform-field-price"><span>${labelHtml}</span><strong>${escapeHtml(field.currency_code || 'USD')} ${Number(field.price_amount || 0).toFixed(2)}</strong></div>`;
+        else if (field.type === 'calculation') markup = `<div class="webform-field webform-field-calculation"><label${hiddenLabel}>${labelHtml}</label><input value="${Number(0).toFixed(Number(field.decimal_places || 2))}" readonly></div>`;
+        else {
+            const type = ({email:'email',number:'number',date:'date',time:'time',phone:'tel',url:'url',appointment:'datetime-local',currency:'number'})[field.type] || 'text';
+            markup = `<div class="webform-field webform-field-${escapeHtml(field.type)}"><label${hiddenLabel}>${labelHtml}</label><input type="${type}" placeholder="${placeholder}" readonly></div>`;
+        }
+        return `${start}<div class="webform-real-preview-field" data-field-id="${escapeHtml(field.id)}" style="${wrapperStyle}">${markup}</div>`;
+    }
+
+    function previewSettings() {
+        const key = $('#webform-style-preset').val() || 'modern';
+        const palette = presetPalettes[key] || presetPalettes.modern;
+        return {
+            key,
+            name: $('#webform-style-preset option:selected').text().replace('🔒 ', ''),
+            accent: $('#webform-accent-color').val() || palette.accent_color,
+            buttonText: $('#webform-button-text-color').val() || palette.button_text_color,
+            text: $('#webform-text-color').val() || palette.text_color,
+            formBackground: $('#webform-form-background').val() || palette.form_background,
+            fieldBackground: $('#webform-field-background').val() || palette.field_background,
+            border: $('#webform-border-color').val() || palette.border_color,
+            font: $('#webform-font-family').val() || 'inherit',
+            fontSize: Number($('#webform-base-font-size').val() || 16),
+            labelSize: Number($('#webform-label-font-size').val() || 14),
+            maxWidth: Number($('#webform-form-max-width').val() || 720),
+            spacing: Number($('#webform-field-spacing').val() || 20),
+            fieldRadius: Number($('#webform-field-radius').val() || 7),
+            buttonRadius: Number($('#webform-button-radius').val() || 7),
+            buttonPadding: Number($('#webform-button-padding').val() || 11)
+        };
+    }
+
+    function previewCustomCss() {
+        let css = String($('#webform-custom-css').val() || '').slice(0, 10000);
+        css = css.replace(/\/\*[\s\S]*?\*\//g, '').replace(/@(?:import|charset|namespace)[^;]*;?/gi, '').replace(/url\s*\([^)]*\)/gi, '').replace(/(?:expression|javascript|vbscript|behavior|-moz-binding)\s*[:(]/gi, '').replace(/[<>]/g, '');
+        let scoped = '';
+        css.split('}').forEach(rule => {
+            if (!rule.includes('{')) return;
+            const parts = rule.split('{');
+            const selectors = parts.shift().trim();
+            const declarations = parts.join('{').trim();
+            if (!selectors || !declarations || selectors.includes('@')) return;
+            const safeSelectors = selectors.split(',').map(selector => selector.trim()).filter(selector => selector && !/(^|\s)(html|body|:root)(\s|$|[.#:\[])/i.test(selector)).map(selector => `#webform-real-preview ${selector}`);
+            if (safeSelectors.length) scoped += `${safeSelectors.join(',')}{${declarations}}`;
+        });
+        let style = document.getElementById('webform-preview-custom-css');
+        if (!style) {
+            style = document.createElement('style');
+            style.id = 'webform-preview-custom-css';
+            document.getElementById('webform-preset-preview-modal')?.appendChild(style);
+        }
+        style.textContent = scoped;
+    }
+
+    function renderRealPreview() {
+        syncRichTextEditor();
+        const settings = previewSettings();
+        previewStage = Math.min(previewStage, Math.max(0, schema.length - 1));
+        const steps = schema.length > 1 ? `<div class="webform-progress"><div class="webform-progress-bar" style="width:${((previewStage + 1) / schema.length) * 100}%"></div></div><ol class="webform-steps">${schema.map((stage,index)=>`<li class="${index===previewStage?'is-active':index<previewStage?'is-complete':''}">${escapeHtml(stage.title)}</li>`).join('')}</ol>` : '';
+        const stages = schema.map((stage,index)=>`<section class="webform-stage ${index===previewStage?'is-active':''}" ${index===previewStage?'':'hidden'}><h2>${escapeHtml(stage.title)}</h2>${(stage.fields || []).map(realPreviewField).join('') || '<p class="webform-preview-empty">This stage has no fields yet.</p>'}<div class="webform-actions">${index>0?'<button type="button" class="webform-preview-prev">Back</button>':''}${index<schema.length-1?'<button type="button" class="webform-preview-next">Continue</button>':`<button type="button">${escapeHtml($('#webform-submit-label').val() || 'Submit')}</button>`}</div></section>`).join('');
+        $('#webform-real-preview').attr('class', `webform-public webform-preset-preview-form webform-style-${escapeHtml(settings.key)}`).css({
+            '--wf-accent':settings.accent,'--wf-button-text':settings.buttonText,'--wf-text':settings.text,'--wf-form-bg':settings.formBackground,'--wf-field-bg':settings.fieldBackground,'--wf-border':settings.border,'--wf-font':settings.font,'--wf-font-size':`${settings.fontSize}px`,'--wf-label-size':`${settings.labelSize}px`,'--wf-max-width':`${settings.maxWidth}px`,'--wf-field-space':`${settings.spacing}px`,'--wf-field-radius':`${settings.fieldRadius}px`,'--wf-button-radius':`${settings.buttonRadius}px`,'--wf-button-padding':`${settings.buttonPadding}px ${settings.buttonPadding * 2}px`
+        }).html(`${steps}${stages}`);
+        previewCustomCss();
+        $('#webform-preset-preview-title').text($('#webform-name').val() || 'Untitled form');
+        $('#webform-preview-style-name').text(`${settings.name} · LIVE FORM PREVIEW`);
+    }
+
     function previewOptions(field, control) {
         const options = field.options && field.options.length ? field.options : ['Option 1', 'Option 2'];
         return options.map((option, index) => `<span class="webform-preview-choice"><i class="${control}">${control === 'radio' && index === 0 ? '<b></b>' : control === 'check' && index === 0 ? '✓' : ''}</i>${escapeHtml(option)}</span>`).join('');
@@ -387,6 +589,7 @@
                     moved.row_start = position > 0 && left <= Math.max(56, $(this).innerWidth() * 0.14);
                 }
                 dirty = true;
+                scheduleHistory(0);
                 render();
             }
         });
@@ -459,6 +662,7 @@
                     editor.on('change keyup undo redo', function () {
                         field.rich_content = editor.getContent();
                         dirty = true;
+                        scheduleHistory();
                         const card = document.querySelector(`.webform-field-card[data-id="${field.id}"] .webform-preview-rich-text`);
                         if (card) card.innerHTML = safeRichPreview(field.rich_content);
                     });
@@ -553,6 +757,7 @@
                     const order = $(this).children('.webform-container-child').map(function () { return Number($(this).data('child-index')); }).get();
                     field.children = order.map(index => current[index]).filter(Boolean);
                     dirty = true;
+                    scheduleHistory(0);
                     render();
                 }
             });
@@ -769,6 +974,7 @@
         if (!field || !WebformAdmin.proActive) return;
         field.icon = String($(this).data('icon') || '');
         dirty = true;
+        scheduleHistory(0);
         closeIconGallery();
         render();
     });
@@ -829,18 +1035,66 @@
         Object.entries(palette).forEach(([name, value]) => { if (themeSelectors[name] && $(themeSelectors[name]).length) $(themeSelectors[name]).val(value); });
     }
     function updatePresetPreview() {
-        const select = $('#webform-style-preset'), key = select.val() || 'modern', palette = presetPalettes[key] || presetPalettes.modern;
-        $('.webform-preset-preview-form').attr('class', `webform-public webform-preset-preview-form webform-style-${key}`).css({'--wf-accent':palette.accent_color,'--wf-button-text':palette.button_text_color,'--wf-text':palette.text_color,'--wf-form-bg':palette.form_background,'--wf-field-bg':palette.field_background,'--wf-border':palette.border_color});
-        $('#webform-preset-preview-title').text(select.find('option:selected').text().replace('🔒 ', ''));
+        if (!$('#webform-preset-preview-modal').prop('hidden')) renderRealPreview();
     }
     $(document).on('change', '#webform-style-preset', function () { applyPresetPalette($(this).val()); updatePresetPreview(); dirty = true; });
-    $(document).on('click', '.webform-preview-preset', function () { updatePresetPreview(); $('#webform-preset-preview-modal').removeAttr('hidden'); });
-    $(document).on('click', '.webform-preset-preview-close,.webform-preset-preview-backdrop', function () { $('#webform-preset-preview-modal').attr('hidden', true); });
+    let previewReturnFocus = null;
+    function openRealPreview() {
+        previewReturnFocus = document.activeElement;
+        previewStage = Math.min(activeStage, Math.max(0, schema.length - 1));
+        renderRealPreview();
+        $('#webform-preset-preview-modal').removeAttr('hidden').attr('aria-hidden', 'false');
+        $('body').addClass('webform-preview-is-open');
+        window.setTimeout(function () { $('.webform-preset-preview-close').trigger('focus'); }, 0);
+    }
+    function closeRealPreview() {
+        $('#webform-preset-preview-modal').attr('hidden', true).attr('aria-hidden', 'true');
+        $('body').removeClass('webform-preview-is-open');
+        if (previewReturnFocus && typeof previewReturnFocus.focus === 'function') previewReturnFocus.focus();
+        previewReturnFocus = null;
+    }
+    $(document).on('click', '.webform-preview-preset,#webform-open-preview', openRealPreview);
+    $(document).on('click', '.webform-preset-preview-close,.webform-preset-preview-backdrop', closeRealPreview);
+    $(document).on('click', '.webform-preview-next', function () { previewStage = Math.min(schema.length - 1, previewStage + 1); renderRealPreview(); });
+    $(document).on('click', '.webform-preview-prev', function () { previewStage = Math.max(0, previewStage - 1); renderRealPreview(); });
+    $(document).on('click', '[data-preview-device]', function () {
+        $('[data-preview-device]').removeClass('is-active');
+        $(this).addClass('is-active');
+        $('.webform-preview-viewport').removeClass('is-desktop is-tablet is-mobile').addClass(`is-${$(this).data('preview-device')}`);
+    });
+    $(document).on('click', '#webform-undo', function () { applyHistory(historyIndex - 1); });
+    $(document).on('click', '#webform-redo', function () { applyHistory(historyIndex + 1); });
+    $(document).on('keydown', function (event) {
+        const previewOpen = !$('#webform-preset-preview-modal').prop('hidden');
+        if (event.key === 'Escape' && previewOpen) {
+            event.preventDefault();
+            closeRealPreview();
+            return;
+        }
+        if (event.key === 'Tab' && previewOpen) {
+            const focusable = Array.from(document.querySelectorAll('#webform-preset-preview-modal button:not([disabled]),#webform-preset-preview-modal [href],#webform-preset-preview-modal input:not([disabled]),#webform-preset-preview-modal select:not([disabled]),#webform-preset-preview-modal textarea:not([disabled]),#webform-preset-preview-modal [tabindex]:not([tabindex="-1"])')).filter(element => element.offsetParent !== null);
+            if (focusable.length) {
+                const first = focusable[0], last = focusable[focusable.length - 1];
+                if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+                else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+            }
+        }
+        const editable = $(event.target).is('input,textarea,select,[contenteditable="true"]');
+        if (editable || !(event.ctrlKey || event.metaKey)) return;
+        if (event.key.toLowerCase() === 'z') {
+            event.preventDefault();
+            applyHistory(historyIndex + (event.shiftKey ? 1 : -1));
+        } else if (event.key.toLowerCase() === 'y') {
+            event.preventDefault();
+            applyHistory(historyIndex + 1);
+        }
+    });
     $(document).on('click', '#webform-apply-theme', function () {
         const theme = WebformAdmin.savedThemes[$('#webform-saved-theme').val()];
         if (!theme || !theme.settings) return;
         Object.entries(theme.settings).forEach(([key, value]) => { if (themeSelectors[key]) $(themeSelectors[key]).val(value); });
         dirty = true;
+        scheduleHistory(0);
         $('.webform-theme-status').text('Theme applied. Save the form to keep it.');
     });
     $(document).on('click', '#webform-save-theme', function () {
@@ -851,6 +1105,7 @@
             WebformAdmin.savedThemes = response.data.themes;
             $('#webform-saved-theme').append(`<option value="${escapeHtml(response.data.id)}">${escapeHtml(name.trim())}</option>`).val(response.data.id);
             $('.webform-theme-status').text('Theme saved for reuse.');
+            scheduleHistory(0);
         }).fail(function (xhr) { $('.webform-theme-status').text(xhr.responseJSON?.data?.message || 'Could not save theme.'); });
     });
     $(document).on('click', '#webform-delete-theme', function () {
@@ -872,7 +1127,7 @@
     $(document).on('dblclick', '.webform-stage-tab', function () {
         const index = Number($(this).data('stage'));
         const title = window.prompt('Stage name', schema[index].title);
-        if (title && title.trim()) { schema[index].title = title.trim(); dirty = true; render(); }
+        if (title && title.trim()) { schema[index].title = title.trim(); dirty = true; scheduleHistory(0); render(); }
     });
     $(document).on('click', '.webform-edit-stage', function (event) {
         event.stopPropagation();
@@ -937,6 +1192,12 @@
         }).always(function () { $button.prop('disabled', false); });
     });
     $('#webform-name,#webform-success-message,#webform-notification-email,#webform-submit-label,#webform-redirect-url,#webform-require-login,#webform-submission-limit,#webform-closed-message,#webform-style-preset,#webform-accent-color,#webform-button-text-color').on('input change', function () { dirty = true; });
+    $(document).on('input change', '.webform-builder-wrap #webform-name,.webform-builder-wrap .webform-properties input,.webform-builder-wrap .webform-properties select,.webform-builder-wrap .webform-properties textarea', function () { scheduleHistory(); });
+    $(document).on('click', '.webform-builder-wrap .webform-builder button,.webform-builder-wrap .webform-page-head button,.webform-builder-wrap .webform-field-picker button', function (event) {
+        if ($(this).is('#webform-undo,#webform-redo,#webform-open-preview,#webform-open-embed,#webform-save,.webform-property-tabs button,.webform-device-switcher button,.webform-open-field-picker,.webform-field-picker-close')) return;
+        if ($(this).is('.webform-stage-tab') && !$(event.target).closest('.webform-edit-stage,.webform-remove-stage').length) return;
+        scheduleHistory(0);
+    });
     $(document).on('change', '#webform-require-login', function () {
         const enabled = $(this).is(':checked');
         $('#webform-role-controls').toggleClass('is-disabled', !enabled).find('input[type="checkbox"]').prop('disabled', !enabled);
