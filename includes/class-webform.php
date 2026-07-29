@@ -27,8 +27,8 @@ final class Webform {
     public function register_post_types() {
         register_post_type('webform_form', array(
             'labels' => array(
-                'name' => __('Mahfuzar Forms', 'mahfuzar-form-builder'),
-                'singular_name' => __('Mahfuzar Form', 'mahfuzar-form-builder'),
+                'name' => __('FormOrbit', 'formorbit'),
+                'singular_name' => __('FormOrbit Form', 'formorbit'),
             ),
             'public' => false,
             'show_ui' => false,
@@ -39,8 +39,8 @@ final class Webform {
 
         register_post_type('webform_entry', array(
             'labels' => array(
-                'name' => __('Entries', 'mahfuzar-form-builder'),
-                'singular_name' => __('Entry', 'mahfuzar-form-builder'),
+                'name' => __('Entries', 'formorbit'),
+                'singular_name' => __('Entry', 'formorbit'),
             ),
             'public' => false,
             'show_ui' => false,

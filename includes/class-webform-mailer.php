@@ -15,7 +15,7 @@ class Webform_Mailer {
     }
 
     public function menu() {
-        add_submenu_page('webform', __('Email Delivery', 'mahfuzar-form-builder'), __('Email Delivery', 'mahfuzar-form-builder'), 'manage_options', 'webform-email-delivery', array($this, 'page'), 2);
+        add_submenu_page('webform', __('Email Delivery', 'formorbit'), __('Email Delivery', 'formorbit'), 'manage_options', 'webform-email-delivery', array($this, 'page'), 2);
     }
 
     public function configure($phpmailer) {
@@ -50,28 +50,28 @@ class Webform_Mailer {
         $notice = get_transient('webform_mail_notice_' . get_current_user_id());
         delete_transient('webform_mail_notice_' . get_current_user_id());
         ?>
-        <div class="wrap webform-wrap"><div class="webform-page-head"><div><h1><?php esc_html_e('Email Delivery', 'mahfuzar-form-builder'); ?></h1><p><?php esc_html_e('Send Webform and WordPress email through your SMTP provider.', 'mahfuzar-form-builder'); ?></p></div></div>
+        <div class="wrap webform-wrap"><div class="webform-page-head"><div><h1><?php esc_html_e('Email Delivery', 'formorbit'); ?></h1><p><?php esc_html_e('Send FormOrbit and WordPress email through your SMTP provider.', 'formorbit'); ?></p></div></div>
         <?php if ($notice) : ?><div class="notice <?php echo !empty($notice['success']) ? 'notice-success' : 'notice-error'; ?> inline"><p><?php echo esc_html($notice['message']); ?></p></div><?php endif; ?>
         <div class="webform-card webform-mail-card">
             <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <input type="hidden" name="action" value="webform_save_mail_settings"><?php wp_nonce_field('webform_save_mail_settings'); ?>
-                <label class="webform-check"><input type="checkbox" name="enabled" value="1" <?php checked(!empty($settings['enabled'])); ?>> <?php esc_html_e('Enable SMTP email delivery', 'mahfuzar-form-builder'); ?></label>
-                <p class="description"><?php esc_html_e('Leave this disabled if another SMTP or transactional-email plugin already controls WordPress email.', 'mahfuzar-form-builder'); ?></p>
+                <label class="webform-check"><input type="checkbox" name="enabled" value="1" <?php checked(!empty($settings['enabled'])); ?>> <?php esc_html_e('Enable SMTP email delivery', 'formorbit'); ?></label>
+                <p class="description"><?php esc_html_e('Leave this disabled if another SMTP or transactional-email plugin already controls WordPress email.', 'formorbit'); ?></p>
                 <div class="webform-mail-grid">
-                    <label><?php esc_html_e('SMTP host', 'mahfuzar-form-builder'); ?><input type="text" name="host" value="<?php echo esc_attr($settings['host']); ?>" placeholder="smtp.example.com"></label>
-                    <label><?php esc_html_e('Port', 'mahfuzar-form-builder'); ?><input type="number" name="port" min="1" max="65535" value="<?php echo esc_attr($settings['port']); ?>"></label>
-                    <label><?php esc_html_e('Encryption', 'mahfuzar-form-builder'); ?><select name="encryption"><option value="tls" <?php selected($settings['encryption'], 'tls'); ?>>TLS / STARTTLS</option><option value="ssl" <?php selected($settings['encryption'], 'ssl'); ?>>SSL</option><option value="none" <?php selected($settings['encryption'], 'none'); ?>><?php esc_html_e('None', 'mahfuzar-form-builder'); ?></option></select></label>
-                    <label class="webform-check"><?php esc_html_e('Authentication', 'mahfuzar-form-builder'); ?><span><input type="checkbox" name="authentication" value="1" <?php checked(!empty($settings['authentication'])); ?>> <?php esc_html_e('Use SMTP authentication', 'mahfuzar-form-builder'); ?></span></label>
-                    <label><?php esc_html_e('Username', 'mahfuzar-form-builder'); ?><input type="text" name="username" value="<?php echo esc_attr($settings['username']); ?>" autocomplete="username"></label>
-                    <label><?php esc_html_e('Password', 'mahfuzar-form-builder'); ?><input type="password" name="password" value="" autocomplete="new-password" placeholder="<?php echo $settings['password'] ? esc_attr__('Saved — leave blank to keep', 'mahfuzar-form-builder') : ''; ?>"></label>
-                    <label><?php esc_html_e('From email', 'mahfuzar-form-builder'); ?><input type="email" name="from_email" value="<?php echo esc_attr($settings['from_email']); ?>"></label>
-                    <label><?php esc_html_e('From name', 'mahfuzar-form-builder'); ?><input type="text" name="from_name" value="<?php echo esc_attr($settings['from_name']); ?>"></label>
+                    <label><?php esc_html_e('SMTP host', 'formorbit'); ?><input type="text" name="host" value="<?php echo esc_attr($settings['host']); ?>" placeholder="smtp.example.com"></label>
+                    <label><?php esc_html_e('Port', 'formorbit'); ?><input type="number" name="port" min="1" max="65535" value="<?php echo esc_attr($settings['port']); ?>"></label>
+                    <label><?php esc_html_e('Encryption', 'formorbit'); ?><select name="encryption"><option value="tls" <?php selected($settings['encryption'], 'tls'); ?>>TLS / STARTTLS</option><option value="ssl" <?php selected($settings['encryption'], 'ssl'); ?>>SSL</option><option value="none" <?php selected($settings['encryption'], 'none'); ?>><?php esc_html_e('None', 'formorbit'); ?></option></select></label>
+                    <label class="webform-check"><?php esc_html_e('Authentication', 'formorbit'); ?><span><input type="checkbox" name="authentication" value="1" <?php checked(!empty($settings['authentication'])); ?>> <?php esc_html_e('Use SMTP authentication', 'formorbit'); ?></span></label>
+                    <label><?php esc_html_e('Username', 'formorbit'); ?><input type="text" name="username" value="<?php echo esc_attr($settings['username']); ?>" autocomplete="username"></label>
+                    <label><?php esc_html_e('Password', 'formorbit'); ?><input type="password" name="password" value="" autocomplete="new-password" placeholder="<?php echo $settings['password'] ? esc_attr__('Saved — leave blank to keep', 'formorbit') : ''; ?>"></label>
+                    <label><?php esc_html_e('From email', 'formorbit'); ?><input type="email" name="from_email" value="<?php echo esc_attr($settings['from_email']); ?>"></label>
+                    <label><?php esc_html_e('From name', 'formorbit'); ?><input type="text" name="from_name" value="<?php echo esc_attr($settings['from_name']); ?>"></label>
                 </div>
-                <label class="webform-check"><input type="checkbox" name="force_from" value="1" <?php checked(!empty($settings['force_from'])); ?>> <?php esc_html_e('Use this From address for WordPress email', 'mahfuzar-form-builder'); ?></label>
-                <button class="button button-primary"><?php esc_html_e('Save email settings', 'mahfuzar-form-builder'); ?></button>
+                <label class="webform-check"><input type="checkbox" name="force_from" value="1" <?php checked(!empty($settings['force_from'])); ?>> <?php esc_html_e('Use this From address for WordPress email', 'formorbit'); ?></label>
+                <button class="button button-primary"><?php esc_html_e('Save email settings', 'formorbit'); ?></button>
             </form>
         </div>
-        <div class="webform-card webform-mail-card"><h2><?php esc_html_e('Send a test email', 'mahfuzar-form-builder'); ?></h2><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="webform_send_test_email"><?php wp_nonce_field('webform_send_test_email'); ?><label><?php esc_html_e('Recipient', 'mahfuzar-form-builder'); ?><input type="email" name="recipient" required value="<?php echo esc_attr(wp_get_current_user()->user_email); ?>"></label><button class="button"><?php esc_html_e('Send test email', 'mahfuzar-form-builder'); ?></button></form><p class="description"><?php esc_html_e('A successful test means WordPress handed the message to the configured mail server; final inbox delivery still depends on the provider and DNS authentication.', 'mahfuzar-form-builder'); ?></p></div>
+        <div class="webform-card webform-mail-card"><h2><?php esc_html_e('Send a test email', 'formorbit'); ?></h2><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="webform_send_test_email"><?php wp_nonce_field('webform_send_test_email'); ?><label><?php esc_html_e('Recipient', 'formorbit'); ?><input type="email" name="recipient" required value="<?php echo esc_attr(wp_get_current_user()->user_email); ?>"></label><button class="button"><?php esc_html_e('Send test email', 'formorbit'); ?></button></form><p class="description"><?php esc_html_e('A successful test means WordPress handed the message to the configured mail server; final inbox delivery still depends on the provider and DNS authentication.', 'formorbit'); ?></p></div>
         </div>
         <?php
     }
@@ -100,14 +100,14 @@ class Webform_Mailer {
     public function test() {
         $this->authorize('webform_send_test_email');
         $recipient = sanitize_email(wp_unslash($_POST['recipient'] ?? ''));
-        $success = $recipient && wp_mail($recipient, __('Webform email delivery test', 'mahfuzar-form-builder'), sprintf(__("This test email was sent from %s at %s.", 'mahfuzar-form-builder'), home_url('/'), current_time('mysql')));
-        set_transient('webform_mail_notice_' . get_current_user_id(), array('success' => $success, 'message' => $success ? __('Test email was accepted by WordPress for delivery.', 'mahfuzar-form-builder') : __('The test email failed. Verify the server, port, encryption, username, password, and From address.', 'mahfuzar-form-builder')), MINUTE_IN_SECONDS);
+        $success = $recipient && wp_mail($recipient, __('FormOrbit email delivery test', 'formorbit'), sprintf(__("This test email was sent from %s at %s.", 'formorbit'), home_url('/'), current_time('mysql')));
+        set_transient('webform_mail_notice_' . get_current_user_id(), array('success' => $success, 'message' => $success ? __('Test email was accepted by WordPress for delivery.', 'formorbit') : __('The test email failed. Verify the server, port, encryption, username, password, and From address.', 'formorbit')), MINUTE_IN_SECONDS);
         wp_safe_redirect(admin_url('admin.php?page=webform-email-delivery'));
         exit;
     }
 
     private function authorize($nonce) {
-        if (!current_user_can('manage_options')) wp_die(esc_html__('Permission denied.', 'mahfuzar-form-builder'));
+        if (!current_user_can('manage_options')) wp_die(esc_html__('Permission denied.', 'formorbit'));
         check_admin_referer($nonce);
     }
 

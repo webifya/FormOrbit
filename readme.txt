@@ -1,10 +1,10 @@
-=== Mahfuzar Form Builder ===
+=== FormOrbit ===
 Contributors: mahfuzar
 Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 3.0.0
+Stable tag: 3.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,7 @@ A visual drag-and-drop, multi-step form builder for WordPress.
 
 == Description ==
 
-Mahfuzar Form Builder provides a native WordPress form-building experience:
+FormOrbit provides a native WordPress form-building experience:
 
 * Drag-and-drop field ordering
 * Multiple stages with progress indicators
@@ -36,20 +36,24 @@ Mahfuzar Form Builder provides a native WordPress form-building experience:
 * Optional Google reCAPTCHA v2 verification
 * Import converters for WPForms, Gravity Forms, Fluent Forms, and Contact Form 7
 
-Mahfuzar Form Builder is created by Mahfuzar Rahman. Advanced automation, payment, document, and marketing features are available in a separately distributed Pro add-on.
+FormOrbit is created by Mahfuzar Rahman. Advanced automation, payment, document, and marketing features are available in a separately distributed Pro add-on.
 
 == Installation ==
 
-1. Upload the `mahfuzar-form-builder` folder to `/wp-content/plugins/`.
-2. Activate Mahfuzar Form Builder in the Plugins screen.
-3. Open Mahfuzar Forms > Add New.
+1. Upload the `formorbit` folder to `/wp-content/plugins/`.
+2. Activate FormOrbit in the Plugins screen.
+3. Open FormOrbit > Add New.
 4. Build and save your form.
 5. Copy the generated `[webform id="123"]` shortcode into any post or page.
 
 == Changelog ==
 
+= 3.0.1 =
+* Renamed the plugin to FormOrbit with the unique `formorbit` slug and text domain.
+* Updated Free and Pro upgrade messaging, menus, settings, and documentation to the FormOrbit product identity.
+* Preserved the existing shortcode, stored forms, entries, hooks, and internal identifiers for backward compatibility.
+
 = 3.0.0 =
-* Renamed the plugin to Mahfuzar Form Builder with the unique `mahfuzar-form-builder` text domain.
 * Moved webhook delivery completely into the separately distributed Pro add-on.
 * Sanitized submitted field values before validation, conditions, and extension hooks.
 * Hardened decoded builder settings and form schemas before storage.
@@ -66,7 +70,7 @@ Mahfuzar Form Builder is created by Mahfuzar Rahman. Advanced automation, paymen
 * Added a dedicated Name field with responsive first-name and last-name inputs.
 * Added the Rich Text / Agreement field to the visible Pro field catalog.
 * Added shared builder support for Pro rich-text editing, media, previews, and safe frontend rendering.
-* Preserved Rich Text fields in locked mode when Webform Pro is unavailable.
+* Preserved Rich Text fields in locked mode when FormOrbit Pro is unavailable.
 
 = 2.6.2 =
 * Moved the secure Preview shortcut beside each active form title.
@@ -97,7 +101,7 @@ Mahfuzar Form Builder is created by Mahfuzar Rahman. Advanced automation, paymen
 * Added JSON, CSV, and XML form imports with automatic format detection.
 * Added dedicated Formidable Forms and Forminator migration support.
 * Added a unified Import / Export screen with licensed Pro export tools.
-* Preserved stages, fields, settings, conditional rules, and Pro field data when moving Webform exports.
+* Preserved stages, fields, settings, conditional rules, and Pro field data when moving FormOrbit exports.
 
 = 2.4.1 =
 * Upgraded the Forms screen with native hover actions for editing, settings, duplication, trash, and secure previews.
@@ -119,7 +123,7 @@ Mahfuzar Form Builder is created by Mahfuzar Rahman. Advanced automation, paymen
 = 1.8.0 =
 * Added accurate visual builder previews for every standard field type.
 * Added native-looking upload, consent, choice, date, time, rating, slider, CAPTCHA, HTML, hidden, and heading previews.
-* Added dedicated calculation, field-group, and e-signature previews when Webform Pro is active.
+* Added dedicated calculation, field-group, and e-signature previews when FormOrbit Pro is active.
 * Improved field-card spacing, labels, responsive behavior, and selected-state clarity.
 
 = 1.7.1 =
@@ -166,7 +170,7 @@ Mahfuzar Form Builder is created by Mahfuzar Rahman. Advanced automation, paymen
 * Updated the Pro offer to include 20 additional premium templates.
 
 = 1.3.0 =
-* Added direct checkout links for annual single-site, annual 10-site bundle, and lifetime Webform Pro plans.
+* Added direct checkout links for annual single-site, annual 10-site bundle, and lifetime FormOrbit Pro plans.
 * Added Pro capability previews inside the form builder.
 * Added login requirements, submission limits, and custom closed-form messages.
 * Added submission timing checks to strengthen automated spam protection.

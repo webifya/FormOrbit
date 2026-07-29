@@ -80,11 +80,11 @@
         };
         $('.webform-pro-field-preview-only .webform-pro-field-list').html(fields.map(name => `<div><span class="dashicons dashicons-lock"></span>${name}</div>`).join(''));
         const catalog = `<h2>Integrations</h2>
-            <p class="description">Connect form submissions to email marketing, payments, automation, and document tools with Webform Pro.</p>
+            <p class="description">Connect form submissions to email marketing, payments, automation, and document tools with FormOrbit Pro.</p>
             <div class="webform-free-pro-catalog">
-                <span class="webform-pro-badge">WEBFORM PRO</span>
+                <span class="webform-pro-badge">FORMORBIT PRO</span>
                 ${Object.entries(integrations).map(([category, names]) => `<h3>${category}</h3><div class="webform-pro-catalog-grid">${names.map(name => `<span><i class="dashicons dashicons-lock"></i>${name}</span>`).join('')}</div>`).join('')}
-                <a class="button button-primary webform-pro-catalog-button" href="https://www.webninjallc.com/product/webform-pro/?utm_source=webform-free&amp;utm_medium=builder&amp;utm_campaign=integrations" target="_blank" rel="noopener">Unlock integrations</a>
+                <a class="button button-primary webform-pro-catalog-button" href="https://www.webninjallc.com/product/webform-pro/?utm_source=formorbit-free&amp;utm_medium=builder&amp;utm_campaign=integrations" target="_blank" rel="noopener">Unlock integrations</a>
             </div>`;
         $('.webform-property-panel[data-panel="integrations"]').html(catalog);
     }
@@ -300,7 +300,7 @@
             return;
         }
         if (isLockedProField(field)) {
-            $('#webform-field-settings').html('<div class="webform-locked-field-message"><span class="dashicons dashicons-lock"></span><strong>Pro field unavailable</strong><p>This field and its settings are preserved. Activate Webform Pro with a valid license to edit or display it.</p></div>');
+            $('#webform-field-settings').html('<div class="webform-locked-field-message"><span class="dashicons dashicons-lock"></span><strong>Pro field unavailable</strong><p>This field and its settings are preserved. Activate FormOrbit Pro with a valid license to edit or display it.</p></div>');
             return;
         }
         const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz', 'product'].includes(field.type);

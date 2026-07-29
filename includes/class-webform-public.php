@@ -17,11 +17,11 @@ class Webform_Public {
         }
         $nonce = isset($_GET['_wpnonce']) ? sanitize_text_field(wp_unslash($_GET['_wpnonce'])) : '';
         if (!current_user_can('manage_options') || !wp_verify_nonce($nonce, 'webform_preview_' . $form_id)) {
-            wp_die(esc_html__('You are not allowed to preview this form.', 'mahfuzar-form-builder'), '', array('response' => 403));
+            wp_die(esc_html__('You are not allowed to preview this form.', 'formorbit'), '', array('response' => 403));
         }
         $form = get_post($form_id);
         if (!$form || $form->post_type !== 'webform_form') {
-            wp_die(esc_html__('Webform not found.', 'mahfuzar-form-builder'), '', array('response' => 404));
+            wp_die(esc_html__('Form not found.', 'formorbit'), '', array('response' => 404));
         }
         wp_enqueue_style('webform-public', WEBFORM_URL . 'assets/css/public.css', array(), WEBFORM_VERSION);
         wp_enqueue_script('webform-public', WEBFORM_URL . 'assets/js/public.js', array(), WEBFORM_VERSION, true);
@@ -30,11 +30,11 @@ class Webform_Public {
         ?>
         <!doctype html><html <?php language_attributes(); ?>><head>
             <meta charset="<?php bloginfo('charset'); ?>"><meta name="viewport" content="width=device-width, initial-scale=1">
-            <title><?php echo esc_html(sprintf(__('Preview: %s', 'mahfuzar-form-builder'), $form->post_title)); ?></title>
+            <title><?php echo esc_html(sprintf(__('Preview: %s', 'formorbit'), $form->post_title)); ?></title>
             <?php wp_head(); ?>
             <style>.webform-preview-page{background:#f0f2f5;margin:0;padding:32px 18px}.webform-preview-toolbar{align-items:center;display:flex;justify-content:space-between;margin:0 auto 18px;max-width:900px}.webform-preview-toolbar strong{font:600 16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.webform-preview-toolbar a{background:#2271b1;border-radius:4px;color:#fff;font:600 13px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:10px 14px;text-decoration:none}.webform-preview-frame{margin:auto;max-width:900px}</style>
         </head><body class="webform-preview-page">
-            <div class="webform-preview-toolbar"><strong><?php echo esc_html(sprintf(__('Previewing “%s”', 'mahfuzar-form-builder'), $form->post_title)); ?></strong><a href="<?php echo esc_url(admin_url('admin.php?page=webform-builder&form_id=' . $form_id)); ?>"><?php esc_html_e('Back to editor', 'mahfuzar-form-builder'); ?></a></div>
+            <div class="webform-preview-toolbar"><strong><?php echo esc_html(sprintf(__('Previewing “%s”', 'formorbit'), $form->post_title)); ?></strong><a href="<?php echo esc_url(admin_url('admin.php?page=webform-builder&form_id=' . $form_id)); ?>"><?php esc_html_e('Back to editor', 'formorbit'); ?></a></div>
             <main class="webform-preview-frame"><?php echo do_shortcode('[webform id="' . absint($form_id) . '"]'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></main>
             <?php wp_footer(); ?>
         </body></html>
@@ -46,7 +46,7 @@ class Webform_Public {
         $atts = shortcode_atts(array('id' => 0), $atts, 'webform');
         $form_id = absint($atts['id']);
         if (!$form_id || get_post_type($form_id) !== 'webform_form') {
-            return current_user_can('manage_options') ? '<p>' . esc_html__('Webform not found.', 'mahfuzar-form-builder') . '</p>' : '';
+            return current_user_can('manage_options') ? '<p>' . esc_html__('Form not found.', 'formorbit') . '</p>' : '';
         }
         $schema = get_post_meta($form_id, '_webform_schema', true);
         $settings = get_post_meta($form_id, '_webform_settings', true);
@@ -86,8 +86,8 @@ class Webform_Public {
                         <?php endforeach; ?>
                         <div class="webform-actions">
                             <?php do_action('webform_stage_actions', $form_id, $settings, $stage_index, count($schema)); ?>
-                            <?php if ($stage_index > 0) : ?><button type="button" class="webform-prev"><?php esc_html_e('Back', 'mahfuzar-form-builder'); ?></button><?php endif; ?>
-                            <?php if ($stage_index < count($schema) - 1) : ?><button type="button" class="webform-next"><?php esc_html_e('Continue', 'mahfuzar-form-builder'); ?></button><?php else : ?><button type="submit" class="webform-submit"><?php echo esc_html($settings['submit_label'] ?? __('Submit', 'mahfuzar-form-builder')); ?></button><?php endif; ?>
+                            <?php if ($stage_index > 0) : ?><button type="button" class="webform-prev"><?php esc_html_e('Back', 'formorbit'); ?></button><?php endif; ?>
+                            <?php if ($stage_index < count($schema) - 1) : ?><button type="button" class="webform-next"><?php esc_html_e('Continue', 'formorbit'); ?></button><?php else : ?><button type="submit" class="webform-submit"><?php echo esc_html($settings['submit_label'] ?? __('Submit', 'formorbit')); ?></button><?php endif; ?>
                         </div>
                     </section>
                 <?php endforeach; ?>
@@ -146,8 +146,8 @@ class Webform_Public {
             <fieldset class="webform-field webform-field-name <?php echo esc_attr($field_class); ?>"<?php echo $condition_attr; ?>>
                 <legend><?php echo $label_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></legend>
                 <div class="webform-name-fields">
-                    <label for="<?php echo esc_attr($id . '-first'); ?>"><span><?php esc_html_e('First name', 'mahfuzar-form-builder'); ?></span><input id="<?php echo esc_attr($id . '-first'); ?>" type="text" name="<?php echo esc_attr($name . '[first]'); ?>" maxlength="100" autocomplete="given-name" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $required; ?>></label>
-                    <label for="<?php echo esc_attr($id . '-last'); ?>"><span><?php esc_html_e('Last name', 'mahfuzar-form-builder'); ?></span><input id="<?php echo esc_attr($id . '-last'); ?>" type="text" name="<?php echo esc_attr($name . '[last]'); ?>" maxlength="100" autocomplete="family-name" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $required; ?>></label>
+                    <label for="<?php echo esc_attr($id . '-first'); ?>"><span><?php esc_html_e('First name', 'formorbit'); ?></span><input id="<?php echo esc_attr($id . '-first'); ?>" type="text" name="<?php echo esc_attr($name . '[first]'); ?>" maxlength="100" autocomplete="given-name" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $required; ?>></label>
+                    <label for="<?php echo esc_attr($id . '-last'); ?>"><span><?php esc_html_e('Last name', 'formorbit'); ?></span><input id="<?php echo esc_attr($id . '-last'); ?>" type="text" name="<?php echo esc_attr($name . '[last]'); ?>" maxlength="100" autocomplete="family-name" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $required; ?>></label>
                 </div>
                 <span class="webform-error" id="<?php echo esc_attr($describedby); ?>"></span>
             </fieldset>
@@ -191,7 +191,7 @@ class Webform_Public {
             $token = base64_encode($first . ':' . $second . ':' . wp_create_nonce('webform_captcha_' . $field['id'] . '_' . $answer));
             ?>
             <div class="webform-field webform-field-captcha <?php echo esc_attr($field_class); ?>"<?php echo $condition_attr; ?>>
-                <label for="<?php echo esc_attr($id); ?>"><?php echo esc_html(sprintf(__('%1$d + %2$d = ?', 'mahfuzar-form-builder'), $first, $second)); ?> <span aria-hidden="true">*</span></label>
+                <label for="<?php echo esc_attr($id); ?>"><?php echo esc_html(sprintf(__('%1$d + %2$d = ?', 'formorbit'), $first, $second)); ?> <span aria-hidden="true">*</span></label>
                 <input type="number" id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" required>
                 <input type="hidden" name="captcha_tokens[<?php echo esc_attr($field['id']); ?>]" value="<?php echo esc_attr($token); ?>">
                 <span class="webform-error" id="<?php echo esc_attr($describedby); ?>"></span>
@@ -201,7 +201,7 @@ class Webform_Public {
         }
         if ($field['type'] === 'rating') {
             ?>
-            <fieldset class="webform-field webform-field-rating <?php echo esc_attr($field_class); ?>"<?php echo $condition_attr; ?>><legend><?php echo $label_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></legend><div class="webform-rating"><?php for ($rating = 5; $rating >= 1; $rating--) : ?><input id="<?php echo esc_attr($id . '-' . $rating); ?>" type="radio" name="<?php echo esc_attr($name); ?>" value="<?php echo esc_attr($rating); ?>" <?php echo $required && $rating === 1 ? 'required' : ''; ?>><label for="<?php echo esc_attr($id . '-' . $rating); ?>" aria-label="<?php echo esc_attr(sprintf(__('%d stars', 'mahfuzar-form-builder'), $rating)); ?>">★</label><?php endfor; ?></div><span class="webform-error" id="<?php echo esc_attr($describedby); ?>"></span></fieldset>
+            <fieldset class="webform-field webform-field-rating <?php echo esc_attr($field_class); ?>"<?php echo $condition_attr; ?>><legend><?php echo $label_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></legend><div class="webform-rating"><?php for ($rating = 5; $rating >= 1; $rating--) : ?><input id="<?php echo esc_attr($id . '-' . $rating); ?>" type="radio" name="<?php echo esc_attr($name); ?>" value="<?php echo esc_attr($rating); ?>" <?php echo $required && $rating === 1 ? 'required' : ''; ?>><label for="<?php echo esc_attr($id . '-' . $rating); ?>" aria-label="<?php echo esc_attr(sprintf(__('%d stars', 'formorbit'), $rating)); ?>">★</label><?php endfor; ?></div><span class="webform-error" id="<?php echo esc_attr($describedby); ?>"></span></fieldset>
             <?php
             return;
         }
@@ -211,10 +211,10 @@ class Webform_Public {
             <?php if ($field['type'] === 'textarea') : ?>
                 <textarea id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" rows="<?php echo esc_attr(min(30, max(2, absint($field['rows'] ?? 5)))); ?>" maxlength="10000" aria-describedby="<?php echo esc_attr($describedby); ?>" placeholder="<?php echo esc_attr($field['placeholder']); ?>"<?php echo $required; ?>></textarea>
             <?php elseif ($field['type'] === 'select') : ?>
-                <select id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $required; ?>><option value=""><?php esc_html_e('Select an option', 'mahfuzar-form-builder'); ?></option><?php foreach ($field['options'] as $option) : ?><option value="<?php echo esc_attr($option); ?>"><?php echo esc_html($option); ?></option><?php endforeach; ?></select>
+                <select id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $required; ?>><option value=""><?php esc_html_e('Select an option', 'formorbit'); ?></option><?php foreach ($field['options'] as $option) : ?><option value="<?php echo esc_attr($option); ?>"><?php echo esc_html($option); ?></option><?php endforeach; ?></select>
             <?php elseif ($field['type'] === 'file') : ?>
                 <input type="file" id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" accept="<?php echo esc_attr(implode(',', array_map(function ($ext) { return '.' . trim($ext); }, explode(',', $field['allowed_extensions'])))); ?>" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $required; ?>>
-                <small><?php echo esc_html(sprintf(__('Allowed: %1$s. Maximum: %2$d MB.', 'mahfuzar-form-builder'), $field['allowed_extensions'], $field['max_size'])); ?></small>
+                <small><?php echo esc_html(sprintf(__('Allowed: %1$s. Maximum: %2$d MB.', 'formorbit'), $field['allowed_extensions'], $field['max_size'])); ?></small>
             <?php elseif ($field['type'] === 'slider') : ?>
                 <input type="range" id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" min="<?php echo esc_attr($field['min']); ?>" max="<?php echo esc_attr($field['max']); ?>" step="<?php echo esc_attr($field['step']); ?>" value="<?php echo esc_attr($field['min']); ?>"<?php echo $required; ?>><output class="webform-slider-value"><?php echo esc_html($field['min']); ?></output>
             <?php else : ?>
@@ -230,25 +230,25 @@ class Webform_Public {
     public function submit() {
         $form_id = isset($_POST['form_id']) ? absint($_POST['form_id']) : 0;
         if (!$form_id || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'] ?? '')), 'webform_submit_' . $form_id)) {
-            wp_send_json_error(array('message' => __('Your session expired. Refresh and try again.', 'mahfuzar-form-builder')), 403);
+            wp_send_json_error(array('message' => __('Your session expired. Refresh and try again.', 'formorbit')), 403);
         }
         if (!empty($_POST['website'])) {
-            wp_send_json_success(array('message' => __('Thanks! Your response has been submitted.', 'mahfuzar-form-builder')));
+            wp_send_json_success(array('message' => __('Thanks! Your response has been submitted.', 'formorbit')));
         }
         $started_at = isset($_POST['started_at']) ? absint($_POST['started_at']) : 0;
         if (!$started_at || time() - $started_at < 2) {
-            wp_send_json_success(array('message' => __('Thanks! Your response has been submitted.', 'mahfuzar-form-builder')));
+            wp_send_json_success(array('message' => __('Thanks! Your response has been submitted.', 'formorbit')));
         }
         $rate_key = 'webform_rate_' . md5($form_id . '|' . $this->client_ip());
         $rate_count = (int) get_transient($rate_key);
         $rate_limit = max(1, (int) apply_filters('webform_rate_limit', 20, $form_id));
         if ($rate_count >= $rate_limit) {
-            wp_send_json_error(array('message' => __('Too many submissions. Please wait and try again.', 'mahfuzar-form-builder')), 429);
+            wp_send_json_error(array('message' => __('Too many submissions. Please wait and try again.', 'formorbit')), 429);
         }
         set_transient($rate_key, $rate_count + 1, MINUTE_IN_SECONDS * 10);
         $schema = get_post_meta($form_id, '_webform_schema', true);
         if (!$schema || get_post_status($form_id) !== 'publish') {
-            wp_send_json_error(array('message' => __('This form is unavailable.', 'mahfuzar-form-builder')), 404);
+            wp_send_json_error(array('message' => __('This form is unavailable.', 'formorbit')), 404);
         }
         $settings = get_post_meta($form_id, '_webform_settings', true);
         $availability_error = $this->availability_error($form_id, $settings);
@@ -283,23 +283,23 @@ class Webform_Public {
                 $value = is_array($value) ? array_slice(array_map('sanitize_text_field', $value), 0, 100) : substr(sanitize_textarea_field($value), 0, 10000);
                 $date_error = $field['type'] === 'date' ? $this->date_validation_error($field, $value) : '';
                 if ($name_incomplete) {
-                    $errors[$field['id']] = sprintf(__('Enter a complete %s.', 'mahfuzar-form-builder'), $field['label']);
+                    $errors[$field['id']] = sprintf(__('Enter a complete %s.', 'formorbit'), $field['label']);
                 } elseif (!empty($field['required']) && (empty($value) && $value !== '0')) {
-                    $errors[$field['id']] = sprintf(__('%s is required.', 'mahfuzar-form-builder'), $field['label']);
+                    $errors[$field['id']] = sprintf(__('%s is required.', 'formorbit'), $field['label']);
                 } elseif ($field['type'] === 'email' && $value && !is_email($value)) {
-                    $errors[$field['id']] = __('Enter a valid email address.', 'mahfuzar-form-builder');
+                    $errors[$field['id']] = __('Enter a valid email address.', 'formorbit');
                 } elseif ($field['type'] === 'url' && $value && !wp_http_validate_url($value)) {
-                    $errors[$field['id']] = __('Enter a valid URL.', 'mahfuzar-form-builder');
+                    $errors[$field['id']] = __('Enter a valid URL.', 'formorbit');
                 } elseif ($date_error) {
                     $errors[$field['id']] = $date_error;
                 } elseif (in_array($field['type'], array('select', 'radio', 'poll', 'quiz'), true) && $value && !in_array($value, $field['options'], true)) {
-                    $errors[$field['id']] = __('Select a valid option.', 'mahfuzar-form-builder');
+                    $errors[$field['id']] = __('Select a valid option.', 'formorbit');
                 } elseif ($field['type'] === 'checkbox' && array_diff((array) $value, $field['options'])) {
-                    $errors[$field['id']] = __('Select valid options.', 'mahfuzar-form-builder');
+                    $errors[$field['id']] = __('Select valid options.', 'formorbit');
                 } elseif ($field['type'] === 'captcha' && !$this->valid_captcha($field['id'], $value)) {
-                    $errors[$field['id']] = __('The security answer is incorrect.', 'mahfuzar-form-builder');
+                    $errors[$field['id']] = __('The security answer is incorrect.', 'formorbit');
                 } elseif ($field['type'] === 'rating' && $value && (!is_numeric($value) || $value < 1 || $value > 5)) {
-                    $errors[$field['id']] = __('Select a valid rating.', 'mahfuzar-form-builder');
+                    $errors[$field['id']] = __('Select a valid rating.', 'formorbit');
                 }
                 $custom_error = apply_filters('webform_validate_field', '', $value, $field, $form_id, $posted);
                 if ($custom_error) $errors[$field['id']] = sanitize_text_field($custom_error);
@@ -314,7 +314,7 @@ class Webform_Public {
             }
         }
         if ($errors) {
-            wp_send_json_error(array('message' => __('Please correct the highlighted fields.', 'mahfuzar-form-builder'), 'errors' => $errors), 422);
+            wp_send_json_error(array('message' => __('Please correct the highlighted fields.', 'formorbit'), 'errors' => $errors), 422);
         }
         // Upload only after every non-file field passes, preventing orphaned
         // files when another field causes validation to fail.
@@ -337,16 +337,16 @@ class Webform_Public {
                     wp_delete_file($uploads['basedir'] . substr($uploaded_url, strlen($uploads['baseurl'])));
                 }
             }
-            wp_send_json_error(array('message' => __('Please correct the highlighted fields.', 'mahfuzar-form-builder'), 'errors' => $errors), 422);
+            wp_send_json_error(array('message' => __('Please correct the highlighted fields.', 'formorbit'), 'errors' => $errors), 422);
         }
         $entry_id = absint(apply_filters('webform_existing_entry_id', 0, $form_id, $posted));
         if (!$entry_id || get_post_type($entry_id) !== 'webform_entry') {
-            $entry_id = wp_insert_post(array('post_type' => 'webform_entry', 'post_status' => 'private', 'post_title' => sprintf(__('Submission for %s', 'mahfuzar-form-builder'), get_the_title($form_id))));
+            $entry_id = wp_insert_post(array('post_type' => 'webform_entry', 'post_status' => 'private', 'post_title' => sprintf(__('Submission for %s', 'formorbit'), get_the_title($form_id))));
         } else {
-            wp_update_post(array('ID' => $entry_id, 'post_title' => sprintf(__('Submission for %s', 'mahfuzar-form-builder'), get_the_title($form_id))));
+            wp_update_post(array('ID' => $entry_id, 'post_title' => sprintf(__('Submission for %s', 'formorbit'), get_the_title($form_id))));
         }
         if (!$entry_id || is_wp_error($entry_id)) {
-            wp_send_json_error(array('message' => __('We could not save your submission. Please try again.', 'mahfuzar-form-builder')), 500);
+            wp_send_json_error(array('message' => __('We could not save your submission. Please try again.', 'formorbit')), 500);
         }
         update_post_meta($entry_id, '_webform_form_id', $form_id);
         update_post_meta($entry_id, '_webform_user_id', get_current_user_id());
@@ -371,7 +371,7 @@ class Webform_Public {
         if (!empty($settings['notification_email']) && is_email($settings['notification_email'])) {
             $lines = array();
             foreach ($data as $item) $lines[] = $item['label'] . ': ' . (is_array($item['value']) ? implode(', ', $item['value']) : $item['value']);
-            wp_mail($settings['notification_email'], sprintf(__('New submission: %s', 'mahfuzar-form-builder'), get_the_title($form_id)), implode("\n", $lines));
+            wp_mail($settings['notification_email'], sprintf(__('New submission: %s', 'formorbit'), get_the_title($form_id)), implode("\n", $lines));
         }
         /**
          * Fires after an entry is stored and core notifications are dispatched.
@@ -381,7 +381,7 @@ class Webform_Public {
          */
         do_action('webform_after_submission', $entry_id, $form_id, $data, $settings);
         $response = array(
-            'message' => $settings['success_message'] ?? __('Thanks! Your response has been submitted.', 'mahfuzar-form-builder'),
+            'message' => $settings['success_message'] ?? __('Thanks! Your response has been submitted.', 'formorbit'),
             'message_html' => wp_kses_post($settings['success_message'] ?? ''),
             'redirect_url' => ($settings['confirmation_type'] ?? 'message') === 'redirect' && !empty($settings['redirect_url']) ? $settings['redirect_url'] : '',
             'quiz' => $quiz_total ? array('score' => $quiz_score, 'total' => $quiz_total) : null,
@@ -410,10 +410,10 @@ class Webform_Public {
     private function date_validation_error($field, $value) {
         if ($value === '') return '';
         $date = DateTime::createFromFormat('!Y-m-d', $value);
-        if (!$date || $date->format('Y-m-d') !== $value) return __('Enter a valid date.', 'mahfuzar-form-builder');
+        if (!$date || $date->format('Y-m-d') !== $value) return __('Enter a valid date.', 'formorbit');
         list($minimum, $maximum) = $this->date_bounds($field);
-        if ($minimum && $value < $minimum) return sprintf(__('Choose a date on or after %s.', 'mahfuzar-form-builder'), $minimum);
-        if ($maximum && $value > $maximum) return sprintf(__('Choose a date on or before %s.', 'mahfuzar-form-builder'), $maximum);
+        if ($minimum && $value < $minimum) return sprintf(__('Choose a date on or after %s.', 'formorbit'), $minimum);
+        if ($maximum && $value > $maximum) return sprintf(__('Choose a date on or before %s.', 'formorbit'), $maximum);
         return '';
     }
 
@@ -447,11 +447,11 @@ class Webform_Public {
             'error' => absint($_FILES['fields']['error'][$field['id']]),
             'size' => absint($_FILES['fields']['size'][$field['id']]),
         );
-        if ($file['error'] !== UPLOAD_ERR_OK) return new WP_Error('upload_error', __('The file could not be uploaded.', 'mahfuzar-form-builder'));
-        if ($file['size'] > absint($field['max_size']) * MB_IN_BYTES) return new WP_Error('file_size', __('The uploaded file is too large.', 'mahfuzar-form-builder'));
+        if ($file['error'] !== UPLOAD_ERR_OK) return new WP_Error('upload_error', __('The file could not be uploaded.', 'formorbit'));
+        if ($file['size'] > absint($field['max_size']) * MB_IN_BYTES) return new WP_Error('file_size', __('The uploaded file is too large.', 'formorbit'));
         $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
         $allowed = array_filter(array_map('trim', explode(',', $field['allowed_extensions'])));
-        if (!$extension || !in_array($extension, $allowed, true)) return new WP_Error('file_type', __('This file type is not allowed.', 'mahfuzar-form-builder'));
+        if (!$extension || !in_array($extension, $allowed, true)) return new WP_Error('file_type', __('This file type is not allowed.', 'formorbit'));
         require_once ABSPATH . 'wp-admin/includes/file.php';
         $uploaded = wp_handle_upload($file, array('test_form' => false));
         return !empty($uploaded['error']) ? new WP_Error('upload_error', $uploaded['error']) : esc_url_raw($uploaded['url']);
@@ -459,7 +459,7 @@ class Webform_Public {
 
     private function availability_error($form_id, $settings) {
         if (!empty($settings['require_login']) && !is_user_logged_in()) {
-            return __('You must be logged in to submit this form.', 'mahfuzar-form-builder');
+            return __('You must be logged in to submit this form.', 'formorbit');
         }
         $limit = absint($settings['submission_limit'] ?? 0);
         if ($limit) {
@@ -472,7 +472,7 @@ class Webform_Public {
                 'meta_query' => array('relation' => 'AND', array('key' => '_webform_form_id', 'value' => $form_id), array('relation' => 'OR', array('key' => '_webform_entry_status', 'compare' => 'NOT EXISTS'), array('key' => '_webform_entry_status', 'value' => 'submitted'))),
             ));
             if ($query->found_posts >= $limit) {
-                return !empty($settings['closed_message']) ? $settings['closed_message'] : __('This form is currently unavailable.', 'mahfuzar-form-builder');
+                return !empty($settings['closed_message']) ? $settings['closed_message'] : __('This form is currently unavailable.', 'formorbit');
             }
         }
         return (string) apply_filters('webform_availability_error', '', $form_id, $settings);
