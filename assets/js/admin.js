@@ -121,6 +121,46 @@
         return $('<div>').text(value == null ? '' : value).html();
     }
 
+    function updateEmbedPanel(formId, shortcode) {
+        const id = Number(formId || 0);
+        if (!id) return;
+        const embedShortcode = shortcode || `[formorbit id="${id}"]`;
+        const phpEmbed = `<?php echo do_shortcode( '${embedShortcode}' ); ?>`;
+        $('#webform-editor-shortcode').text(embedShortcode);
+        $('#webform-editor-php').text(phpEmbed);
+        $('#webform-embed-panel').prop('hidden', false);
+    }
+
+    function copyToClipboard(button, text) {
+        const value = String(text || '');
+        if (!value) return;
+        const label = $(button).find('.webform-copy-label');
+        const originalLabel = label.text() || 'Copy';
+        const originalTitle = button.getAttribute('title') || 'Copy';
+        const originalAria = button.getAttribute('aria-label') || originalTitle;
+        const copied = function () {
+            $(button).addClass('is-copied').attr('title', 'Copied').attr('aria-label', 'Copied');
+            if (label.length) label.text('Copied');
+            window.setTimeout(function () {
+                $(button).removeClass('is-copied').attr('title', originalTitle).attr('aria-label', originalAria);
+                if (label.length) label.text(originalLabel);
+            }, 1600);
+        };
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(value).then(copied).catch(function () {});
+            return;
+        }
+        const input = document.createElement('textarea');
+        input.value = value;
+        input.setAttribute('readonly', '');
+        input.style.position = 'fixed';
+        input.style.opacity = '0';
+        document.body.appendChild(input);
+        input.select();
+        try { document.execCommand('copy'); copied(); } catch (error) {}
+        input.remove();
+    }
+
     function ensureIconGallery() {
         if ($('#webform-icon-gallery').length) return;
         const icons = Object.entries(fieldIcons).map(([value, icon]) => `<button type="button" data-icon="${escapeHtml(value)}" data-label="${escapeHtml(icon[0].toLowerCase())}"><span class="dashicons ${escapeHtml(icon[1])}" aria-hidden="true"></span><span>${escapeHtml(icon[0])}</span></button>`).join('');
@@ -705,7 +745,8 @@
             if (!response.success) throw new Error(response.data && response.data.message);
             $('#webform-id').val(response.data.id);
             dirty = false;
-            $('#webform-save-status').html(`Saved · <code>${escapeHtml(response.data.shortcode)}</code>`);
+            $('#webform-save-status').text('Saved');
+            updateEmbedPanel(response.data.id, response.data.shortcode);
             window.history.replaceState({}, '', `admin.php?page=formorbit-builder&form_id=${response.data.id}`);
         }).fail(function (xhr) {
             const message = xhr.responseJSON && xhr.responseJSON.data ? xhr.responseJSON.data.message : 'Save failed.';
@@ -758,23 +799,11 @@
     $(document).on('click', '.webform-copy-shortcode', function () {
         const button = this;
         const shortcode = String($(button).data('shortcode') || '');
-        const copied = function () {
-            $(button).addClass('is-copied').attr('title', 'Copied').attr('aria-label', 'Shortcode copied');
-            window.setTimeout(function () { $(button).removeClass('is-copied').attr('title', 'Copy shortcode').attr('aria-label', 'Copy shortcode'); }, 1600);
-        };
-        if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(shortcode).then(copied);
-            return;
-        }
-        const input = document.createElement('textarea');
-        input.value = shortcode;
-        input.setAttribute('readonly', '');
-        input.style.position = 'fixed';
-        input.style.opacity = '0';
-        document.body.appendChild(input);
-        input.select();
-        try { document.execCommand('copy'); copied(); } catch (error) {}
-        input.remove();
+        copyToClipboard(button, shortcode);
+    });
+    $(document).on('click', '.webform-copy-embed', function () {
+        const target = document.getElementById(String($(this).data('copy-target') || ''));
+        copyToClipboard(this, target ? target.textContent : '');
     });
     $(document).on('click', '.webform-delete', function () {
         if (!window.confirm('Move this form to the trash?')) return;
