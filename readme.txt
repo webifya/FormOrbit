@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.6.0
+Stable tag: 2.6.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -48,6 +48,13 @@ Webform is created by Mahfuzar Rahman at Web Ninja LLC.
 5. Copy the generated `[webform id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 2.6.1 =
+* Redesigned the Forms screen as a unified, compact management dashboard.
+* Added segmented All Forms and Trash navigation with clear counts.
+* Added instant form-title and ID search.
+* Added one-click shortcode copying with visual confirmation.
+* Improved form metadata, action discoverability, entry links, status badges, dates, and responsive mobile cards.
 
 = 2.6.0 =
 * Added an All/Trash switch to the Forms screen with secure restore and permanent-delete actions.
