@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 4.1.2
+Stable tag: 4.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -47,6 +47,13 @@ FormOrbit is created by Mahfuzar Rahman. Advanced automation, payment, document,
 5. Copy the generated `[formorbit id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 4.2.0 =
+* Added nested-field builder support for true Pro Field Group and Repeater containers.
+* Added compact child-field editing with type, label, placeholder, choices, required status, and numeric controls.
+* Added drag-to-reorder controls for fields inside Pro containers.
+* Added an explicit compatibility conversion path for legacy groups and single-value repeaters.
+* Improved builder previews so groups and repeaters display their actual child-field layouts.
 
 = 4.1.2 =
 * Replaced the large editor Embed panel with a compact Embed button beside Save form.
