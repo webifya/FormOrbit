@@ -9,6 +9,8 @@ class Webform_Mailer {
         add_action('admin_menu', array($this, 'menu'), 20);
         add_action('admin_post_webform_save_mail_settings', array($this, 'save'));
         add_action('admin_post_webform_send_test_email', array($this, 'test'));
+        add_action('admin_post_formorbit_save_mail_settings', array($this, 'save'));
+        add_action('admin_post_formorbit_send_test_email', array($this, 'test'));
         add_action('phpmailer_init', array($this, 'configure'), 20);
         add_filter('wp_mail_from', array($this, 'from_email'));
         add_filter('wp_mail_from_name', array($this, 'from_name'));
@@ -54,7 +56,7 @@ class Webform_Mailer {
         <?php if ($notice) : ?><div class="notice <?php echo !empty($notice['success']) ? 'notice-success' : 'notice-error'; ?> inline"><p><?php echo esc_html($notice['message']); ?></p></div><?php endif; ?>
         <div class="webform-card webform-mail-card">
             <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-                <input type="hidden" name="action" value="webform_save_mail_settings"><?php wp_nonce_field('webform_save_mail_settings'); ?>
+                <input type="hidden" name="action" value="formorbit_save_mail_settings"><?php wp_nonce_field('webform_save_mail_settings'); ?>
                 <label class="webform-check"><input type="checkbox" name="enabled" value="1" <?php checked(!empty($settings['enabled'])); ?>> <?php esc_html_e('Enable SMTP email delivery', 'formorbit'); ?></label>
                 <p class="description"><?php esc_html_e('Leave this disabled if another SMTP or transactional-email plugin already controls WordPress email.', 'formorbit'); ?></p>
                 <div class="webform-mail-grid">
@@ -71,7 +73,7 @@ class Webform_Mailer {
                 <button class="button button-primary"><?php esc_html_e('Save email settings', 'formorbit'); ?></button>
             </form>
         </div>
-        <div class="webform-card webform-mail-card"><h2><?php esc_html_e('Send a test email', 'formorbit'); ?></h2><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="webform_send_test_email"><?php wp_nonce_field('webform_send_test_email'); ?><label><?php esc_html_e('Recipient', 'formorbit'); ?><input type="email" name="recipient" required value="<?php echo esc_attr(wp_get_current_user()->user_email); ?>"></label><button class="button"><?php esc_html_e('Send test email', 'formorbit'); ?></button></form><p class="description"><?php esc_html_e('A successful test means WordPress handed the message to the configured mail server; final inbox delivery still depends on the provider and DNS authentication.', 'formorbit'); ?></p></div>
+        <div class="webform-card webform-mail-card"><h2><?php esc_html_e('Send a test email', 'formorbit'); ?></h2><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="formorbit_send_test_email"><?php wp_nonce_field('webform_send_test_email'); ?><label><?php esc_html_e('Recipient', 'formorbit'); ?><input type="email" name="recipient" required value="<?php echo esc_attr(wp_get_current_user()->user_email); ?>"></label><button class="button"><?php esc_html_e('Send test email', 'formorbit'); ?></button></form><p class="description"><?php esc_html_e('A successful test means WordPress handed the message to the configured mail server; final inbox delivery still depends on the provider and DNS authentication.', 'formorbit'); ?></p></div>
         </div>
         <?php
     }
