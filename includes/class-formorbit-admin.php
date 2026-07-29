@@ -205,24 +205,36 @@ class Webform_Admin {
         <div class="wrap webform-wrap webform-builder-wrap">
             <div class="webform-page-head">
                 <div><h1><?php echo $form ? esc_html__('Edit form', 'formorbit') : esc_html__('Create form', 'formorbit'); ?></h1><p><?php esc_html_e('Drag fields into a stage, then select a field to configure it.', 'formorbit'); ?></p></div>
-                <div><span id="webform-save-status"></span> <button class="button button-primary button-hero" id="webform-save"><?php esc_html_e('Save form', 'formorbit'); ?></button></div>
+                <div class="webform-editor-actions">
+                    <span id="webform-save-status"></span>
+                    <button type="button" class="button webform-embed-trigger" id="webform-open-embed" aria-haspopup="dialog" aria-controls="webform-embed-panel"<?php echo $form_id ? '' : ' hidden'; ?>><span class="dashicons dashicons-editor-code" aria-hidden="true"></span><?php esc_html_e('Embed', 'formorbit'); ?></button>
+                    <button type="button" class="button button-primary button-hero" id="webform-save"><?php esc_html_e('Save form', 'formorbit'); ?></button>
+                </div>
             </div>
             <input type="hidden" id="webform-id" value="<?php echo esc_attr($form_id); ?>">
             <input type="hidden" id="webform-schema" value="<?php echo esc_attr(wp_json_encode($schema ? $schema : array())); ?>">
             <input type="hidden" id="webform-settings" value="<?php echo esc_attr(wp_json_encode($settings ? $settings : array())); ?>">
-            <section id="webform-embed-panel" class="webform-editor-embed"<?php echo $form_id ? '' : ' hidden'; ?>>
-                <div class="webform-editor-embed-head"><span class="dashicons dashicons-editor-code" aria-hidden="true"></span><div><strong><?php esc_html_e('Embed this form', 'formorbit'); ?></strong><small><?php esc_html_e('Copy the format that matches where you are adding the form.', 'formorbit'); ?></small></div></div>
-                <div class="webform-editor-embed-options">
-                    <div class="webform-editor-embed-option">
-                        <div><strong><?php esc_html_e('WordPress shortcode', 'formorbit'); ?></strong><small><?php esc_html_e('Use in posts, pages, widgets, and shortcode blocks.', 'formorbit'); ?></small></div>
-                        <code id="webform-editor-shortcode"><?php echo esc_html($shortcode); ?></code>
-                        <button type="button" class="button webform-copy-embed" data-copy-target="webform-editor-shortcode"><span class="dashicons dashicons-admin-page" aria-hidden="true"></span><span class="webform-copy-label"><?php esc_html_e('Copy', 'formorbit'); ?></span></button>
+            <section id="webform-embed-panel" class="webform-editor-embed-modal" hidden aria-hidden="true">
+                <button type="button" class="webform-editor-embed-backdrop" aria-label="<?php esc_attr_e('Close embed options', 'formorbit'); ?>"></button>
+                <div class="webform-editor-embed-dialog" role="dialog" aria-modal="true" aria-labelledby="webform-embed-title" aria-describedby="webform-embed-description">
+                    <header class="webform-editor-embed-head">
+                        <div class="webform-editor-embed-icon"><span class="dashicons dashicons-editor-code" aria-hidden="true"></span></div>
+                        <div><h2 id="webform-embed-title"><?php esc_html_e('Embed this form', 'formorbit'); ?></h2><p id="webform-embed-description"><?php esc_html_e('Copy the format that matches where you are adding the form.', 'formorbit'); ?></p></div>
+                        <button type="button" class="webform-editor-embed-close" aria-label="<?php esc_attr_e('Close embed options', 'formorbit'); ?>">×</button>
+                    </header>
+                    <div class="webform-editor-embed-options">
+                        <div class="webform-editor-embed-option">
+                            <div><strong><?php esc_html_e('WordPress shortcode', 'formorbit'); ?></strong><small><?php esc_html_e('For posts, pages, widgets, and Shortcode blocks.', 'formorbit'); ?></small></div>
+                            <code id="webform-editor-shortcode"><?php echo esc_html($shortcode); ?></code>
+                            <button type="button" class="button button-primary webform-copy-embed" data-copy-target="webform-editor-shortcode"><span class="dashicons dashicons-admin-page" aria-hidden="true"></span><span class="webform-copy-label"><?php esc_html_e('Copy', 'formorbit'); ?></span></button>
+                        </div>
+                        <div class="webform-editor-embed-option">
+                            <div><strong><?php esc_html_e('PHP template code', 'formorbit'); ?></strong><small><?php esc_html_e('For a trusted theme or plugin PHP template.', 'formorbit'); ?></small></div>
+                            <code id="webform-editor-php"><?php echo esc_html($php_embed); ?></code>
+                            <button type="button" class="button webform-copy-embed" data-copy-target="webform-editor-php"><span class="dashicons dashicons-admin-page" aria-hidden="true"></span><span class="webform-copy-label"><?php esc_html_e('Copy', 'formorbit'); ?></span></button>
+                        </div>
                     </div>
-                    <div class="webform-editor-embed-option">
-                        <div><strong><?php esc_html_e('PHP template code', 'formorbit'); ?></strong><small><?php esc_html_e('Use only inside a trusted theme or plugin PHP template.', 'formorbit'); ?></small></div>
-                        <code id="webform-editor-php"><?php echo esc_html($php_embed); ?></code>
-                        <button type="button" class="button webform-copy-embed" data-copy-target="webform-editor-php"><span class="dashicons dashicons-admin-page" aria-hidden="true"></span><span class="webform-copy-label"><?php esc_html_e('Copy', 'formorbit'); ?></span></button>
-                    </div>
+                    <footer class="webform-editor-embed-footer"><span class="dashicons dashicons-info-outline" aria-hidden="true"></span><?php esc_html_e('Save the form before copying to ensure the embed code uses the latest form ID.', 'formorbit'); ?></footer>
                 </div>
             </section>
             <div class="webform-name-row">
