@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.7.0
+Stable tag: 2.7.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -48,6 +48,12 @@ Webform is created by Mahfuzar Rahman at Web Ninja LLC.
 5. Copy the generated `[webform id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 2.7.1 =
+* Added past-only, future-only, unrestricted, and custom ranges for Date fields.
+* Added server-side date range validation using the WordPress site date.
+* Added adjustable visible rows for Long Text fields with live builder previews.
+* Added shared support for the expanded Pro field-icon gallery.
 
 = 2.7.0 =
 * Added a dedicated Name field with responsive first-name and last-name inputs.
