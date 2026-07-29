@@ -209,7 +209,7 @@ class Webform_Public {
         <div class="webform-field webform-field-<?php echo esc_attr($field['type'] . ' ' . $field_class); ?>"<?php echo $condition_attr; ?>>
             <label for="<?php echo esc_attr($id); ?>"><?php echo $label_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></label>
             <?php if ($field['type'] === 'textarea') : ?>
-                <textarea id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" maxlength="10000" aria-describedby="<?php echo esc_attr($describedby); ?>" placeholder="<?php echo esc_attr($field['placeholder']); ?>"<?php echo $required; ?>></textarea>
+                <textarea id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" rows="<?php echo esc_attr(min(30, max(2, absint($field['rows'] ?? 5)))); ?>" maxlength="10000" aria-describedby="<?php echo esc_attr($describedby); ?>" placeholder="<?php echo esc_attr($field['placeholder']); ?>"<?php echo $required; ?>></textarea>
             <?php elseif ($field['type'] === 'select') : ?>
                 <select id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $required; ?>><option value=""><?php esc_html_e('Select an option', 'webform'); ?></option><?php foreach ($field['options'] as $option) : ?><option value="<?php echo esc_attr($option); ?>"><?php echo esc_html($option); ?></option><?php endforeach; ?></select>
             <?php elseif ($field['type'] === 'file') : ?>
@@ -219,7 +219,8 @@ class Webform_Public {
                 <input type="range" id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" min="<?php echo esc_attr($field['min']); ?>" max="<?php echo esc_attr($field['max']); ?>" step="<?php echo esc_attr($field['step']); ?>" value="<?php echo esc_attr($field['min']); ?>"<?php echo $required; ?>><output class="webform-slider-value"><?php echo esc_html($field['min']); ?></output>
             <?php else : ?>
                 <?php $type = in_array($field['type'], array('email', 'number', 'date', 'time', 'url'), true) ? $field['type'] : ($field['type'] === 'phone' ? 'tel' : 'text'); ?>
-                <input type="<?php echo esc_attr($type); ?>" id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" <?php echo in_array($type, array('text', 'email', 'tel'), true) ? 'maxlength="1000"' : ''; ?> aria-describedby="<?php echo esc_attr($describedby); ?>" placeholder="<?php echo esc_attr($field['placeholder']); ?>"<?php echo $required; ?>>
+                <?php $date_bounds = $type === 'date' ? $this->date_bounds($field) : array('', ''); ?>
+                <input type="<?php echo esc_attr($type); ?>" id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" <?php echo in_array($type, array('text', 'email', 'tel'), true) ? 'maxlength="1000"' : ''; ?><?php if ($date_bounds[0]) : ?> min="<?php echo esc_attr($date_bounds[0]); ?>"<?php endif; ?><?php if ($date_bounds[1]) : ?> max="<?php echo esc_attr($date_bounds[1]); ?>"<?php endif; ?> aria-describedby="<?php echo esc_attr($describedby); ?>" placeholder="<?php echo esc_attr($field['placeholder']); ?>"<?php echo $required; ?>>
             <?php endif; ?>
             <span class="webform-error" id="<?php echo esc_attr($describedby); ?>"></span>
         </div>
@@ -278,6 +279,7 @@ class Webform_Public {
                     $value = trim($first_name . ' ' . $last_name);
                 }
                 $value = is_array($value) ? array_slice(array_map('sanitize_text_field', $value), 0, 100) : substr(sanitize_textarea_field($value), 0, 10000);
+                $date_error = $field['type'] === 'date' ? $this->date_validation_error($field, $value) : '';
                 if ($name_incomplete) {
                     $errors[$field['id']] = sprintf(__('Enter a complete %s.', 'webform'), $field['label']);
                 } elseif (!empty($field['required']) && (empty($value) && $value !== '0')) {
@@ -286,6 +288,8 @@ class Webform_Public {
                     $errors[$field['id']] = __('Enter a valid email address.', 'webform');
                 } elseif ($field['type'] === 'url' && $value && !wp_http_validate_url($value)) {
                     $errors[$field['id']] = __('Enter a valid URL.', 'webform');
+                } elseif ($date_error) {
+                    $errors[$field['id']] = $date_error;
                 } elseif (in_array($field['type'], array('select', 'radio', 'poll', 'quiz'), true) && $value && !in_array($value, $field['options'], true)) {
                     $errors[$field['id']] = __('Select a valid option.', 'webform');
                 } elseif ($field['type'] === 'checkbox' && array_diff((array) $value, $field['options'])) {
@@ -391,6 +395,27 @@ class Webform_Public {
     private function field_type_enabled($field) {
         $pro_types = array('calculation', 'field_group', 'signature', 'rich_text', 'address', 'repeater', 'appointment', 'nps', 'currency', 'product', 'price');
         return !in_array($field['type'] ?? '', $pro_types, true) || (bool) apply_filters('webform_pro_field_enabled', false, $field);
+    }
+
+    private function date_bounds($field) {
+        $rule = in_array($field['date_rule'] ?? 'any', array('any', 'future', 'past', 'custom'), true) ? $field['date_rule'] : 'any';
+        $today = current_time('Y-m-d');
+        if ($rule === 'future') return array($today, '');
+        if ($rule === 'past') return array('', $today);
+        if ($rule !== 'custom') return array('', '');
+        $minimum = preg_match('/^\d{4}-\d{2}-\d{2}$/', $field['date_min'] ?? '') ? $field['date_min'] : '';
+        $maximum = preg_match('/^\d{4}-\d{2}-\d{2}$/', $field['date_max'] ?? '') ? $field['date_max'] : '';
+        return array($minimum, $maximum);
+    }
+
+    private function date_validation_error($field, $value) {
+        if ($value === '') return '';
+        $date = DateTime::createFromFormat('!Y-m-d', $value);
+        if (!$date || $date->format('Y-m-d') !== $value) return __('Enter a valid date.', 'webform');
+        list($minimum, $maximum) = $this->date_bounds($field);
+        if ($minimum && $value < $minimum) return sprintf(__('Choose a date on or after %s.', 'webform'), $minimum);
+        if ($maximum && $value > $maximum) return sprintf(__('Choose a date on or before %s.', 'webform'), $maximum);
+        return '';
     }
 
     private function condition_passes($condition, $posted) {
