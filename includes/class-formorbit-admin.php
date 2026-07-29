@@ -40,12 +40,12 @@ class Webform_Admin {
         );
         add_submenu_page('formorbit', __('All Forms', 'formorbit'), __('All Forms', 'formorbit'), 'manage_options', 'formorbit', array($this, 'forms_page'), 0);
         add_submenu_page('formorbit', __('Add New', 'formorbit'), __('Add New', 'formorbit'), 'manage_options', 'formorbit-builder', array($this, 'builder_page'), 1);
+        add_submenu_page('formorbit', __('Entries', 'formorbit'), __('Entries', 'formorbit'), 'manage_options', 'formorbit-entries', array($this, 'entries_page'), 2);
         add_submenu_page('formorbit', __('Form Templates', 'formorbit'), __('Templates', 'formorbit'), 'manage_options', 'formorbit-templates', array($this, 'templates_page'), 3);
-        add_submenu_page('formorbit', __('Entries', 'formorbit'), __('Entries', 'formorbit'), 'manage_options', 'formorbit-entries', array($this, 'entries_page'), 4);
-        add_submenu_page('formorbit', __('Import and Export Forms', 'formorbit'), __('Import / Export', 'formorbit'), 'manage_options', 'formorbit-import', array($this, 'import_page'), 5);
-        add_submenu_page('formorbit', __('FormOrbit Settings', 'formorbit'), __('Settings', 'formorbit'), 'manage_options', 'formorbit-settings', array($this, 'settings_page'), 6);
+        add_submenu_page('formorbit', __('FormOrbit Tools', 'formorbit'), __('Tools', 'formorbit'), 'manage_options', 'formorbit-tools', array($this, 'tools_page'), 6);
+        add_submenu_page('formorbit', __('FormOrbit Settings', 'formorbit'), __('Settings', 'formorbit'), 'manage_options', 'formorbit-settings', array($this, 'settings_page'), 7);
         if (!$this->is_pro_active()) {
-            add_submenu_page('formorbit', __('FormOrbit Pro', 'formorbit'), __('Upgrade to Pro', 'formorbit'), 'manage_options', 'formorbit-pro', array($this, 'pro_page'), 7);
+            add_submenu_page('formorbit', __('FormOrbit Pro', 'formorbit'), __('Upgrade to Pro', 'formorbit'), 'manage_options', 'formorbit-pro', array($this, 'pro_page'), 8);
         }
     }
 
@@ -58,7 +58,8 @@ class Webform_Admin {
             'webform-builder' => 'formorbit-builder',
             'webform-templates' => 'formorbit-templates',
             'webform-entries' => 'formorbit-entries',
-            'webform-import' => 'formorbit-import',
+            'webform-import' => 'formorbit-tools',
+            'formorbit-import' => 'formorbit-tools',
             'webform-settings' => 'formorbit-settings',
             'webform-pro' => 'formorbit-pro',
             'webform-email-delivery' => 'formorbit-email-delivery',
@@ -689,12 +690,17 @@ class Webform_Admin {
         exit;
     }
 
-    public function import_page() {
+    public function tools_page() {
         if (!current_user_can('manage_options')) return;
+        $active_tab = isset($_GET['tab']) && sanitize_key(wp_unslash($_GET['tab'])) === 'resources' ? 'resources' : 'transfer';
         $forms = get_posts(array('post_type' => 'webform_form', 'post_status' => array('publish', 'draft'), 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC'));
         ?>
-        <div class="wrap webform-wrap"><div class="webform-page-head"><div><h1><?php esc_html_e('Import and Export Forms', 'formorbit'); ?></h1><p><?php esc_html_e('Move forms between websites or migrate from another form builder.', 'formorbit'); ?></p></div></div>
-        <div class="webform-transfer-grid">
+        <div class="wrap webform-wrap webform-tools-wrap"><div class="webform-page-head"><div><h1><?php esc_html_e('FormOrbit Tools', 'formorbit'); ?></h1><p><?php esc_html_e('Move forms, access product resources, and get help in one place.', 'formorbit'); ?></p></div></div>
+        <nav class="nav-tab-wrapper webform-tools-tabs" aria-label="<?php esc_attr_e('FormOrbit tools', 'formorbit'); ?>">
+            <a class="nav-tab <?php echo esc_attr($active_tab === 'transfer' ? 'nav-tab-active' : ''); ?>" href="<?php echo esc_url(admin_url('admin.php?page=formorbit-tools')); ?>"><span class="dashicons dashicons-migrate" aria-hidden="true"></span><?php esc_html_e('Import / Export', 'formorbit'); ?></a>
+            <a class="nav-tab <?php echo esc_attr($active_tab === 'resources' ? 'nav-tab-active' : ''); ?>" href="<?php echo esc_url(admin_url('admin.php?page=formorbit-tools&tab=resources')); ?>"><span class="dashicons dashicons-admin-links" aria-hidden="true"></span><?php esc_html_e('Resources', 'formorbit'); ?></a>
+        </nav>
+        <?php if ($active_tab === 'transfer') : ?><div class="webform-transfer-grid">
             <form class="webform-settings-card" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" enctype="multipart/form-data"><input type="hidden" name="action" value="formorbit_import"><?php wp_nonce_field('webform_import'); ?>
                 <h2><?php esc_html_e('Import a form', 'formorbit'); ?></h2>
                 <label><?php esc_html_e('Source', 'formorbit'); ?><select name="source"><option value="auto"><?php esc_html_e('Detect automatically', 'formorbit'); ?></option><option value="webform">FormOrbit</option><option value="wpforms">WPForms</option><option value="gravity">Gravity Forms</option><option value="fluent">Fluent Forms</option><option value="formidable">Formidable Forms</option><option value="forminator">Forminator</option><option value="cf7">Contact Form 7</option></select></label>
@@ -704,8 +710,18 @@ class Webform_Admin {
                 <button class="button button-primary"><?php esc_html_e('Import and edit', 'formorbit'); ?></button>
             </form>
             <div><?php do_action('webform_import_export_tools', $forms); ?><?php if (!apply_filters('webform_can_export_forms', false)) : ?><div class="webform-settings-card webform-export-pro-card"><span class="webform-pro-badge"><?php esc_html_e('PRO', 'formorbit'); ?></span><h2><?php esc_html_e('Export forms', 'formorbit'); ?></h2><p><?php esc_html_e('Export complete form structures and settings as JSON, CSV, or XML for backups and migrations.', 'formorbit'); ?></p><ul><li><?php esc_html_e('Portable fields, stages, and settings', 'formorbit'); ?></li><li><?php esc_html_e('JSON, CSV, and XML downloads', 'formorbit'); ?></li><li><?php esc_html_e('Import files on another FormOrbit site', 'formorbit'); ?></li></ul><a class="button button-primary" href="<?php echo esc_url($this->upgrade_url('form-export')); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Unlock form export', 'formorbit'); ?></a></div><?php endif; ?></div>
-        </div></div>
+        </div><?php else : ?>
+            <div class="webform-tools-resource-grid">
+                <article class="webform-tool-resource-card"><span class="dashicons dashicons-backup" aria-hidden="true"></span><div><h2><?php esc_html_e('Product changelog', 'formorbit'); ?></h2><p><?php esc_html_e('Review new features, improvements, compatibility notes, and fixes in every FormOrbit release.', 'formorbit'); ?></p><a class="button button-primary" href="<?php echo esc_url('https://www.webninjallc.com/plugins/formorbit/changelog.html'); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('View changelog', 'formorbit'); ?><span class="dashicons dashicons-external" aria-hidden="true"></span></a></div></article>
+                <article class="webform-tool-resource-card"><span class="dashicons dashicons-welcome-learn-more" aria-hidden="true"></span><div><h2><?php esc_html_e('FormOrbit product page', 'formorbit'); ?></h2><p><?php esc_html_e('Explore FormOrbit Pro features, integrations, licensing plans, and product information.', 'formorbit'); ?></p><a class="button" href="<?php echo esc_url('https://www.webninjallc.com/plugins/formorbit/'); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Visit FormOrbit', 'formorbit'); ?><span class="dashicons dashicons-external" aria-hidden="true"></span></a></div></article>
+                <?php do_action('formorbit_tools_resources'); ?>
+            </div>
+        <?php endif; ?></div>
         <?php
+    }
+
+    public function import_page() {
+        $this->tools_page();
     }
 
     public function import_form() {
