@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 3.2.0
+Stable tag: 4.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -47,6 +47,11 @@ FormOrbit is created by Mahfuzar Rahman. Advanced automation, payment, document,
 5. Copy the generated `[formorbit id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 4.0.0 =
+* Completed the FormOrbit filename transition by removing the legacy webform.php entry file.
+* Standardized the distributable package on formorbit.php and FormOrbit-branded include filenames.
+* Established a clean major-version baseline for future WordPress.org and direct updates.
 
 = 3.2.0 =
 * Renamed the primary plugin entry file to formorbit.php.
@@ -118,6 +123,11 @@ FormOrbit is created by Mahfuzar Rahman. Advanced automation, payment, document,
 * Fixed empty builder alignment on blank and failed-import forms.
 * Improved Formidable XML field discovery and normalized JSON or serialized choice data into individual options.
 * Prevented imports without a usable form structure from creating empty forms.
+
+== Upgrade Notice ==
+
+= 4.0.0 =
+This release removes the historical webform.php compatibility loader. Sites upgrading directly from a version older than 3.2.0 may need to reactivate FormOrbit once after installing the update.
 * Moved Email Delivery directly below Add New for faster access.
 * Added the safe label markup extension used by licensed field icons.
 
