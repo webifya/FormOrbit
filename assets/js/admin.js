@@ -77,6 +77,21 @@
     let dirty = false;
     let richTextEditorFieldId = null;
     const proFieldTypes = WebformAdmin.proFieldTypes || [];
+    const containerChildTypes = {
+        text: 'Text',
+        email: 'Email',
+        textarea: 'Long text',
+        select: 'Dropdown',
+        radio: 'Radio',
+        checkbox: 'Checkbox',
+        number: 'Number',
+        date: 'Date',
+        time: 'Time',
+        phone: 'Phone',
+        url: 'Website',
+        consent: 'Consent',
+        hidden: 'Hidden'
+    };
 
     function isLockedProField(field) {
         return !WebformAdmin.proActive && proFieldTypes.includes(field.type);
@@ -119,6 +134,89 @@
 
     function escapeHtml(value) {
         return $('<div>').text(value == null ? '' : value).html();
+    }
+
+    function createContainerChild(type, label) {
+        const childType = containerChildTypes[type] ? type : 'text';
+        const choices = ['select', 'radio', 'checkbox'].includes(childType);
+        return {
+            id: uid('child'),
+            type: childType,
+            label: label || containerChildTypes[childType],
+            placeholder: '',
+            required: false,
+            options: choices ? ['Option 1', 'Option 2'] : [],
+            rows: 4,
+            min: '',
+            max: '',
+            step: '1',
+            default_value: ''
+        };
+    }
+
+    function defaultContainerChildren(type) {
+        return type === 'repeater'
+            ? [createContainerChild('text', 'Item'), createContainerChild('number', 'Quantity')]
+            : [createContainerChild('text', 'First name'), createContainerChild('email', 'Email')];
+    }
+
+    function containerChildren(field) {
+        return Array.isArray(field.children) ? field.children : [];
+    }
+
+    function containerChildPreview(child) {
+        const label = escapeHtml(child.label || containerChildTypes[child.type] || 'Field');
+        const required = child.required ? '<em>*</em>' : '';
+        let control = '<i class="webform-container-preview-input"></i>';
+        if (child.type === 'textarea') control = '<i class="webform-container-preview-input is-textarea"></i>';
+        if (child.type === 'select') control = '<i class="webform-container-preview-input is-select"></i>';
+        if (['radio', 'checkbox', 'consent'].includes(child.type)) control = `<i class="webform-container-preview-options">${(child.options || ['Option 1', 'Option 2']).slice(0, 2).map(option => `<span>○ ${escapeHtml(option)}</span>`).join('') || '<span>□ Consent</span>'}</i>`;
+        if (child.type === 'hidden') control = '<i class="webform-container-preview-hidden">Hidden value</i>';
+        return `<span class="webform-container-preview-child"><small>${label} ${required}</small>${control}</span>`;
+    }
+
+    function containerPreview(field) {
+        const children = containerChildren(field);
+        if (!children.length) {
+            if (field.type === 'field_group') {
+                return `<div class="webform-preview-group is-legacy" style="--preview-columns:${Math.max(1, Math.min(4, Number(field.group_columns || 2)))}">${Array.from({ length: Math.max(1, Math.min(6, Number(field.group_count || 2))) }, (_, index) => `<span><small>Legacy grouped field ${index + 1}</small><i></i></span>`).join('')}</div>`;
+            }
+            return '<div class="webform-preview-repeater is-legacy"><div><i></i><button type="button">×</button></div><small>Legacy single-value row</small></div>';
+        }
+        const columns = field.type === 'field_group' ? Math.max(1, Math.min(4, Number(field.group_columns || 2))) : Math.min(2, Math.max(1, children.length));
+        return `<div class="webform-preview-container webform-preview-container-${escapeHtml(field.type)}" style="--preview-columns:${columns}">
+            ${children.map(containerChildPreview).join('')}
+            ${field.type === 'repeater' ? `<span class="webform-container-preview-add">＋ ${escapeHtml(field.repeater_button || 'Add another row')}</span>` : ''}
+        </div>`;
+    }
+
+    function containerChildrenSettings(field) {
+        const children = containerChildren(field);
+        const legacy = !children.length;
+        const typeOptions = Object.entries(containerChildTypes).map(([value, label]) => `<option value="${value}">${label}</option>`);
+        return `<div class="webform-container-field-settings">
+            <div class="webform-container-field-heading"><div><h3>${field.type === 'repeater' ? 'Fields in each repeated row' : 'Fields inside this group'}</h3><p>Each child field is stored inside this ${field.type === 'repeater' ? 'repeating row' : 'group'}.</p></div>${children.length < 12 ? '<button type="button" class="button webform-add-container-child"><span class="dashicons dashicons-plus-alt2"></span>Add field</button>' : ''}</div>
+            ${legacy ? `<div class="webform-container-legacy"><strong>Legacy ${field.type === 'repeater' ? 'single-field repeater' : 'field group'}</strong><p>This form keeps its existing public behavior until you convert it. Conversion creates real child fields inside the container.</p><button type="button" class="button button-primary webform-convert-container">Convert to multi-field ${field.type === 'repeater' ? 'repeater' : 'group'}</button></div>` : `<div class="webform-container-children">${children.map((child, index) => {
+                const choices = ['select', 'radio', 'checkbox'].includes(child.type);
+                return `<div class="webform-container-child" data-child-index="${index}">
+                    <span class="dashicons dashicons-menu webform-container-child-drag" title="Drag to reorder"></span>
+                    <div class="webform-container-child-main">
+                        <select data-child-prop="type" aria-label="Child field type">${typeOptions.join('').replace(`value="${child.type}"`, `value="${child.type}" selected`)}</select>
+                        <input type="text" data-child-prop="label" value="${escapeHtml(child.label || '')}" aria-label="Child field label" placeholder="Field label">
+                    </div>
+                    <label class="webform-container-child-required"><input type="checkbox" data-child-prop="required" ${child.required ? 'checked' : ''}> Required</label>
+                    <button type="button" class="webform-remove-container-child" aria-label="Remove child field">×</button>
+                    <div class="webform-container-child-options">
+                        ${!['radio','checkbox','select','consent','hidden'].includes(child.type) ? `<input type="text" data-child-prop="placeholder" value="${escapeHtml(child.placeholder || '')}" placeholder="Placeholder (optional)">` : ''}
+                        ${choices ? `<textarea rows="3" data-child-prop="options" placeholder="One option per line">${escapeHtml((child.options || []).join('\n'))}</textarea>` : ''}
+                        ${child.type === 'textarea' ? `<label>Rows <input type="number" min="2" max="20" data-child-prop="rows" value="${Number(child.rows || 4)}"></label>` : ''}
+                        ${child.type === 'number' ? `<div class="webform-container-number-options"><input type="number" data-child-prop="min" value="${escapeHtml(child.min ?? '')}" placeholder="Minimum"><input type="number" data-child-prop="max" value="${escapeHtml(child.max ?? '')}" placeholder="Maximum"><input type="number" step="any" data-child-prop="step" value="${escapeHtml(child.step || '1')}" placeholder="Step"></div>` : ''}
+                        ${child.type === 'hidden' ? `<input type="text" data-child-prop="default_value" value="${escapeHtml(child.default_value || '')}" placeholder="Hidden default value">` : ''}
+                    </div>
+                </div>`;
+            }).join('')}</div>`}
+            ${children.length ? '<p class="description">Drag child fields by the handle to reorder them. Nested groups, uploads, payments, CAPTCHA, and signatures stay as top-level fields.</p>' : ''}
+        </div>`;
     }
 
     function updateEmbedPanel(formId, shortcode) {
@@ -234,12 +332,12 @@
             captcha: '<div class="webform-preview-captcha"><i class="check"></i><span>I’m not a robot</span><span class="webform-preview-recaptcha"><span class="dashicons dashicons-update"></span><small>reCAPTCHA</small></span></div>',
             heading: `<div class="webform-preview-heading">${escapeHtml(field.label || 'Section heading')}</div>`,
             calculation: `<div class="webform-preview-calculation"><strong>${Number(0).toFixed(Math.max(0, Math.min(6, Number(field.decimal_places ?? 2))))}</strong><code>${escapeHtml(field.formula || 'Formula not configured')}</code></div>`,
-            field_group: `<div class="webform-preview-group" style="--preview-columns:${Math.max(1, Math.min(4, Number(field.group_columns || 2)))}">${Array.from({ length: Math.max(1, Math.min(6, Number(field.group_count || 2))) }, (_, index) => `<span><small>Grouped field ${index + 1}</small><i></i></span>`).join('')}</div>`,
+            field_group: containerPreview(field),
             signature: '<div class="webform-preview-signature"><span>Sign here</span><svg viewBox="0 0 240 48" aria-hidden="true"><path d="M8 38c30-4 31-30 43-23 10 6-8 22-2 24 11 4 21-25 29-20 6 4-7 18 0 20 9 2 13-13 20-11 5 2 3 9 13 9 16 0 24-8 39-5"/></svg><small>Clear signature</small></div>',
             rich_text: `<div class="webform-preview-rich-text">${safeRichPreview(field.rich_content || '<h3>Agreement terms</h3><p>Add your contract or agreement content here.</p>')}</div>`,
             divider: dividerPreview(field),
             address: '<div class="webform-preview-address"><i>Street address</i><i>City</i><i>State / Province</i><i>Postal code</i><i>Country</i></div>',
-            repeater: '<div class="webform-preview-repeater"><div><i></i><button type="button">×</button></div><div><i></i><button type="button">×</button></div><small>＋ Add another</small></div>',
+            repeater: containerPreview(field),
             appointment: '<div class="webform-preview-control webform-preview-with-icon"><span>Select date and time</span><span class="dashicons dashicons-calendar-alt"></span></div>',
             nps: '<div class="webform-preview-nps"><div>' + Array.from({length: 11}, (_, index) => `<i>${index}</i>`).join('') + '</div><small><span>Not likely</span><span>Very likely</span></small></div>',
             currency: `<div class="webform-preview-control webform-preview-currency"><b>${escapeHtml(field.currency_symbol || '$')}</b><span>${placeholder || '0.00'}</span></div>`,
@@ -405,8 +503,8 @@
             ${field.type === 'date' ? `<label>Allowed dates<select data-prop="date_rule"><option value="any" ${(field.date_rule || 'any') === 'any' ? 'selected' : ''}>Any date</option><option value="future" ${field.date_rule === 'future' ? 'selected' : ''}>Today and future dates</option><option value="past" ${field.date_rule === 'past' ? 'selected' : ''}>Today and past dates</option><option value="custom" ${field.date_rule === 'custom' ? 'selected' : ''}>Custom date range</option></select></label><div class="webform-date-custom-range" ${field.date_rule === 'custom' ? '' : 'hidden'}><label>Earliest date<input type="date" data-prop="date_min" value="${escapeHtml(field.date_min || '')}"></label><label>Latest date<input type="date" data-prop="date_max" value="${escapeHtml(field.date_max || '')}"></label></div>` : ''}
             ${field.type === 'slider' ? `<label>Minimum<input type="number" data-prop="min" value="${Number(field.min ?? 0)}"></label><label>Maximum<input type="number" data-prop="max" value="${Number(field.max ?? 100)}"></label><label>Step<input type="number" min="0.01" step="0.01" data-prop="step" value="${Number(field.step || 1)}"></label>` : ''}
             ${field.type === 'calculation' ? `<label>Formula <small>Use field IDs in braces, for example {price} * {quantity}</small><input type="text" data-prop="formula" value="${escapeHtml(field.formula || '')}"></label><label>Decimal places<input type="number" min="0" max="6" data-prop="decimal_places" value="${Number(field.decimal_places ?? 2)}"></label>` : ''}
-            ${field.type === 'field_group' ? `<label>Fields to group<input type="number" min="1" max="6" data-prop="group_count" value="${Number(field.group_count || 2)}"></label><label>Columns<input type="number" min="1" max="4" data-prop="group_columns" value="${Number(field.group_columns || 2)}"></label>` : ''}
-            ${field.type === 'repeater' ? `<label>Minimum rows<input type="number" min="1" max="20" data-prop="repeater_min" value="${Number(field.repeater_min || 1)}"></label><label>Maximum rows<input type="number" min="1" max="50" data-prop="repeater_max" value="${Number(field.repeater_max || 10)}"></label><label>Add button text<input type="text" data-prop="repeater_button" value="${escapeHtml(field.repeater_button || 'Add another')}"></label>` : ''}
+            ${field.type === 'field_group' ? `${containerChildren(field).length ? '' : `<label>Legacy fields to group<input type="number" min="1" max="6" data-prop="group_count" value="${Number(field.group_count || 2)}"></label>`}<label>Columns<input type="number" min="1" max="4" data-prop="group_columns" value="${Number(field.group_columns || 2)}"></label>${containerChildrenSettings(field)}` : ''}
+            ${field.type === 'repeater' ? `<label>Minimum rows<input type="number" min="1" max="20" data-prop="repeater_min" value="${Number(field.repeater_min || 1)}"></label><label>Maximum rows<input type="number" min="1" max="50" data-prop="repeater_max" value="${Number(field.repeater_max || 10)}"></label><label>Add row button text<input type="text" data-prop="repeater_button" value="${escapeHtml(field.repeater_button || 'Add another row')}"></label>${containerChildrenSettings(field)}` : ''}
             ${field.type === 'appointment' ? `<label>Earliest date and time<input type="datetime-local" data-prop="min_date" value="${escapeHtml(field.min_date || '')}"></label><label>Latest date and time<input type="datetime-local" data-prop="max_date" value="${escapeHtml(field.max_date || '')}"></label>` : ''}
             ${field.type === 'currency' ? `<label>Currency symbol<input type="text" maxlength="5" data-prop="currency_symbol" value="${escapeHtml(field.currency_symbol || '$')}"></label><label>Minimum<input type="number" step="0.01" data-prop="min" value="${Number(field.min ?? 0)}"></label><label>Maximum<input type="number" step="0.01" data-prop="max" value="${Number(field.max ?? 999999999)}"></label>` : ''}
             ${field.type === 'product' ? `<p class="description">Enter each product as <code>Product name|19.99</code>.</p>` : ''}
@@ -444,6 +542,21 @@
             </div>` : '<div class="webform-field-style-locked">🔒 Width, colors, corners, and custom classes are available in Pro.</div>'}` : ''}
         `);
         if (field.type === 'rich_text') window.setTimeout(function () { initializeRichTextEditor(field); }, 0);
+        if (['field_group', 'repeater'].includes(field.type) && containerChildren(field).length) {
+            $('.webform-container-children').sortable({
+                items: '.webform-container-child',
+                handle: '.webform-container-child-drag',
+                axis: 'y',
+                placeholder: 'webform-container-child-placeholder',
+                update: function () {
+                    const current = containerChildren(field);
+                    const order = $(this).children('.webform-container-child').map(function () { return Number($(this).data('child-index')); }).get();
+                    field.children = order.map(index => current[index]).filter(Boolean);
+                    dirty = true;
+                    render();
+                }
+            });
+        }
     }
 
     function addField(type) {
@@ -456,7 +569,7 @@
             return;
         }
         const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz', 'product'].includes(type);
-        const field = { id: uid('field'), type, label: defaults[type] || 'Field', icon: '', placeholder: '', hide_label: false, required: ['consent','captcha','signature'].includes(type), options: choices ? (type === 'product' ? ['Standard|19.99', 'Premium|39.99'] : ['Option 1', 'Option 2']) : [], allowed_extensions: 'jpg,jpeg,png,pdf,doc,docx', max_size: 5, correct_answer: '', points: 1, default_value: '', html: '<p>Add your content here.</p>', rich_content: type === 'rich_text' ? '<h3>Agreement terms</h3><p>Describe the terms, responsibilities, and conditions of this agreement.</p><p><strong>Acceptance:</strong> Add a Consent field and E-signature below this agreement.</p>' : '', rows: 5, date_rule: 'any', date_min: '', date_max: '', min: 0, max: type === 'currency' ? 999999999 : 100, step: 1, formula: '', decimal_places: 2, group_count: 2, group_columns: 2, repeater_min: 1, repeater_max: 10, repeater_button: 'Add another', currency_symbol: '$', price_amount: 0, currency_code: 'USD', min_date: '', max_date: '', divider_show_label: false, divider_label_position: 'above', divider_style: 'solid', divider_alignment: 'center', divider_width: 100, divider_thickness: 1, divider_color: '#dfe1e6', divider_margin_top: 10, divider_margin_bottom: 10, divider_padding_top: 0, divider_padding_bottom: 0, style: { width: type === 'divider' ? '100' : (WebformAdmin.proActive ? 'auto' : '100') }, condition: { enabled: false, field_id: '', operator: 'equals', value: '' } };
+        const field = { id: uid('field'), type, label: defaults[type] || 'Field', icon: '', placeholder: '', hide_label: false, required: ['consent','captcha','signature'].includes(type), options: choices ? (type === 'product' ? ['Standard|19.99', 'Premium|39.99'] : ['Option 1', 'Option 2']) : [], children: ['field_group', 'repeater'].includes(type) ? defaultContainerChildren(type) : [], allowed_extensions: 'jpg,jpeg,png,pdf,doc,docx', max_size: 5, correct_answer: '', points: 1, default_value: '', html: '<p>Add your content here.</p>', rich_content: type === 'rich_text' ? '<h3>Agreement terms</h3><p>Describe the terms, responsibilities, and conditions of this agreement.</p><p><strong>Acceptance:</strong> Add a Consent field and E-signature below this agreement.</p>' : '', rows: 5, date_rule: 'any', date_min: '', date_max: '', min: 0, max: type === 'currency' ? 999999999 : 100, step: 1, formula: '', decimal_places: 2, group_count: 2, group_columns: 2, repeater_min: 1, repeater_max: 10, repeater_button: 'Add another row', currency_symbol: '$', price_amount: 0, currency_code: 'USD', min_date: '', max_date: '', divider_show_label: false, divider_label_position: 'above', divider_style: 'solid', divider_alignment: 'center', divider_width: 100, divider_thickness: 1, divider_color: '#dfe1e6', divider_margin_top: 10, divider_margin_bottom: 10, divider_padding_top: 0, divider_padding_bottom: 0, style: { width: type === 'divider' ? '100' : (WebformAdmin.proActive ? 'auto' : '100') }, condition: { enabled: false, field_id: '', operator: 'equals', value: '' } };
         schema[activeStage].fields.push(field);
         selectedId = field.id;
         dirty = true;
@@ -536,6 +649,7 @@
         if (!field || !WebformAdmin.proActive) return;
         const duplicate = JSON.parse(JSON.stringify(field));
         duplicate.id = uid('field');
+        if (Array.isArray(duplicate.children)) duplicate.children.forEach(child => { child.id = uid('child'); });
         duplicate.label = `${field.label || defaults[field.type] || 'Field'} copy`;
         duplicate.row_start = false;
         const index = schema[activeStage].fields.indexOf(field);
@@ -556,6 +670,75 @@
             const input = document.querySelector(`#webform-field-settings [data-prop="${prop}"]`);
             if (input && caret != null) input.setSelectionRange(caret, caret);
         }
+    });
+    $(document).on('click', '.webform-add-container-child', function () {
+        const field = selectedField();
+        if (!field || !['field_group', 'repeater'].includes(field.type)) return;
+        field.children = containerChildren(field);
+        if (field.children.length >= 12) return;
+        field.children.push(createContainerChild('text'));
+        dirty = true;
+        render();
+    });
+    $(document).on('click', '.webform-remove-container-child', function () {
+        const field = selectedField();
+        if (!field) return;
+        const index = Number($(this).closest('.webform-container-child').data('child-index'));
+        field.children = containerChildren(field).filter((child, childIndex) => childIndex !== index);
+        dirty = true;
+        render();
+    });
+    $(document).on('click', '.webform-convert-container', function () {
+        const field = selectedField();
+        if (!field) return;
+        if (field.type === 'field_group') {
+            const fields = schema[activeStage].fields || [];
+            const parentIndex = fields.indexOf(field);
+            const supported = [];
+            const removeIndexes = [];
+            for (let index = parentIndex + 1; index < fields.length && supported.length < Number(field.group_count || 2); index++) {
+                const source = fields[index];
+                if (!containerChildTypes[source.type]) continue;
+                supported.push({
+                    id: source.id || uid('child'),
+                    type: source.type,
+                    label: source.label || containerChildTypes[source.type],
+                    placeholder: source.placeholder || '',
+                    required: !!source.required,
+                    options: Array.isArray(source.options) ? source.options.slice() : [],
+                    rows: Number(source.rows || 4),
+                    min: source.min ?? '',
+                    max: source.max ?? '',
+                    step: source.step ?? '1',
+                    default_value: source.default_value || ''
+                });
+                removeIndexes.push(index);
+            }
+            field.children = supported.length ? supported : defaultContainerChildren(field.type);
+            schema[activeStage].fields = fields.filter((item, index) => !removeIndexes.includes(index));
+        } else {
+            field.children = [createContainerChild('text', field.label ? `${field.label} item` : 'Item')];
+        }
+        dirty = true;
+        render();
+    });
+    $(document).on('input change', '#webform-field-settings [data-child-prop]', function () {
+        const field = selectedField();
+        if (!field) return;
+        const index = Number($(this).closest('.webform-container-child').data('child-index'));
+        const child = containerChildren(field)[index];
+        if (!child) return;
+        const prop = $(this).data('child-prop');
+        if (prop === 'required') child[prop] = $(this).is(':checked');
+        else if (prop === 'options') child[prop] = $(this).val().split('\n').map(value => value.trim()).filter(Boolean);
+        else child[prop] = $(this).val();
+        if (prop === 'type' && ['select', 'radio', 'checkbox'].includes(child.type) && (!Array.isArray(child.options) || !child.options.length)) child.options = ['Option 1', 'Option 2'];
+        dirty = true;
+        if (prop === 'type') {
+            render();
+            return;
+        }
+        $('#webform-canvas').html(schema[activeStage].fields.map(fieldCard).join(''));
     });
     $(document).on('change', '#webform-field-settings [data-prop="date_rule"]', function () {
         $('.webform-date-custom-range').prop('hidden', $(this).val() !== 'custom');
