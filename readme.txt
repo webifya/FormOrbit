@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 3.0.1
+Stable tag: 3.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -47,6 +47,10 @@ FormOrbit is created by Mahfuzar Rahman. Advanced automation, payment, document,
 5. Copy the generated `[webform id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 3.0.2 =
+* Connected every Free upgrade action to the dedicated FormOrbit Pro marketing page.
+* Updated product branding and campaign tracking for the new FormOrbit purchase journey.
 
 = 3.0.1 =
 * Renamed the plugin to FormOrbit with the unique `formorbit` slug and text domain.

@@ -955,9 +955,9 @@ class Webform_Admin {
             __('Automatic updates with every paid license', 'formorbit'),
         );
         $plans = array(
-            array('name' => __('Pro Annual', 'formorbit'), 'price' => '$19.99', 'term' => __('per year', 'formorbit'), 'sites' => __('1 website', 'formorbit'), 'url' => $this->purchase_url('single', 'plans-single'), 'featured' => false),
-            array('name' => __('Pro Bundle', 'formorbit'), 'price' => '$99.99', 'term' => __('per year', 'formorbit'), 'sites' => __('Up to 10 websites', 'formorbit'), 'url' => $this->purchase_url('bundle', 'plans-bundle'), 'featured' => true),
-            array('name' => __('Pro Lifetime', 'formorbit'), 'price' => '$249.99', 'term' => __('one-time payment', 'formorbit'), 'sites' => __('1 website · lifetime license', 'formorbit'), 'url' => $this->purchase_url('lifetime', 'plans-lifetime'), 'featured' => false),
+            array('name' => __('Pro Annual', 'formorbit'), 'price' => '$19.99', 'term' => __('per year', 'formorbit'), 'sites' => __('1 website', 'formorbit'), 'url' => $this->upgrade_url('plans-single'), 'featured' => false),
+            array('name' => __('Pro Bundle', 'formorbit'), 'price' => '$99.99', 'term' => __('per year', 'formorbit'), 'sites' => __('Up to 10 websites', 'formorbit'), 'url' => $this->upgrade_url('plans-bundle'), 'featured' => true),
+            array('name' => __('Pro Lifetime', 'formorbit'), 'price' => '$249.99', 'term' => __('one-time payment', 'formorbit'), 'sites' => __('1 website · lifetime license', 'formorbit'), 'url' => $this->upgrade_url('plans-lifetime'), 'featured' => false),
         );
         ?>
         <div class="wrap webform-wrap webform-pro-page">
@@ -977,16 +977,15 @@ class Webform_Admin {
     }
 
     private function upgrade_url($source) {
-        return apply_filters('webform_upgrade_url', $this->purchase_url('single', $source));
-    }
-
-    private function purchase_url($plan, $source) {
-        $urls = array(
-            'single' => 'https://www.webninjallc.com/product/webform-pro/',
-            'bundle' => 'https://www.webninjallc.com/product/webform-pro-bundle/',
-            'lifetime' => 'https://www.webninjallc.com/product/webform-lifetime/',
+        $url = add_query_arg(
+            array(
+                'utm_source' => 'formorbit-plugin',
+                'utm_medium' => 'upgrade',
+                'utm_campaign' => sanitize_key($source),
+            ),
+            'https://www.webninjallc.com/formorbit/'
         );
-        return add_query_arg(array('utm_source' => 'webform-plugin', 'utm_medium' => 'upgrade', 'utm_campaign' => sanitize_key($source)), $urls[$plan] ?? $urls['single']);
+        return apply_filters('webform_upgrade_url', $url, $source);
     }
 
     private function is_pro_active() {

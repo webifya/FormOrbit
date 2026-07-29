@@ -84,7 +84,7 @@
             <div class="webform-free-pro-catalog">
                 <span class="webform-pro-badge">FORMORBIT PRO</span>
                 ${Object.entries(integrations).map(([category, names]) => `<h3>${category}</h3><div class="webform-pro-catalog-grid">${names.map(name => `<span><i class="dashicons dashicons-lock"></i>${name}</span>`).join('')}</div>`).join('')}
-                <a class="button button-primary webform-pro-catalog-button" href="https://www.webninjallc.com/product/webform-pro/?utm_source=formorbit-free&amp;utm_medium=builder&amp;utm_campaign=integrations" target="_blank" rel="noopener">Unlock integrations</a>
+                <a class="button button-primary webform-pro-catalog-button" href="https://www.webninjallc.com/formorbit/?utm_source=formorbit-free&amp;utm_medium=builder&amp;utm_campaign=integrations" target="_blank" rel="noopener">Explore FormOrbit Pro</a>
             </div>`;
         $('.webform-property-panel[data-panel="integrations"]').html(catalog);
     }
