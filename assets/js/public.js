@@ -83,6 +83,15 @@
                     const output = event.target.parentElement.querySelector('.webform-slider-value');
                     if (output) output.value = event.target.value;
                 }
+                if (event.target.classList.contains('webform-phone-number')) {
+                    const country = event.target.closest('.webform-phone-control')?.querySelector('.webform-phone-country')?.value || event.target.closest('.webform-phone-control')?.dataset.defaultCountry || 'US';
+                    const digits = event.target.value.replace(/\D/g, '').slice(0, 15);
+                    if (country === 'US' || country === 'CA') {
+                        event.target.value = digits.length > 6 ? `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}` : (digits.length > 3 ? `(${digits.slice(0, 3)}) ${digits.slice(3)}` : digits);
+                    } else {
+                        event.target.value = digits.replace(/(\d{3})(?=\d)/g, '$1 ').trim();
+                    }
+                }
             });
 
             form.addEventListener('submit', function (event) {
