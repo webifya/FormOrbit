@@ -268,6 +268,7 @@
             required: false,
             options: choices ? ['Option 1', 'Option 2'] : [],
             choice_columns: 1,
+            child_width: '100',
             rows: 4,
             min: '',
             max: '',
@@ -293,6 +294,7 @@
         if (!containerChildTypes[source.type]) return [];
         const child = JSON.parse(JSON.stringify(source));
         child.id = uid('child');
+        child.child_width = ({'25':'25','33':'33','50':'50','66':'66','75':'75','100':'100'})[String(source.style?.width || '')] || '100';
         delete child.children;
         delete child.condition;
         delete child.row_start;
@@ -331,11 +333,11 @@
         if (['price', 'calculation'].includes(child.type)) control = `<i class="webform-container-preview-value">${child.type === 'price' ? escapeHtml(child.currency_code || 'USD') + ' ' + Number(child.price_amount || 0).toFixed(2) : '0.00'}</i>`;
         if (child.type === 'hidden') control = '<i class="webform-container-preview-hidden">Hidden value</i>';
         const selected = editable && selectedChildIndex === index;
-        return `<span class="webform-container-preview-child ${editable ? 'is-editable' : ''} ${selected ? 'is-child-selected' : ''}" data-child-index="${index}" role="button" tabindex="${editable ? '0' : '-1'}" aria-label="Edit ${label}">
+        return `<span class="webform-container-preview-child ${editable ? 'is-editable' : ''} ${selected ? 'is-child-selected' : ''}" data-child-index="${index}" role="button" tabindex="${editable ? '0' : '-1'}" aria-label="Edit ${label}" style="--webform-child-width:${Math.max(25, Math.min(100, Number(child.child_width || 100)))}%">
             ${editable ? '<span class="dashicons dashicons-menu webform-live-child-drag" title="Drag to reorder"></span>' : ''}
             ${editable ? `<input class="webform-live-child-label" value="${label}" aria-label="Child field label">` : `<small>${label} ${required}</small>`}
             ${control}
-            ${editable ? `<span class="webform-live-child-actions"><button type="button" class="webform-live-eject-child" title="Drag or click to move to the main form" aria-label="Move ${label} to main form"><span class="dashicons dashicons-external"></span></button><button type="button" class="webform-live-remove-child" title="Delete child field" aria-label="Delete ${label}"><span class="dashicons dashicons-trash"></span></button></span>` : ''}
+            ${editable ? `<span class="webform-live-child-actions"><button type="button" class="webform-live-child-width" title="Change child width" aria-label="Change ${label} width">${escapeHtml(child.child_width || '100')}%</button><button type="button" class="webform-live-eject-child" title="Drag or click to move to the main form" aria-label="Move ${label} to main form"><span class="dashicons dashicons-external"></span></button><button type="button" class="webform-live-remove-child" title="Delete child field" aria-label="Delete ${label}"><span class="dashicons dashicons-trash"></span></button></span>` : ''}
         </span>`;
     }
 
@@ -471,6 +473,7 @@
             ${!['radio','checkbox','select','consent','hidden','poll','quiz','product','html','heading','rich_text','divider','price'].includes(child.type) ? `<label>Placeholder<input type="text" data-child-prop="placeholder" value="${escapeHtml(child.placeholder || '')}" placeholder="Optional helper text"></label>` : ''}
             ${choices ? `<label>Options <small>One per line</small><textarea rows="6" data-child-prop="options">${escapeHtml((child.options || []).join('\n'))}</textarea></label>` : ''}
             ${['radio','checkbox','poll','quiz'].includes(child.type) ? `<label>Option columns<select data-child-prop="choice_columns">${[1,2,3,4].map(column => `<option value="${column}" ${Number(child.choice_columns || 1) === column ? 'selected' : ''}>${column}</option>`).join('')}</select></label>` : ''}
+            <label>Width inside group<select data-child-prop="child_width">${[['25','25%'],['33','33%'],['50','50%'],['66','66%'],['75','75%'],['100','100%']].map(option => `<option value="${option[0]}" ${String(child.child_width || '100') === option[0] ? 'selected' : ''}>${option[1]}</option>`).join('')}</select></label>
             ${child.type === 'textarea' ? `<label>Visible rows<input type="number" min="2" max="30" data-child-prop="rows" value="${Number(child.rows || 4)}"></label>` : ''}
             ${['number','slider','currency'].includes(child.type) ? `<div class="webform-child-editor-grid is-three-columns"><label>Minimum<input type="number" data-child-prop="min" value="${escapeHtml(child.min ?? '')}"></label><label>Maximum<input type="number" data-child-prop="max" value="${escapeHtml(child.max ?? '')}"></label><label>Step<input type="number" step="any" data-child-prop="step" value="${escapeHtml(child.step || '1')}"></label></div>` : ''}
             ${child.type === 'hidden' ? `<label>Default value<input type="text" data-child-prop="default_value" value="${escapeHtml(child.default_value || '')}"></label>` : ''}
@@ -1019,6 +1022,7 @@
             ${field.type === 'rich_text' ? `<div class="webform-rich-text-editor"><label for="webform-rich-text-content">Contract or agreement content <small>Format text, add links, lists, tables, and media.</small></label><textarea id="webform-rich-text-content" rows="14">${escapeHtml(field.rich_content || '')}</textarea></div>` : ''}
             ${field.type === 'textarea' ? `<label>Visible rows <small>Adjust the starting height of the long-text box.</small><input type="number" min="2" max="30" data-prop="rows" value="${Math.max(2, Math.min(30, Number(field.rows || 5)))}"></label>` : ''}
             ${field.type === 'date' ? `<label>Allowed dates<select data-prop="date_rule"><option value="any" ${(field.date_rule || 'any') === 'any' ? 'selected' : ''}>Any date</option><option value="future" ${field.date_rule === 'future' ? 'selected' : ''}>Today and future dates</option><option value="past" ${field.date_rule === 'past' ? 'selected' : ''}>Today and past dates</option><option value="custom" ${field.date_rule === 'custom' ? 'selected' : ''}>Custom date range</option></select></label><div class="webform-date-custom-range" ${field.date_rule === 'custom' ? '' : 'hidden'}><label>Earliest date<input type="date" data-prop="date_min" value="${escapeHtml(field.date_min || '')}"></label><label>Latest date<input type="date" data-prop="date_max" value="${escapeHtml(field.date_max || '')}"></label></div>` : ''}
+            ${field.type === 'phone' ? `<label>Default country<select data-prop="phone_country">${[['US','United States (+1)'],['CA','Canada (+1)'],['GB','United Kingdom (+44)'],['AU','Australia (+61)'],['BD','Bangladesh (+880)'],['IN','India (+91)'],['PK','Pakistan (+92)'],['AE','United Arab Emirates (+971)'],['SA','Saudi Arabia (+966)']].map(option => `<option value="${option[0]}" ${(field.phone_country || 'US') === option[0] ? 'selected' : ''}>${option[1]}</option>`).join('')}</select></label><label class="webform-check"><input type="checkbox" data-prop="phone_country_selector" ${field.phone_country_selector !== false ? 'checked' : ''}> Let visitors choose their country</label>` : ''}
             ${field.type === 'slider' ? `<label>Minimum<input type="number" data-prop="min" value="${Number(field.min ?? 0)}"></label><label>Maximum<input type="number" data-prop="max" value="${Number(field.max ?? 100)}"></label><label>Step<input type="number" min="0.01" step="0.01" data-prop="step" value="${Number(field.step || 1)}"></label>` : ''}
             ${field.type === 'calculation' ? `<div class="webform-calculation-builder"><label>Formula <small>Use field IDs in braces, for example <code>round({price} * {quantity}, 2)</code></small><textarea rows="4" data-prop="formula">${escapeHtml(field.formula || '')}</textarea></label><p class="description"><strong>Functions:</strong> sum, avg, min, max, round, ceil, floor, abs, sqrt, pow, clamp and if. Operators: + − × ÷ % ^ and comparisons.</p><div class="webform-calculation-field-chips">${candidates.map(item => `<button type="button" class="button webform-insert-calculation-field" data-field-reference="{${escapeHtml(item.id)}}">${escapeHtml(item.label || item.id)}</button>`).join('')}</div><label>Decimal places<input type="number" min="0" max="6" data-prop="decimal_places" value="${Number(field.decimal_places ?? 2)}"></label></div>` : ''}
             ${field.type === 'field_group' ? `${containerChildren(field).length ? '' : `<label>Legacy fields to group<input type="number" min="1" max="6" data-prop="group_count" value="${Number(field.group_count || 2)}"></label>`}<label>Columns<input type="number" min="1" max="4" data-prop="group_columns" value="${Number(field.group_columns || 2)}"></label>${containerChildrenSettings(field)}` : ''}
@@ -1201,12 +1205,12 @@
         const field = selectedField();
         if (!field) return;
         const prop = $(this).data('prop');
-        field[prop] = ['required', 'hide_label', 'divider_show_label'].includes(prop) ? $(this).is(':checked') : prop === 'options' ? $(this).val().split('\n').map(v => v.trim()).filter(Boolean) : $(this).val();
+        field[prop] = ['required', 'hide_label', 'divider_show_label', 'phone_country_selector'].includes(prop) ? $(this).is(':checked') : prop === 'options' ? $(this).val().split('\n').map(v => v.trim()).filter(Boolean) : $(this).val();
         dirty = true;
         const caret = this.selectionStart;
         $('#webform-canvas').html(schema[activeStage].fields.map(fieldCard).join(''));
         initializeLiveContainers();
-        if (!['required', 'hide_label', 'divider_show_label'].includes(prop)) {
+        if (!['required', 'hide_label', 'divider_show_label', 'phone_country_selector'].includes(prop)) {
             const input = document.querySelector(`#webform-field-settings [data-prop="${prop}"]`);
             if (input && caret != null) input.setSelectionRange(caret, caret);
         }
@@ -1286,6 +1290,22 @@
         const index = Number($(this).closest('[data-child-index]').data('child-index'));
         selectedId = field.id;
         removeContainerChild(field, index);
+    });
+    $(document).on('click', '.webform-live-child-width', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const field = containerFromElement(this);
+        const index = Number($(this).closest('[data-child-index]').data('child-index'));
+        const child = field && containerChildren(field)[index];
+        if (!child) return;
+        const widths = ['25', '33', '50', '66', '75', '100'];
+        const current = widths.indexOf(String(child.child_width || '100'));
+        child.child_width = widths[(current + 1) % widths.length];
+        selectedId = field.id;
+        selectedChildIndex = index;
+        dirty = true;
+        scheduleHistory(0);
+        render();
     });
     $(document).on('click', '.webform-live-eject-child', function (event) {
         event.preventDefault();
