@@ -9,3 +9,4 @@
 .webform-preview-divider>div>small{color:var(--preview-label,#1d2327);flex:0 0 auto;font-size:10px;font-weight:600}
 .webform-preview-divider.is-left>div{align-self:flex-start}.webform-preview-divider.is-center>div{align-self:center}.webform-preview-divider.is-right>div{align-self:flex-end}
 .webform-preview-divider.label-above>div>span:last-child,.webform-preview-divider.label-inline:not(.has-label)>div>span:last-child{display:none}
+.webform-preview-container .webform-container-preview-child{box-sizing:border-box;flex:0 0 calc(var(--webform-child-width,100%) - 6px);max-width:calc(var(--webform-child-width,100%) - 6px)}.webform-preview-container{display:flex!important;flex-wrap:wrap}@media(max-width:640px){.webform-preview-container .webform-container-preview-child{flex-basis:100%;max-width:100%}}
