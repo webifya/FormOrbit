@@ -183,6 +183,40 @@ class Webform_Public {
             <?php
             return;
         }
+        if ($field['type'] === 'phone') {
+            $countries = array(
+                'US' => array('+1', __('United States', 'formorbit')),
+                'CA' => array('+1', __('Canada', 'formorbit')),
+                'GB' => array('+44', __('United Kingdom', 'formorbit')),
+                'AU' => array('+61', __('Australia', 'formorbit')),
+                'BD' => array('+880', __('Bangladesh', 'formorbit')),
+                'IN' => array('+91', __('India', 'formorbit')),
+                'PK' => array('+92', __('Pakistan', 'formorbit')),
+                'AE' => array('+971', __('United Arab Emirates', 'formorbit')),
+                'SA' => array('+966', __('Saudi Arabia', 'formorbit')),
+            );
+            $default_country = isset($countries[$field['phone_country'] ?? '']) ? $field['phone_country'] : 'US';
+            ?>
+            <div class="webform-field webform-field-phone <?php echo esc_attr($field_class); ?>"<?php echo $condition_attr; ?>>
+                <label for="<?php echo esc_attr($id); ?>"<?php echo $label_class; ?>><?php echo $label_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></label>
+                <div class="webform-phone-control" data-default-country="<?php echo esc_attr($default_country); ?>">
+                    <?php if (($field['phone_country_selector'] ?? true) !== false) : ?>
+                        <select name="<?php echo esc_attr($name . '[country]'); ?>" class="webform-phone-country" aria-label="<?php esc_attr_e('Country calling code', 'formorbit'); ?>">
+                            <?php foreach ($countries as $code => $country) : ?>
+                                <option value="<?php echo esc_attr($code); ?>" data-prefix="<?php echo esc_attr($country[0]); ?>" <?php selected($default_country, $code); ?>><?php echo esc_html($code . ' ' . $country[0]); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    <?php else : ?>
+                        <input type="hidden" name="<?php echo esc_attr($name . '[country]'); ?>" value="<?php echo esc_attr($default_country); ?>">
+                        <span class="webform-phone-prefix"><?php echo esc_html($countries[$default_country][0]); ?></span>
+                    <?php endif; ?>
+                    <input type="tel" id="<?php echo esc_attr($id); ?>" class="webform-phone-number" name="<?php echo esc_attr($name . '[number]'); ?>" maxlength="24" autocomplete="tel-national" inputmode="tel" aria-describedby="<?php echo esc_attr($describedby); ?>" placeholder="<?php echo esc_attr($field['placeholder']); ?>"<?php echo $required; ?>>
+                </div>
+                <span class="webform-error" id="<?php echo esc_attr($describedby); ?>"></span>
+            </div>
+            <?php
+            return;
+        }
         if ($field['type'] === 'captcha') {
             $global_settings = (array) get_option('webform_global_settings', array());
             if ($this->google_recaptcha_enabled()) {
@@ -285,6 +319,14 @@ class Webform_Public {
                     $name_incomplete = !empty($field['required']) && (!$first_name || !$last_name);
                     $value = trim($first_name . ' ' . $last_name);
                 }
+                if ($field['type'] === 'phone' && is_array($value)) {
+                    $country_codes = array('US' => '1', 'CA' => '1', 'GB' => '44', 'AU' => '61', 'BD' => '880', 'IN' => '91', 'PK' => '92', 'AE' => '971', 'SA' => '966');
+                    $country = strtoupper(sanitize_key($value['country'] ?? ($field['phone_country'] ?? 'US')));
+                    $digits = preg_replace('/\D+/', '', (string) ($value['number'] ?? ''));
+                    $code = $country_codes[$country] ?? '1';
+                    $digits = ltrim($digits, '0');
+                    $value = $digits ? '+' . $code . $digits : '';
+                }
                 $value = is_array($value) ? array_slice(array_map('sanitize_text_field', $value), 0, 100) : substr(sanitize_textarea_field($value), 0, 10000);
                 $date_error = $field['type'] === 'date' ? $this->date_validation_error($field, $value) : '';
                 if ($name_incomplete) {
@@ -295,6 +337,8 @@ class Webform_Public {
                     $errors[$field['id']] = __('Enter a valid email address.', 'formorbit');
                 } elseif ($field['type'] === 'url' && $value && !wp_http_validate_url($value)) {
                     $errors[$field['id']] = __('Enter a valid URL.', 'formorbit');
+                } elseif ($field['type'] === 'phone' && $value && !preg_match('/^\+[1-9][0-9]{7,14}$/', $value)) {
+                    $errors[$field['id']] = __('Enter a valid international phone number.', 'formorbit');
                 } elseif ($date_error) {
                     $errors[$field['id']] = $date_error;
                 } elseif (in_array($field['type'], array('select', 'radio', 'poll', 'quiz'), true) && $value && !in_array($value, $field['options'], true)) {
