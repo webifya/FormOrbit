@@ -37,6 +37,7 @@
 .webform-live-child-actions .dashicons{font-size:14px;height:14px;margin:0;width:14px}
 .webform-live-child-actions .webform-live-remove-child:hover,.webform-live-child-actions .webform-live-remove-child:focus{background:#fff1f1;border-color:#dba3a5;color:#b32d2e;outline:0}
 .webform-live-child-actions .webform-live-eject-child{cursor:grab}
+.webform-live-child-actions .webform-live-child-width{background:#f4f1fd;border:1px solid #d9d0f4;border-radius:5px;color:#5e43bd;cursor:pointer;font-size:9px;font-weight:700;height:25px;line-height:1;padding:0 5px}
 .webform-live-child-actions .webform-live-eject-child:active{cursor:grabbing}
 .webform-live-child-actions .webform-live-eject-child:hover,.webform-live-child-actions .webform-live-eject-child:focus{background:#f1edff;border-color:#ad9ae7;color:#5e43bd;outline:0}
 .webform-container-preview-child.is-editable{padding-top:39px}
