@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 4.5.0
+Stable tag: 4.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -47,6 +47,12 @@ FormOrbit is created by Mahfuzar Rahman. Advanced automation, payment, document,
 5. Copy the generated `[formorbit id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 4.6.0 =
+* Added international phone entry with a configurable default country, visitor country selector, live formatting, and E.164-style server validation.
+* Added customizable child-field widths inside Pro groups and repeaters, with responsive full-width defaults for newly added children.
+* Added a compact live width control beside nested child actions.
+* Improved live move-out and drag-out behavior for fields nested inside Pro containers.
 
 = 4.5.0 =
 * Kept the stage and Add field toolbar visible while scrolling long forms.
