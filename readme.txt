@@ -4,11 +4,12 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 4.6.0
+Stable tag: 4.6.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 A visual drag-and-drop, multi-step form builder for WordPress.
+
 
 == Description ==
 
@@ -37,6 +38,10 @@ FormOrbit provides a native WordPress form-building experience:
 * Import converters for WPForms, Gravity Forms, Fluent Forms, and Contact Form 7
 
 FormOrbit is created by Mahfuzar Rahman. Advanced automation, payment, document, and marketing features are available in a separately distributed Pro add-on.
+
+Developer: mahfuzar
+Plugin website: https://webninjallc.com
+
 
 == Installation ==
 
