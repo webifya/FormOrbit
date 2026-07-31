@@ -63,6 +63,14 @@ Plugin website: https://webninjallc.com
 
 == Changelog ==
 
+= 4.6.3 =
+* Added WordPress.org plugin banners, icons, and screenshots.
+* Improved plugin branding and directory listing appearance.
+* Enhanced documentation and readme formatting.
+* Improved overall plugin presentation on WordPress.org.
+* Minor code cleanup and stability improvements.
+* Fixed small UI inconsistencies.
+
 = 4.6.1 =
 * Screenshots added
 * Form Icon and Banner updated
