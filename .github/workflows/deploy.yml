@@ -29,7 +29,7 @@ jobs:
         run: |
           set -euo pipefail
           TAG="${GITHUB_REF_NAME}"
-          PLUGIN_VERSION=$(sed -n 's/^ \* Version: //p' mailchimp-optin.php | head -n 1 | tr -d '\r')
+          PLUGIN_VERSION=$(sed -n 's/^ \* Version: //p' formorbit.php | head -n 1 | tr -d '\r')
           STABLE_TAG=$(sed -n 's/^Stable tag: //p' readme.txt | head -n 1 | tr -d '\r')
 
           echo "Release tag: ${TAG}"
