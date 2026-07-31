@@ -3,7 +3,7 @@
  * Plugin Name: FormOrbit
   * Plugin URI: https://wordpress.org/plugins/formorbit
  * Description: A visual drag-and-drop, multi-step form builder for WordPress.
- * Version: 4.6.2
+ * Version: 4.6.3
  * Author: Mahfuzar Rahman
  * Author URI: https://www.webninjallc.com/
  * License: GPLv2 or later
