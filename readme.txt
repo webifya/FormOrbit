@@ -63,6 +63,11 @@ Plugin website: https://webninjallc.com
 
 == Changelog ==
 
+= 4.6.1 =
+* Screenshots added
+* Form Icon and Banner updated
+* Bug Fixes
+
 = 4.6.0 =
 * Added international phone entry with a configurable default country, visitor country selector, live formatting, and E.164-style server validation.
 * Added customizable child-field widths inside Pro groups and repeaters, with responsive full-width defaults for newly added children.
