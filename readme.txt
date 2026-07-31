@@ -47,9 +47,14 @@ FormOrbit is created by Mahfuzar Rahman. Advanced automation, payment, document,
 5. Copy the generated `[formorbit id="123"]` shortcode into any post or page.
 
 == Screenshots ==
-1. This is the caption for your first screenshot (dashboard view).
-2. This is the caption for your second screenshot (settings page).
-3. This is the caption for your third screenshot.
+1. Form Editor View
+2. Available Fields on Free Mode
+3. Start with free templates
+4. Dashboard View
+5. Formorbit Tools (Import/Export/Resources)
+6. Email SMTP Configuration
+7. Shortcode 
+8. Templates Gallery 
 
 == Changelog ==
 
