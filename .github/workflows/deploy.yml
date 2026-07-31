@@ -1,0 +1,82 @@
+name: Deploy to WordPress.org SVN
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wordpress-org-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy plugin
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate release version
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          PLUGIN_VERSION=$(sed -n 's/^ \* Version: //p' mailchimp-optin.php | head -n 1 | tr -d '\r')
+          STABLE_TAG=$(sed -n 's/^Stable tag: //p' readme.txt | head -n 1 | tr -d '\r')
+
+          echo "Release tag: ${TAG}"
+          echo "Plugin version: ${PLUGIN_VERSION}"
+          echo "Readme stable tag: ${STABLE_TAG}"
+
+          if [ "${TAG}" != "${PLUGIN_VERSION}" ]; then
+            echo "Error: release tag does not match the plugin header version."
+            exit 1
+          fi
+
+          if [ "${TAG}" != "${STABLE_TAG}" ]; then
+            echo "Error: release tag does not match readme.txt Stable tag."
+            exit 1
+          fi
+
+      - name: Resolve WordPress.org credentials
+        id: credentials
+        shell: bash
+        env:
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          WORDPRESS_SVN_USERNAME: ${{ secrets.WORDPRESS_SVN_USERNAME }}
+          WORDPRESS_SVN_PASSWORD: ${{ secrets.WORDPRESS_SVN_PASSWORD }}
+          WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
+          WORDPRESS_PASSWORD: ${{ secrets.WORDPRESS_PASSWORD }}
+          WP_ORG_USERNAME: ${{ secrets.WP_ORG_USERNAME }}
+          WP_ORG_PASSWORD: ${{ secrets.WP_ORG_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          USERNAME="${SVN_USERNAME:-${WORDPRESS_SVN_USERNAME:-${WORDPRESS_USERNAME:-${WP_ORG_USERNAME:-}}}}"
+          PASSWORD="${SVN_PASSWORD:-${WORDPRESS_SVN_PASSWORD:-${WORDPRESS_PASSWORD:-${WP_ORG_PASSWORD:-}}}}"
+
+          if [ -z "${USERNAME}" ] || [ -z "${PASSWORD}" ]; then
+            echo "Error: WordPress.org SVN credentials were not available to GitHub Actions."
+            echo "Create repository secrets under Settings > Secrets and variables > Actions."
+            echo "Recommended names: SVN_USERNAME and SVN_PASSWORD."
+            exit 1
+          fi
+
+          echo "svn_username=${USERNAME}" >> "${GITHUB_OUTPUT}"
+          echo "svn_password=${PASSWORD}" >> "${GITHUB_OUTPUT}"
+
+      - name: Deploy to WordPress.org
+        uses: 10up/action-wordpress-plugin-deploy@stable
+        env:
+          SVN_USERNAME: ${{ steps.credentials.outputs.svn_username }}
+          SVN_PASSWORD: ${{ steps.credentials.outputs.svn_password }}
+          SLUG: easy-mailchimp-opt-in
