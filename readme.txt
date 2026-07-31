@@ -4,44 +4,62 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 4.6.3
+Stable tag: 4.6.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-A visual drag-and-drop, multi-step form builder for WordPress.
+The all-in-one WordPress form builder with drag-and-drop, multi-step forms, SMTP setup, form imports, payments, automation, and more.
 
 
 == Description ==
 
-FormOrbit provides a native WordPress form-building experience:
+FormOrbit is a modern drag-and-drop WordPress form builder designed to help you create beautiful, high-converting forms without writing code.
 
-* Drag-and-drop field ordering
-* Multiple stages with progress indicators
-* Name, text, email, textarea, dropdown, radio, checkbox, number, date, phone, URL, consent, secure file upload, and heading fields
-* Conditional field visibility
-* Required-field and email validation
-* AJAX submission without page reload
-* WordPress-native entry storage and admin entry browser
-* Email notifications
-* Entry filtering, pagination, deletion, and CSV export
-* One-click form duplication
-* Configurable submit labels and confirmation redirects
-* Shortcode embedding
-* Nonces, capability checks, sanitization, escaping, and a spam honeypot
-* Login requirements and total submission limits
-* Polls with live percentage results
-* Scored quizzes with configurable answers and points
-* 10 free ready-to-customize form templates
-* Time, slider, rating, hidden, HTML, CAPTCHA, and page-break tools
-* Modern, minimal, and rounded style presets with custom colors
-* Optional Google reCAPTCHA v2 verification
-* Import converters for WPForms, Gravity Forms, Fluent Forms, and Contact Form 7
+Features include:
+
+* Drag & Drop Form Builder
+* Multi-Step Forms
+* Conditional Logic
+* Email Notifications
+* Free SMTP Configuration Wizard
+* One-Click SMTP Email Testing
+* Import Forms from Contact Form 7, WPForms and more
+* AJAX Forms
+* File Upload Fields
+* reCAPTCHA & Anti-Spam Protection
+* Payment Integrations
+* Webhooks & Automation
+* Responsive Form Designer
+* Custom CSS & JavaScript
+* Gutenberg Block
+* Elementor Widget
+* Shortcodes
+* Form Analytics
+* Entry Management
+* Export & Import
+* Developer Hooks & Filters
 
 FormOrbit is created by Mahfuzar Rahman. Advanced automation, payment, document, and marketing features are available in a separately distributed Pro add-on.
 
 Developer: mahfuzar
 Plugin website: https://webninjallc.com
 
+==  🚀 Upgrade to FormOrbit Pro ==
+
+Take your forms to the next level with FormOrbit Pro.
+
+Features include:
+
+* Premium form templates
+* Advanced conditional logic
+* Additional payment gateways
+* CRM & marketing integrations
+* Automation workflows
+* Priority support
+* Regular feature updates
+
+👉 Get FormOrbit Pro:
+https://webninjallc.com/plugins/formorbit
 
 == Installation ==
 
