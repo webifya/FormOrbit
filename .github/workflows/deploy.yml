@@ -80,3 +80,4 @@ jobs:
           SVN_USERNAME: ${{ steps.credentials.outputs.svn_username }}
           SVN_PASSWORD: ${{ steps.credentials.outputs.svn_password }}
           SLUG: formorbit
+          ASSETS_DIR: .wordpress-org
