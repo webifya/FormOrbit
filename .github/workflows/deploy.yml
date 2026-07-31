@@ -79,4 +79,4 @@ jobs:
         env:
           SVN_USERNAME: ${{ steps.credentials.outputs.svn_username }}
           SVN_PASSWORD: ${{ steps.credentials.outputs.svn_password }}
-          SLUG: easy-mailchimp-opt-in
+          SLUG: formorbit
