@@ -1,0 +1,53 @@
+/* Consistent icon and label alignment for FormOrbit admin controls. */
+.webform-wrap .webform-create-button,
+.webform-wrap .webform-live-preview-trigger,
+.webform-wrap .webform-embed-trigger,
+.webform-wrap .webform-open-field-picker,
+.webform-wrap .webform-copy-embed,
+.webform-wrap .webform-tool-resource-card .button,
+.webform-wrap .webform-support-actions .button,
+.webform-wrap .webform-drop-empty .button {
+    align-items: center;
+    display: inline-flex !important;
+    gap: 7px;
+    justify-content: center;
+}
+
+.webform-wrap .webform-create-button .dashicons,
+.webform-wrap .webform-live-preview-trigger .dashicons,
+.webform-wrap .webform-embed-trigger .dashicons,
+.webform-wrap .webform-open-field-picker .dashicons,
+.webform-wrap .webform-copy-embed .dashicons,
+.webform-wrap .webform-tool-resource-card .button .dashicons,
+.webform-wrap .webform-support-actions .button .dashicons,
+.webform-wrap .webform-drop-empty .button .dashicons {
+    align-items: center;
+    display: inline-flex;
+    flex: 0 0 auto;
+    justify-content: center;
+    line-height: 1;
+    margin: 0;
+    position: static;
+    vertical-align: middle;
+}
+
+.webform-wrap .webform-create-button .dashicons {
+    font-size: 18px;
+    height: 18px;
+    width: 18px;
+}
+
+.webform-wrap .webform-live-preview-trigger .dashicons,
+.webform-wrap .webform-embed-trigger .dashicons,
+.webform-wrap .webform-open-field-picker .dashicons,
+.webform-wrap .webform-drop-empty .button .dashicons {
+    font-size: 17px;
+    height: 17px;
+    width: 17px;
+}
+
+.webform-wrap .webform-tool-resource-card .button .dashicons {
+    font-size: 15px;
+    height: 15px;
+    width: 15px;
+}
