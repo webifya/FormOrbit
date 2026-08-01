@@ -25,7 +25,10 @@ class Webform_Admin {
         add_action('admin_post_formorbit_delete_entry', array($this, 'delete_entry'));
         add_action('admin_post_formorbit_save_global_settings', array($this, 'save_global_settings'));
         add_action('admin_post_formorbit_import', array($this, 'import_form'));
+        add_action('admin_post_formorbit_dismiss_review', array($this, 'dismiss_review'));
         add_action('admin_head', array($this, 'suppress_editor_notices'), 1);
+        add_action('admin_notices', array($this, 'review_notice'));
+        add_filter('plugin_action_links_' . plugin_basename(WEBFORM_FILE), array($this, 'plugin_action_links'));
     }
 
     public function menu() {
@@ -41,12 +44,41 @@ class Webform_Admin {
         add_submenu_page('formorbit', __('All Forms', 'formorbit'), __('All Forms', 'formorbit'), 'manage_options', 'formorbit', array($this, 'forms_page'), 0);
         add_submenu_page('formorbit', __('Add New', 'formorbit'), __('Add New', 'formorbit'), 'manage_options', 'formorbit-builder', array($this, 'builder_page'), 1);
         add_submenu_page('formorbit', __('Entries', 'formorbit'), __('Entries', 'formorbit'), 'manage_options', 'formorbit-entries', array($this, 'entries_page'), 2);
-        add_submenu_page('formorbit', __('Form Templates', 'formorbit'), __('Templates', 'formorbit'), 'manage_options', 'formorbit-templates', array($this, 'templates_page'), 3);
+        add_submenu_page('formorbit', __('Analytics & Reporting', 'formorbit'), __('Analytics', 'formorbit'), 'manage_options', 'formorbit-analytics', array($this, 'analytics_page'), 3);
+        add_submenu_page('formorbit', __('Form Templates', 'formorbit'), __('Templates', 'formorbit'), 'manage_options', 'formorbit-templates', array($this, 'templates_page'), 4);
         add_submenu_page('formorbit', __('FormOrbit Tools', 'formorbit'), __('Tools', 'formorbit'), 'manage_options', 'formorbit-tools', array($this, 'tools_page'), 6);
         add_submenu_page('formorbit', __('FormOrbit Settings', 'formorbit'), __('Settings', 'formorbit'), 'manage_options', 'formorbit-settings', array($this, 'settings_page'), 7);
         if (!$this->is_pro_active()) {
             add_submenu_page('formorbit', __('FormOrbit Pro', 'formorbit'), __('Upgrade to Pro', 'formorbit'), 'manage_options', 'formorbit-pro', array($this, 'pro_page'), 8);
         }
+    }
+
+    public function plugin_action_links($links) {
+        $settings = '<a href="' . esc_url(admin_url('admin.php?page=formorbit-settings')) . '">' . esc_html__('Settings', 'formorbit') . '</a>';
+        array_unshift($links, $settings);
+        return $links;
+    }
+
+    public function review_notice() {
+        if (!current_user_can('manage_options') || $this->is_pro_active() || get_option('formorbit_review_dismissed')) return;
+        $activated = absint(get_option('formorbit_activated_at', 0));
+        if (!$activated) {
+            update_option('formorbit_activated_at', time(), false);
+            return;
+        }
+        $form_count = wp_count_posts('webform_form');
+        $published = absint($form_count->publish ?? 0) + absint($form_count->draft ?? 0);
+        if ($published < 2 && time() - $activated < 7 * DAY_IN_SECONDS) return;
+        $dismiss = wp_nonce_url(admin_url('admin-post.php?action=formorbit_dismiss_review'), 'formorbit_dismiss_review');
+        echo '<div class="notice notice-info is-dismissible webform-review-notice"><p><strong>' . esc_html__('Enjoying FormOrbit?', 'formorbit') . '</strong> ' . esc_html__('A short WordPress.org review helps other site owners discover the free form builder.', 'formorbit') . '</p><p><a class="button button-primary" target="_blank" rel="noopener noreferrer" href="https://wordpress.org/support/plugin/formorbit/reviews/#new-post">' . esc_html__('Leave a review', 'formorbit') . '</a> <a class="button" href="' . esc_url($dismiss) . '">' . esc_html__('Maybe later', 'formorbit') . '</a></p></div>';
+    }
+
+    public function dismiss_review() {
+        if (!current_user_can('manage_options')) wp_die(esc_html__('Permission denied.', 'formorbit'));
+        check_admin_referer('formorbit_dismiss_review');
+        update_option('formorbit_review_dismissed', 1, false);
+        wp_safe_redirect(wp_get_referer() ?: admin_url('admin.php?page=formorbit'));
+        exit;
     }
 
     public function redirect_legacy_pages() {
@@ -95,9 +127,10 @@ class Webform_Admin {
             'formsUrl' => admin_url('admin.php?page=formorbit'),
             'proInstalled' => false,
             'proActive' => false,
-            'proFieldTypes' => array('calculation', 'field_group', 'signature', 'rich_text', 'divider', 'address', 'repeater', 'appointment', 'nps', 'currency', 'product', 'price'),
+            'proFieldTypes' => array('calculation', 'field_group', 'signature', 'rich_text', 'divider', 'address', 'repeater', 'appointment', 'nps', 'currency', 'product', 'price', 'post_title', 'post_body', 'post_excerpt', 'post_tags', 'post_custom'),
             'proStyling' => false,
             'savedThemes' => array(),
+            'postTypes' => array_map(function ($type) { return $type->labels->singular_name; }, get_post_types(array('show_ui' => true), 'objects')),
         )));
     }
 
@@ -162,6 +195,55 @@ class Webform_Admin {
     private function entry_count($form_id) {
         $query = new WP_Query(array('post_type' => 'webform_entry', 'post_status' => 'private', 'posts_per_page' => 1, 'fields' => 'ids', 'meta_query' => array('relation' => 'AND', array('key' => '_webform_form_id', 'value' => $form_id), array('relation' => 'OR', array('key' => '_webform_entry_status', 'compare' => 'NOT EXISTS'), array('key' => '_webform_entry_status', 'value' => 'submitted')))));
         return $query->found_posts;
+    }
+
+    public function analytics_page() {
+        if (!current_user_can('manage_options')) return;
+        $days = isset($_GET['range']) ? absint($_GET['range']) : 30;
+        if (!in_array($days, array(7, 30, 90, 365), true)) $days = 30;
+        $form_filter = isset($_GET['form_id']) ? absint($_GET['form_id']) : 0;
+        $forms = get_posts(array('post_type' => 'webform_form', 'post_status' => array('publish', 'draft'), 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC'));
+        $start = strtotime('-' . ($days - 1) . ' days', current_time('timestamp'));
+        $daily = array();
+        $by_form = array();
+        $totals = array('views' => 0, 'visitors' => 0, 'clicks' => 0, 'submissions' => 0);
+        for ($offset = 0; $offset < $days; $offset++) {
+            $date = wp_date('Y-m-d', $start + $offset * DAY_IN_SECONDS);
+            $daily[$date] = array('views' => 0, 'visitors' => 0, 'clicks' => 0, 'submissions' => 0);
+        }
+        $months = array_unique(array_map(function ($date) { return substr($date, 0, 7); }, array_keys($daily)));
+        foreach ($months as $month) {
+            $stored = (array) get_option('formorbit_analytics_' . str_replace('-', '_', $month), array());
+            foreach ($stored as $date => $form_rows) {
+                if (!isset($daily[$date])) continue;
+                foreach ((array) $form_rows as $form_id => $metrics) {
+                    $form_id = absint($form_id);
+                    if ($form_filter && $form_filter !== $form_id) continue;
+                    if (!isset($by_form[$form_id])) $by_form[$form_id] = array('views' => 0, 'visitors' => 0, 'clicks' => 0, 'submissions' => 0);
+                    foreach (array_keys($totals) as $metric) {
+                        $value = absint($metrics[$metric] ?? 0);
+                        $daily[$date][$metric] += $value;
+                        $by_form[$form_id][$metric] += $value;
+                        $totals[$metric] += $value;
+                    }
+                }
+            }
+        }
+        $conversion = $totals['views'] ? round($totals['submissions'] / $totals['views'] * 100, 1) : 0;
+        ?>
+        <div class="wrap webform-wrap webform-analytics-wrap">
+            <div class="webform-page-head"><div><h1><?php esc_html_e('Analytics & Reporting', 'formorbit'); ?></h1><p><?php esc_html_e('Understand form visibility, engagement, and submission performance.', 'formorbit'); ?></p></div></div>
+            <form class="webform-analytics-filters" method="get"><input type="hidden" name="page" value="formorbit-analytics"><label><?php esc_html_e('Date range', 'formorbit'); ?><select name="range"><?php foreach (array(7 => __('Last 7 days', 'formorbit'), 30 => __('Last 30 days', 'formorbit'), 90 => __('Last 90 days', 'formorbit'), 365 => __('Last year', 'formorbit')) as $value => $label) : ?><option value="<?php echo esc_attr($value); ?>" <?php selected($days, $value); ?>><?php echo esc_html($label); ?></option><?php endforeach; ?></select></label><label><?php esc_html_e('Form', 'formorbit'); ?><select name="form_id"><option value="0"><?php esc_html_e('All forms', 'formorbit'); ?></option><?php foreach ($forms as $form) : ?><option value="<?php echo esc_attr($form->ID); ?>" <?php selected($form_filter, $form->ID); ?>><?php echo esc_html($form->post_title); ?></option><?php endforeach; ?></select></label><button class="button button-primary"><?php esc_html_e('Apply filters', 'formorbit'); ?></button></form>
+            <div class="webform-analytics-cards">
+                <?php foreach (array('views' => array(__('Form views', 'formorbit'), 'dashicons-visibility'), 'visitors' => array(__('Unique visitors', 'formorbit'), 'dashicons-groups'), 'clicks' => array(__('Engaged visitors', 'formorbit'), 'dashicons-marker'), 'submissions' => array(__('Submissions', 'formorbit'), 'dashicons-yes-alt')) as $key => $card) : ?><article><span class="dashicons <?php echo esc_attr($card[1]); ?>"></span><small><?php echo esc_html($card[0]); ?></small><strong><?php echo esc_html(number_format_i18n($totals[$key])); ?></strong></article><?php endforeach; ?>
+                <article><span class="dashicons dashicons-chart-line"></span><small><?php esc_html_e('View conversion', 'formorbit'); ?></small><strong><?php echo esc_html($conversion); ?>%</strong></article>
+            </div>
+            <div class="webform-analytics-grid">
+                <section class="webform-card"><h2><?php esc_html_e('Performance by form', 'formorbit'); ?></h2><div class="webform-analytics-table-wrap"><table class="widefat striped"><thead><tr><th><?php esc_html_e('Form', 'formorbit'); ?></th><th><?php esc_html_e('Views', 'formorbit'); ?></th><th><?php esc_html_e('Visitors', 'formorbit'); ?></th><th><?php esc_html_e('Engaged', 'formorbit'); ?></th><th><?php esc_html_e('Submissions', 'formorbit'); ?></th><th><?php esc_html_e('Conversion', 'formorbit'); ?></th></tr></thead><tbody><?php if (!$by_form) : ?><tr><td colspan="6"><?php esc_html_e('Analytics will appear after visitors view and interact with your forms.', 'formorbit'); ?></td></tr><?php else : foreach ($by_form as $form_id => $metrics) : ?><tr><td><a href="<?php echo esc_url(admin_url('admin.php?page=formorbit-builder&form_id=' . $form_id)); ?>"><?php echo esc_html(get_the_title($form_id) ?: sprintf(__('Form #%d', 'formorbit'), $form_id)); ?></a></td><td><?php echo esc_html(number_format_i18n($metrics['views'])); ?></td><td><?php echo esc_html(number_format_i18n($metrics['visitors'])); ?></td><td><?php echo esc_html(number_format_i18n($metrics['clicks'])); ?></td><td><?php echo esc_html(number_format_i18n($metrics['submissions'])); ?></td><td><?php echo esc_html($metrics['views'] ? round($metrics['submissions'] / $metrics['views'] * 100, 1) : 0); ?>%</td></tr><?php endforeach; endif; ?></tbody></table></div></section>
+                <section class="webform-card"><h2><?php esc_html_e('Daily activity', 'formorbit'); ?></h2><div class="webform-analytics-table-wrap"><table class="widefat striped"><thead><tr><th><?php esc_html_e('Date', 'formorbit'); ?></th><th><?php esc_html_e('Views', 'formorbit'); ?></th><th><?php esc_html_e('Engaged', 'formorbit'); ?></th><th><?php esc_html_e('Submissions', 'formorbit'); ?></th></tr></thead><tbody><?php foreach (array_reverse($daily, true) as $date => $metrics) : ?><tr><td><?php echo esc_html(wp_date(get_option('date_format'), strtotime($date))); ?></td><td><?php echo esc_html(number_format_i18n($metrics['views'])); ?></td><td><?php echo esc_html(number_format_i18n($metrics['clicks'])); ?></td><td><?php echo esc_html(number_format_i18n($metrics['submissions'])); ?></td></tr><?php endforeach; ?></tbody></table></div></section>
+            </div><p class="description"><?php esc_html_e('Unique visitors are counted once per browser session for each form. Engagement records the first field interaction. Tracking begins with this release and stores aggregate counts only.', 'formorbit'); ?></p>
+        </div>
+        <?php
     }
 
     private function embed_counts() {
@@ -277,7 +359,7 @@ class Webform_Admin {
                             'heading' => __('Heading', 'formorbit'),
                         );
                         $fields = apply_filters('webform_field_palette', $standard_fields);
-                        $field_icons = array('name' => 'dashicons-admin-users', 'text' => 'dashicons-editor-textcolor', 'email' => 'dashicons-email', 'textarea' => 'dashicons-editor-alignleft', 'select' => 'dashicons-arrow-down-alt2', 'radio' => 'dashicons-marker', 'checkbox' => 'dashicons-yes', 'number' => 'dashicons-editor-ol', 'date' => 'dashicons-calendar', 'time' => 'dashicons-clock', 'phone' => 'dashicons-phone', 'url' => 'dashicons-admin-links', 'file' => 'dashicons-upload', 'consent' => 'dashicons-privacy', 'poll' => 'dashicons-chart-bar', 'quiz' => 'dashicons-welcome-learn-more', 'rating' => 'dashicons-star-filled', 'slider' => 'dashicons-image-flip-horizontal', 'hidden' => 'dashicons-hidden', 'html' => 'dashicons-editor-code', 'captcha' => 'dashicons-shield', 'page_break' => 'dashicons-controls-forward', 'heading' => 'dashicons-heading', 'calculation' => 'dashicons-editor-table', 'field_group' => 'dashicons-grid-view', 'signature' => 'dashicons-edit', 'rich_text' => 'dashicons-editor-paste-word', 'divider' => 'dashicons-minus', 'address' => 'dashicons-location-alt', 'repeater' => 'dashicons-list-view', 'appointment' => 'dashicons-calendar-alt', 'nps' => 'dashicons-chart-line', 'currency' => 'dashicons-money-alt', 'product' => 'dashicons-cart', 'price' => 'dashicons-tag');
+                        $field_icons = array('name' => 'dashicons-admin-users', 'text' => 'dashicons-editor-textcolor', 'email' => 'dashicons-email', 'textarea' => 'dashicons-editor-alignleft', 'select' => 'dashicons-arrow-down-alt2', 'radio' => 'dashicons-marker', 'checkbox' => 'dashicons-yes', 'number' => 'dashicons-editor-ol', 'date' => 'dashicons-calendar', 'time' => 'dashicons-clock', 'phone' => 'dashicons-phone', 'url' => 'dashicons-admin-links', 'file' => 'dashicons-upload', 'consent' => 'dashicons-privacy', 'poll' => 'dashicons-chart-bar', 'quiz' => 'dashicons-welcome-learn-more', 'rating' => 'dashicons-star-filled', 'slider' => 'dashicons-image-flip-horizontal', 'hidden' => 'dashicons-hidden', 'html' => 'dashicons-editor-code', 'captcha' => 'dashicons-shield', 'page_break' => 'dashicons-controls-forward', 'heading' => 'dashicons-heading', 'calculation' => 'dashicons-editor-table', 'field_group' => 'dashicons-grid-view', 'signature' => 'dashicons-edit', 'rich_text' => 'dashicons-editor-paste-word', 'divider' => 'dashicons-minus', 'address' => 'dashicons-location-alt', 'repeater' => 'dashicons-list-view', 'appointment' => 'dashicons-calendar-alt', 'nps' => 'dashicons-chart-line', 'currency' => 'dashicons-money-alt', 'product' => 'dashicons-cart', 'price' => 'dashicons-tag', 'post_title' => 'dashicons-heading', 'post_body' => 'dashicons-editor-alignleft', 'post_excerpt' => 'dashicons-excerpt-view', 'post_tags' => 'dashicons-tag', 'post_custom' => 'dashicons-admin-generic');
                         foreach (array_intersect_key($fields, $standard_fields) as $type => $label) {
                             printf('<button type="button" class="webform-palette-item" data-type="%s"><span class="dashicons %s"></span><span>%s</span></button>', esc_attr($type), esc_attr($field_icons[$type] ?? 'dashicons-plus-alt2'), esc_html($label));
                         }
@@ -430,7 +512,7 @@ class Webform_Admin {
     private function sanitize_schema($schema) {
         $clean = array();
         $base_types = array('name', 'text', 'email', 'textarea', 'select', 'radio', 'checkbox', 'number', 'date', 'time', 'phone', 'url', 'file', 'consent', 'poll', 'quiz', 'rating', 'slider', 'hidden', 'html', 'captcha', 'heading');
-        $known_pro_types = array('calculation', 'field_group', 'signature', 'rich_text', 'divider', 'address', 'repeater', 'appointment', 'nps', 'currency', 'product', 'price');
+        $known_pro_types = array('calculation', 'field_group', 'signature', 'rich_text', 'divider', 'address', 'repeater', 'appointment', 'nps', 'currency', 'product', 'price', 'post_title', 'post_body', 'post_excerpt', 'post_tags', 'post_custom');
         $allowed_types = array_unique(array_merge($base_types, $known_pro_types, apply_filters('webform_allowed_field_types', $base_types)));
         $pro_types = array_values(array_diff($allowed_types, $base_types));
         $allowed_operators = array('equals', 'not_equals', 'contains', 'starts_with', 'ends_with', 'greater_than', 'less_than', 'not_empty', 'empty');
