@@ -4,62 +4,41 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 4.6.4
+Stable tag: 4.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-The all-in-one WordPress form builder with drag-and-drop, multi-step forms, SMTP setup, form imports, payments, automation, and more.
-
+The all-in-one WordPress form builder with drag-and-drop editing, multi-step forms, SMTP configuration, imports, analytics, and more.
 
 == Description ==
 
-FormOrbit is a modern drag-and-drop WordPress form builder designed to help you create beautiful, high-converting forms without writing code.
+FormOrbit provides a native WordPress form-building experience:
 
-Features include:
-
-* Drag & Drop Form Builder
-* Multi-Step Forms
-* Conditional Logic
-* Email Notifications
-* Free SMTP Configuration Wizard
-* One-Click SMTP Email Testing
-* Import Forms from Contact Form 7, WPForms and more
-* AJAX Forms
-* File Upload Fields
-* reCAPTCHA & Anti-Spam Protection
-* Payment Integrations
-* Webhooks & Automation
-* Responsive Form Designer
-* Custom CSS & JavaScript
-* Gutenberg Block
-* Elementor Widget
-* Shortcodes
-* Form Analytics
-* Entry Management
-* Export & Import
-* Developer Hooks & Filters
+* Drag-and-drop field ordering
+* Multiple stages with progress indicators
+* Name, text, email, textarea, dropdown, radio, checkbox, number, date, phone, URL, consent, secure file upload, and heading fields
+* Conditional field visibility
+* Required-field and email validation
+* AJAX submission without page reload
+* WordPress-native entry storage and admin entry browser
+* Email notifications
+* Entry filtering, pagination, deletion, and CSV export
+* One-click form duplication
+* Configurable submit labels and confirmation redirects
+* Shortcode embedding
+* Nonces, capability checks, sanitization, escaping, and a spam honeypot
+* Login requirements and total submission limits
+* Polls with live percentage results
+* Scored quizzes with configurable answers and points
+* 10 free ready-to-customize form templates
+* Time, slider, rating, hidden, HTML, CAPTCHA, and page-break tools
+* Modern, minimal, and rounded style presets with custom colors
+* Optional Google reCAPTCHA v2 verification
+* Import converters for WPForms, Gravity Forms, Fluent Forms, and Contact Form 7
+* Form views, unique visitors, engagement, submissions, conversion, date ranges, and per-form analytics
+* Safe field-type conversion that preserves compatible labels, choices, styling, and validation
 
 FormOrbit is created by Mahfuzar Rahman. Advanced automation, payment, document, and marketing features are available in a separately distributed Pro add-on.
-
-Developer: mahfuzar
-Plugin website: https://webninjallc.com
-
-==  🚀 Upgrade to FormOrbit Pro ==
-
-Take your forms to the next level with FormOrbit Pro.
-
-Features include:
-
-* Premium form templates
-* Advanced conditional logic
-* Additional payment gateways
-* CRM & marketing integrations
-* Automation workflows
-* Priority support
-* Regular feature updates
-
-👉 Get FormOrbit Pro:
-https://webninjallc.com/plugins/formorbit
 
 == Installation ==
 
@@ -69,30 +48,25 @@ https://webninjallc.com/plugins/formorbit
 4. Build and save your form.
 5. Copy the generated `[formorbit id="123"]` shortcode into any post or page.
 
-== Screenshots ==
-1. Form Editor View
-2. Available Fields on Free Mode
-3. Start with free templates
-4. Dashboard View
-5. Formorbit Tools (Import/Export/Resources)
-6. Email SMTP Configuration
-7. Shortcode 
-8. Templates Gallery 
-
 == Changelog ==
+
+= 4.7.0 =
+* Added Analytics & Reporting with form views, session-based unique visitors, engaged visitors, submissions, conversion, daily activity, form filters, and date ranges.
+* Added safe field-type conversion to the field settings panel.
+* Added a Settings action beside Deactivate on the WordPress Plugins screen.
+* Added a polite, dismissible WordPress.org review request for established Free installations.
+* Corrected editor field-icon vertical alignment.
+* Improved Pro integration empty states and prevented audience/list controls from being cut off.
+* Added the Free-side compatibility layer and upgrade preview for Pro WordPress Post Fields.
 
 = 4.6.3 =
 * Added WordPress.org plugin banners, icons, and screenshots.
-* Improved plugin branding and directory listing appearance.
-* Enhanced documentation and readme formatting.
-* Improved overall plugin presentation on WordPress.org.
-* Minor code cleanup and stability improvements.
-* Fixed small UI inconsistencies.
+* Improved plugin branding, directory listing presentation, and readme formatting.
+* Fixed minor interface inconsistencies.
 
 = 4.6.1 =
-* Screenshots added
-* Form Icon and Banner updated
-* Bug Fixes
+* Added directory screenshots, plugin icons, and banner assets.
+* Fixed minor presentation issues.
 
 = 4.6.0 =
 * Added international phone entry with a configurable default country, visitor country selector, live formatting, and E.164-style server validation.
