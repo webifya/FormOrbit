@@ -1,7 +1,7 @@
 (function ($) {
     'use strict';
 
-    const defaults = { name: 'Name', text: 'Text', email: 'Email', textarea: 'Long text', select: 'Dropdown', radio: 'Radio', checkbox: 'Checkbox', number: 'Number', date: 'Date', time: 'Time', phone: 'Phone', url: 'Website', file: 'File upload', consent: 'I agree to the terms', poll: 'Poll question', quiz: 'Quiz question', rating: 'Rating', slider: 'Slider', hidden: 'Hidden field', html: 'HTML content', captcha: 'Security check', calculation: 'Calculation', signature: 'Signature', rich_text: 'Rich text', divider: 'Divider', field_group: 'Field group', address: 'Address', repeater: 'Repeater', appointment: 'Appointment', nps: 'NPS score', currency: 'Currency', product: 'Product selector', price: 'Price', post_title: 'Post title', post_body: 'Post body', post_excerpt: 'Post excerpt', post_tags: 'Post tags', post_custom: 'Post custom field', heading: 'Heading' };
+    const defaults = { name: 'Name', text: 'Text', email: 'Email', textarea: 'Long text', select: 'Dropdown', radio: 'Radio', checkbox: 'Checkbox', number: 'Number', date: 'Date', time: 'Time', phone: 'Phone', url: 'Website', file: 'File upload', consent: 'I agree to the terms', poll: 'Poll question', quiz: 'Quiz question', rating: 'Rating', slider: 'Slider', hidden: 'Hidden field', html: 'HTML content', captcha: 'Security check', calculation: 'Calculation', signature: 'Signature', rich_text: 'Rich text', divider: 'Divider', field_group: 'Field group', address: 'Address', repeater: 'Repeater', appointment: 'Appointment', nps: 'NPS score', currency: 'Currency', product: 'Product selector', price: 'Price', quantity: 'Quantity', product_option: 'Product option', shipping: 'Shipping', donation: 'Donation', total: 'Order total', post_title: 'Post title', post_body: 'Post body', post_excerpt: 'Post excerpt', post_tags: 'Post tags', post_custom: 'Post custom field', heading: 'Heading' };
     const fieldIcons = {
         '': ['No icon', 'dashicons-minus'],
         user: ['Person', 'dashicons-admin-users'],
@@ -240,7 +240,8 @@
         const integrations = {
             'Email marketing & CRM': ['Mailchimp', 'Brevo', 'ActiveCampaign', 'Kit', 'GetResponse', 'LeadConnector / GoHighLevel'],
             'Payments': ['Stripe', 'PayPal', 'Square', 'Bank transfer'],
-            'Automation & documents': ['Zapier', 'Webhooks', 'PDF notifications']
+            'Messaging': ['Twilio', 'Vonage', 'MessageBird', 'Telnyx', 'Email & SMS follow-ups'],
+            'Automation & documents': ['Zapier', 'Webhooks', 'PDF notifications', 'Public URL form import']
         };
         const catalog = `<h2>Integrations</h2>
             <p class="description">Connect form submissions to email marketing, payments, automation, and document tools with FormOrbit Pro.</p>
@@ -823,6 +824,11 @@
             currency: `<div class="webform-preview-control webform-preview-currency"><b>${escapeHtml(field.currency_symbol || '$')}</b><span>${placeholder || '0.00'}</span></div>`,
             product: `<div class="webform-preview-product">${(field.options || ['Standard|19.99','Premium|39.99']).map(option => { const parts = option.split('|'); return `<span><i></i><strong>${escapeHtml(parts[0])}</strong><em>${escapeHtml(parts[1] || '0.00')}</em></span>`; }).join('')}</div>`,
             price: `<div class="webform-preview-price"><span>${escapeHtml(field.label || 'Price')}</span><strong>${escapeHtml(field.currency_code || 'USD')} ${Number(field.price_amount || 0).toFixed(2)}</strong></div>`,
+            quantity: `<div class="webform-preview-control webform-preview-number"><span>${Number(field.min ?? 1)}</span><span class="webform-preview-steppers">⌃<br>⌄</span></div>`,
+            product_option: `<div class="webform-preview-control webform-preview-select"><span>${escapeHtml(String((field.options || ['Option|0'])[0]).replace('|', ' — '))}</span><span>⌄</span></div>`,
+            shipping: `<div class="webform-preview-control webform-preview-select"><span>${escapeHtml(String((field.options || ['Standard shipping|0'])[0]).replace('|', ' — '))}</span><span>⌄</span></div>`,
+            donation: `<div class="webform-preview-control webform-preview-currency"><b>${escapeHtml(field.currency_symbol || '$')}</b><span>0.00</span></div>`,
+            total: `<div class="webform-preview-price"><span>${escapeHtml(field.label || 'Order total')}</span><strong>${escapeHtml(field.currency_code || 'USD')} 0.00</strong></div>`,
             post_title: '<div class="webform-preview-control"><span>WordPress post title</span></div>',
             post_body: '<div class="webform-preview-control webform-preview-textarea"><span>WordPress post content</span></div>',
             post_excerpt: '<div class="webform-preview-control webform-preview-textarea"><span>Short post summary</span></div>',
@@ -927,7 +933,7 @@
         const previousType = field.type;
         if (previousType === nextType) return;
         field.type = nextType;
-        const choiceTypes = ['select', 'radio', 'checkbox', 'poll', 'quiz', 'product'];
+        const choiceTypes = ['select', 'radio', 'checkbox', 'poll', 'quiz', 'product', 'product_option', 'shipping'];
         if (choiceTypes.includes(nextType) && (!Array.isArray(field.options) || !field.options.length)) field.options = nextType === 'product' ? ['Standard|19.99', 'Premium|39.99'] : ['Option 1', 'Option 2'];
         if (nextType === 'textarea' && !field.rows) field.rows = 5;
         if (nextType === 'html' && !field.html) field.html = `<p>${escapeHtml(field.label || 'Custom content')}</p>`;
@@ -1027,7 +1033,7 @@
             $('#webform-field-settings').html('<div class="webform-locked-field-message"><span class="dashicons dashicons-lock"></span><strong>Pro field unavailable</strong><p>This field and its settings are preserved. Activate FormOrbit Pro with a valid license to edit or display it.</p></div>');
             return;
         }
-        const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz', 'product'].includes(field.type);
+        const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz', 'product', 'product_option', 'shipping'].includes(field.type);
         const candidates = schema.flatMap(stage => stage.fields).filter(item => item.id !== field.id && !['heading','file','html','rich_text','divider'].includes(item.type));
         const condition = field.condition || { enabled: false, field_id: '', operator: 'equals', value: '' };
         const selectedIcon = fieldIcons[field.icon] || fieldIcons[''];
@@ -1057,7 +1063,9 @@
             ${field.type === 'appointment' ? `<label>Earliest date and time<input type="datetime-local" data-prop="min_date" value="${escapeHtml(field.min_date || '')}"></label><label>Latest date and time<input type="datetime-local" data-prop="max_date" value="${escapeHtml(field.max_date || '')}"></label>` : ''}
             ${field.type === 'currency' ? `<label>Currency symbol<input type="text" maxlength="5" data-prop="currency_symbol" value="${escapeHtml(field.currency_symbol || '$')}"></label><label>Minimum<input type="number" step="0.01" data-prop="min" value="${Number(field.min ?? 0)}"></label><label>Maximum<input type="number" step="0.01" data-prop="max" value="${Number(field.max ?? 999999999)}"></label>` : ''}
             ${field.type === 'product' ? `<p class="description">Enter each product as <code>Product name|19.99</code>.</p>` : ''}
-            ${field.type === 'price' ? `<label>Amount<input type="number" min="0" step="0.01" data-prop="price_amount" value="${Number(field.price_amount || 0)}"></label><label>Currency<select data-prop="currency_code">${['USD','EUR','GBP','CAD','AUD','BDT'].map(code => `<option ${field.currency_code === code ? 'selected' : ''}>${code}</option>`).join('')}</select></label>` : ''}
+            ${['product_option','shipping'].includes(field.type) ? `<p class="description">Enter each option as <code>Option name|5.00</code>. Use zero for a free option.</p>` : ''}
+            ${['price','total'].includes(field.type) ? `${field.type === 'price' ? `<label>Amount<input type="number" min="0" step="0.01" data-prop="price_amount" value="${Number(field.price_amount || 0)}"></label>` : ''}<label>Currency<select data-prop="currency_code">${['USD','EUR','GBP','CAD','AUD','BDT'].map(code => `<option ${field.currency_code === code ? 'selected' : ''}>${code}</option>`).join('')}</select></label>` : ''}
+            ${['quantity','donation'].includes(field.type) ? `<div class="webform-child-editor-grid"><label>Minimum<input type="number" data-prop="min" value="${Number(field.min ?? (field.type === 'quantity' ? 1 : 0))}"></label><label>Maximum<input type="number" data-prop="max" value="${Number(field.max ?? 999999)}"></label><label>Step<input type="number" min="0.01" step="0.01" data-prop="step" value="${Number(field.step ?? (field.type === 'quantity' ? 1 : .01))}"></label></div>` : ''}
             ${field.type === 'post_title' ? `<div class="webform-post-field-settings"><p class="description"><strong>WordPress content creation</strong><br>This field controls the generated content type and publishing status.</p><label>Content type<select data-prop="post_type">${Object.entries(WebformAdmin.postTypes || {post:'Post',page:'Page'}).filter(([type]) => !['attachment','webform_form','webform_entry'].includes(type)).map(([type,label]) => `<option value="${escapeHtml(type)}" ${(field.post_type || 'post') === type ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}</select></label><label>New content status<select data-prop="post_status"><option value="draft" ${(field.post_status || 'draft') === 'draft' ? 'selected' : ''}>Draft</option><option value="pending" ${field.post_status === 'pending' ? 'selected' : ''}>Pending review</option><option value="publish" ${field.post_status === 'publish' ? 'selected' : ''}>Publish immediately</option></select></label></div>` : ''}
             ${field.type === 'post_custom' ? `<label>Custom field meta key<input type="text" data-prop="post_meta_key" value="${escapeHtml(field.post_meta_key || '')}" placeholder="customer_reference"></label>` : ''}
             ${field.type === 'divider' ? `<hr><div class="webform-divider-settings"><h3>Divider design <span class="webform-pro-badge">PRO</span></h3>
@@ -1105,7 +1113,7 @@
             render();
             return;
         }
-        const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz', 'product'].includes(type);
+        const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz', 'product', 'product_option', 'shipping'].includes(type);
         const field = { id: uid('field'), type, label: defaults[type] || 'Field', icon: '', placeholder: '', hide_label: false, required: ['consent','captcha','signature','post_title'].includes(type), options: choices ? (type === 'product' ? ['Standard|19.99', 'Premium|39.99'] : ['Option 1', 'Option 2']) : [], choice_columns: 1, children: ['field_group', 'repeater'].includes(type) ? defaultContainerChildren(type) : [], allowed_extensions: 'jpg,jpeg,png,pdf,doc,docx', max_size: 5, correct_answer: '', points: 1, default_value: '', html: '<p>Add your content here.</p>', rich_content: type === 'rich_text' ? '<h3>Agreement terms</h3><p>Describe the terms, responsibilities, and conditions of this agreement.</p><p><strong>Acceptance:</strong> Add a Consent field and E-signature below this agreement.</p>' : '', rows: 5, date_rule: 'any', date_min: '', date_max: '', min: 0, max: type === 'currency' ? 999999999 : 100, step: 1, formula: '', decimal_places: 2, group_count: 2, group_columns: 2, repeater_min: 1, repeater_max: 10, repeater_button: 'Add another row', currency_symbol: '$', price_amount: 0, currency_code: 'USD', post_meta_key: '', post_type: 'post', post_status: 'draft', min_date: '', max_date: '', divider_show_label: false, divider_label_position: 'above', divider_style: 'solid', divider_alignment: 'center', divider_width: 100, divider_thickness: 1, divider_color: '#dfe1e6', divider_margin_top: 10, divider_margin_bottom: 10, divider_padding_top: 0, divider_padding_bottom: 0, style: { width: type === 'divider' ? '100' : (WebformAdmin.proActive ? 'auto' : '100') }, condition: { enabled: false, field_id: '', operator: 'equals', value: '' } };
         schema[activeStage].fields.push(field);
         selectedId = field.id;
