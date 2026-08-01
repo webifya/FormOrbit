@@ -153,7 +153,7 @@ class Webform_Admin {
         <div class="wrap webform-wrap">
             <div class="webform-page-head">
                 <div><h1><?php esc_html_e('FormOrbit', 'formorbit'); ?></h1><p><?php esc_html_e('Build and manage forms without code.', 'formorbit'); ?></p></div>
-                <a class="button button-primary webform-create-button" href="<?php echo esc_url(admin_url('admin.php?page=formorbit-builder')); ?>"><span class="dashicons dashicons-plus-alt2"></span><?php esc_html_e('Create form', 'formorbit'); ?></a>
+                <a class="button button-primary webform-create-button" href="<?php echo esc_url(admin_url('admin.php?page=formorbit-builder')); ?>"><svg class="webform-button-icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M9 3h2v6h6v2h-6v6H9v-6H3V9h6z"></path></svg><?php esc_html_e('Create form', 'formorbit'); ?></a>
             </div>
             <div class="webform-card webform-list-card">
                 <div class="webform-list-toolbar">
