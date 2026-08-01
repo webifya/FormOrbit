@@ -59,6 +59,10 @@ class Webform_Mailer {
                 <input type="hidden" name="action" value="formorbit_save_mail_settings"><?php wp_nonce_field('webform_save_mail_settings'); ?>
                 <label class="webform-check"><input type="checkbox" name="enabled" value="1" <?php checked(!empty($settings['enabled'])); ?>> <?php esc_html_e('Enable SMTP email delivery', 'formorbit'); ?></label>
                 <p class="description"><?php esc_html_e('Leave this disabled if another SMTP or transactional-email plugin already controls WordPress email.', 'formorbit'); ?></p>
+                <label><?php esc_html_e('Email provider', 'formorbit'); ?><select name="provider" id="formorbit-mail-provider">
+                    <?php foreach ($this->providers() as $provider_id => $provider) : ?><option value="<?php echo esc_attr($provider_id); ?>" <?php selected($settings['provider'], $provider_id); ?>><?php echo esc_html($provider['label']); ?></option><?php endforeach; ?>
+                </select></label>
+                <p class="description" id="formorbit-mail-provider-help"><?php esc_html_e('Choose a provider to fill its recommended SMTP server, port, and encryption. Enter the credentials issued by that provider.', 'formorbit'); ?></p>
                 <div class="webform-mail-grid">
                     <label><?php esc_html_e('SMTP host', 'formorbit'); ?><input type="text" name="host" value="<?php echo esc_attr($settings['host']); ?>" placeholder="smtp.example.com"></label>
                     <label><?php esc_html_e('Port', 'formorbit'); ?><input type="number" name="port" min="1" max="65535" value="<?php echo esc_attr($settings['port']); ?>"></label>
@@ -72,6 +76,9 @@ class Webform_Mailer {
                 <label class="webform-check"><input type="checkbox" name="force_from" value="1" <?php checked(!empty($settings['force_from'])); ?>> <?php esc_html_e('Use this From address for WordPress email', 'formorbit'); ?></label>
                 <button class="button button-primary"><?php esc_html_e('Save email settings', 'formorbit'); ?></button>
             </form>
+            <script>
+            (function(){var select=document.getElementById('formorbit-mail-provider');if(!select)return;var presets=<?php echo wp_json_encode($this->providers()); ?>;var form=select.form;function apply(force){var item=presets[select.value]||presets.custom;if(!item)return;var host=form.elements.host,port=form.elements.port,encryption=form.elements.encryption,username=form.elements.username;if(force||!host.value)host.value=item.host||'';if(force||!port.value)port.value=item.port||587;if(force||!encryption.value)encryption.value=item.encryption||'tls';if(item.username&&!username.value)username.value=item.username;}select.addEventListener('change',function(){apply(true);});apply(false);}());
+            </script>
         </div>
         <div class="webform-card webform-mail-card"><h2><?php esc_html_e('Send a test email', 'formorbit'); ?></h2><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="formorbit_send_test_email"><?php wp_nonce_field('webform_send_test_email'); ?><label><?php esc_html_e('Recipient', 'formorbit'); ?><input type="email" name="recipient" required value="<?php echo esc_attr(wp_get_current_user()->user_email); ?>"></label><button class="button"><?php esc_html_e('Send test email', 'formorbit'); ?></button></form><p class="description"><?php esc_html_e('A successful test means WordPress handed the message to the configured mail server; final inbox delivery still depends on the provider and DNS authentication.', 'formorbit'); ?></p></div>
         </div>
@@ -82,8 +89,10 @@ class Webform_Mailer {
         $this->authorize('webform_save_mail_settings');
         $current = $this->settings();
         $password = sanitize_text_field(wp_unslash($_POST['password'] ?? ''));
+        $provider = sanitize_key(wp_unslash($_POST['provider'] ?? 'custom'));
         $settings = array(
             'enabled' => !empty($_POST['enabled']),
+            'provider' => array_key_exists($provider, $this->providers()) ? $provider : 'custom',
             'host' => strtolower(sanitize_text_field(wp_unslash($_POST['host'] ?? ''))),
             'port' => min(65535, max(1, absint($_POST['port'] ?? 587))),
             'encryption' => in_array($_POST['encryption'] ?? '', array('tls', 'ssl', 'none'), true) ? sanitize_key($_POST['encryption']) : 'tls',
@@ -114,7 +123,23 @@ class Webform_Mailer {
     }
 
     private function settings() {
-        return wp_parse_args((array) get_option($this->option, array()), array('enabled' => false, 'host' => '', 'port' => 587, 'encryption' => 'tls', 'authentication' => true, 'username' => '', 'password' => '', 'from_email' => get_option('admin_email'), 'from_name' => get_bloginfo('name'), 'force_from' => true));
+        return wp_parse_args((array) get_option($this->option, array()), array('enabled' => false, 'provider' => 'custom', 'host' => '', 'port' => 587, 'encryption' => 'tls', 'authentication' => true, 'username' => '', 'password' => '', 'from_email' => get_option('admin_email'), 'from_name' => get_bloginfo('name'), 'force_from' => true));
+    }
+
+    private function providers() {
+        return array(
+            'custom' => array('label' => __('Custom SMTP', 'formorbit'), 'host' => '', 'port' => 587, 'encryption' => 'tls'),
+            'mailgun' => array('label' => 'Mailgun', 'host' => 'smtp.mailgun.org', 'port' => 587, 'encryption' => 'tls'),
+            'brevo' => array('label' => 'Brevo', 'host' => 'smtp-relay.brevo.com', 'port' => 587, 'encryption' => 'tls'),
+            'sendgrid' => array('label' => 'SendGrid', 'host' => 'smtp.sendgrid.net', 'port' => 587, 'encryption' => 'tls', 'username' => 'apikey'),
+            'amazon_ses' => array('label' => 'Amazon SES (US East 1)', 'host' => 'email-smtp.us-east-1.amazonaws.com', 'port' => 587, 'encryption' => 'tls'),
+            'postmark' => array('label' => 'Postmark', 'host' => 'smtp.postmarkapp.com', 'port' => 587, 'encryption' => 'tls'),
+            'mailjet' => array('label' => 'Mailjet', 'host' => 'in-v3.mailjet.com', 'port' => 587, 'encryption' => 'tls'),
+            'mailersend' => array('label' => 'MailerSend', 'host' => 'smtp.mailersend.net', 'port' => 587, 'encryption' => 'tls'),
+            'gmail' => array('label' => 'Gmail / Google Workspace', 'host' => 'smtp.gmail.com', 'port' => 587, 'encryption' => 'tls'),
+            'microsoft_365' => array('label' => 'Microsoft 365 / Outlook', 'host' => 'smtp.office365.com', 'port' => 587, 'encryption' => 'tls'),
+            'zoho' => array('label' => 'Zoho Mail', 'host' => 'smtp.zoho.com', 'port' => 587, 'encryption' => 'tls'),
+        );
     }
 
     private function protect($password) {
