@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 4.8.1
+Stable tag: 4.8.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -101,6 +101,10 @@ Yes. FormOrbit Pro is an add-on that extends the Free builder, so both compatibl
 5. Copy the generated `[formorbit id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 4.8.2 =
+* Improved the installed-plugin description to communicate FormOrbit's main use cases and capabilities.
+* Added a prominent Go Pro action beside Settings and Deactivate; it disappears automatically when Pro is active.
 
 = 4.8.1 =
 * Rebuilt the WordPress.org description around clear use cases, Free features, migration tools, security, and data ownership.
