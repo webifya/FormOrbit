@@ -17,6 +17,9 @@ final class FormOrbit_Site_Profile {
     }
 
     public static function enabled() {
+        $pro_license = (array) get_option('webform_pro_license', array());
+        $pro_status = (array) get_option('webform_pro_license_status', array());
+        if (!empty($pro_license['license_key']) && !empty($pro_status['valid'])) return true;
         $settings = (array) get_option('webform_global_settings', array());
         return !empty($settings['usage_sharing_enabled']);
     }
@@ -47,6 +50,14 @@ final class FormOrbit_Site_Profile {
                 'instance_id' => $this->instance_id(),
                 'site_url' => home_url('/'),
                 'site_data' => wp_json_encode(array_merge($site_data, $product)),
+                'profile' => wp_json_encode(array_merge($site_data, $product)),
+                'site_profile' => wp_json_encode(array_merge($site_data, $product)),
+                'plugin' => $product['product'],
+                'plugin_slug' => $product['product'],
+                'product_slug' => $product['product'],
+                'plugin_version' => $product['version'],
+                'contact_email' => $site_data['admin_email'],
+                'license' => $product['license_key'],
                 'telemetry_consent' => 'yes',
             ));
             $response = wp_safe_remote_post(self::ENDPOINT, array(
@@ -82,6 +93,10 @@ final class FormOrbit_Site_Profile {
     private function site_data() {
         global $wp_version;
         $theme = wp_get_theme();
+        $message = '';
+        if (is_array($body)) {
+            $message = $body['message'] ?? ($body['data']['message'] ?? ($body['code'] ?? ''));
+        }
         return array(
             'site_name' => sanitize_text_field(get_bloginfo('name')),
             'admin_email' => sanitize_email(get_option('admin_email')),
@@ -108,7 +123,7 @@ final class FormOrbit_Site_Profile {
         return array(
             'success' => $code >= 200 && $code < 300,
             'code' => absint($code),
-            'message' => sanitize_text_field(is_array($body) ? ($body['message'] ?? '') : ''),
+            'message' => sanitize_text_field($message),
         );
     }
 }
