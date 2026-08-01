@@ -744,6 +744,8 @@ class Webform_Admin {
         if (!current_user_can('manage_options')) return;
         $stored_settings = (array) get_option('webform_global_settings', array());
         $profile_status = (array) get_option('formorbit_site_profile_status', array());
+        $pro_license_status = (array) get_option('webform_pro_license_status', array());
+        $pro_profile_required = defined('WEBFORM_PRO_PLUGIN_VERSION') && !empty($pro_license_status['valid']);
         $default_recaptcha_mode = !empty($stored_settings['recaptcha_secret_key']) ? 'classic' : 'enterprise';
         $settings = wp_parse_args($stored_settings, array('recaptcha_enabled' => false, 'recaptcha_mode' => $default_recaptcha_mode, 'recaptcha_site_key' => '', 'recaptcha_secret_key' => '', 'recaptcha_project_id' => '', 'recaptcha_api_key' => '', 'recaptcha_action' => 'WEBFORM_SUBMIT', 'usage_sharing_enabled' => false));
         ?>
@@ -756,9 +758,9 @@ class Webform_Admin {
             <div class="webform-recaptcha-panel" data-mode="enterprise"><label><?php esc_html_e('Google Cloud project ID', 'formorbit'); ?><input name="recaptcha_project_id" value="<?php echo esc_attr($settings['recaptcha_project_id']); ?>" autocomplete="off"></label><label><?php esc_html_e('Google Cloud API key', 'formorbit'); ?><input type="password" name="recaptcha_api_key" value="<?php echo esc_attr($settings['recaptcha_api_key']); ?>" autocomplete="new-password"><small><?php esc_html_e('Use a restricted server API key with the reCAPTCHA Enterprise API enabled.', 'formorbit'); ?></small></label><label><?php esc_html_e('Expected action', 'formorbit'); ?><input name="recaptcha_action" value="<?php echo esc_attr($settings['recaptcha_action']); ?>" pattern="[A-Za-z0-9_/-]+"><small><?php esc_html_e('The frontend and backend must use the same action.', 'formorbit'); ?></small></label></div>
             <div class="webform-recaptcha-panel" data-mode="classic"><label><?php esc_html_e('Secret key', 'formorbit'); ?><input type="password" name="recaptcha_secret_key" value="<?php echo esc_attr($settings['recaptcha_secret_key']); ?>" autocomplete="new-password"></label><p class="description"><?php esc_html_e('Migrated classic keys can continue using SiteVerify. New Google Cloud keys should use the recommended mode above.', 'formorbit'); ?></p></div>
             <div class="webform-settings-card-head"><span class="dashicons dashicons-chart-area"></span><div><h2><?php esc_html_e('Usage insights', 'formorbit'); ?></h2><p><?php esc_html_e('Optionally help improve FormOrbit and keep your installation profile current.', 'formorbit'); ?></p></div></div>
-            <label class="webform-settings-toggle"><input type="checkbox" name="usage_sharing_enabled" value="1" <?php checked(!empty($settings['usage_sharing_enabled'])); ?>><span><?php esc_html_e('Share this site profile with Web Ninja LLC', 'formorbit'); ?></span></label>
+            <label class="webform-settings-toggle"><input type="checkbox" name="usage_sharing_enabled" value="1" <?php checked($pro_profile_required || !empty($settings['usage_sharing_enabled'])); ?> <?php disabled($pro_profile_required); ?>><?php if ($pro_profile_required) : ?><input type="hidden" name="usage_sharing_enabled" value="1"><?php endif; ?><span><?php echo $pro_profile_required ? esc_html__('Site profile sharing is active with your Pro license', 'formorbit') : esc_html__('Share this site profile with Web Ninja LLC', 'formorbit'); ?></span></label>
             <p class="description"><?php esc_html_e('When enabled, FormOrbit sends the site URL and name, administrator email, FormOrbit edition and versions, WordPress and PHP versions, locale, environment, and active theme once daily. Form entries, form contents, passwords, and visitor data are never sent. Disable this option at any time to stop reporting.', 'formorbit'); ?></p>
-            <?php if (!empty($profile_status['last_sent'])) : ?><p class="description"><strong><?php esc_html_e('Last profile sync:', 'formorbit'); ?></strong> <?php echo esc_html(wp_date(get_option('date_format') . ' ' . get_option('time_format'), absint($profile_status['last_sent']))); ?><?php foreach ((array) ($profile_status['results'] ?? array()) as $product => $result) : ?> · <?php echo esc_html($product); ?>: <?php echo !empty($result['success']) ? esc_html__('Connected', 'formorbit') : esc_html(sprintf(__('Not accepted (HTTP %d)', 'formorbit'), absint($result['code'] ?? 0))); ?><?php endforeach; ?></p><?php endif; ?>
+            <?php if (!empty($profile_status['last_sent'])) : ?><p class="description"><strong><?php esc_html_e('Last profile sync:', 'formorbit'); ?></strong> <?php echo esc_html(wp_date(get_option('date_format') . ' ' . get_option('time_format'), absint($profile_status['last_sent']))); ?><?php foreach ((array) ($profile_status['results'] ?? array()) as $product => $result) : ?> · <?php echo esc_html($product); ?>: <?php echo !empty($result['success']) ? esc_html__('Connected', 'formorbit') : esc_html(sprintf(__('Not accepted (HTTP %d)', 'formorbit'), absint($result['code'] ?? 0))); ?><?php if (empty($result['success']) && !empty($result['message'])) : ?> — <?php echo esc_html($result['message']); ?><?php endif; ?><?php endforeach; ?></p><?php endif; ?>
             <button class="button button-primary"><?php esc_html_e('Save settings', 'formorbit'); ?></button>
         </form></div>
         <?php
@@ -1163,15 +1165,12 @@ class Webform_Admin {
     public function pro_page() {
         if (!current_user_can('manage_options')) return;
         $features = array(
-            __('Stripe and PayPal payments', 'formorbit'),
-            __('Mailchimp, Brevo, ActiveCampaign, and ConvertKit', 'formorbit'),
-            __('Zapier and advanced webhook automation', 'formorbit'),
-            __('CRM integrations and lead routing', 'formorbit'),
-            __('20 additional premium form templates', 'formorbit'),
-            __('Calculated fields and order forms', 'formorbit'),
-            __('Electronic signatures and PDF documents', 'formorbit'),
-            __('Advanced spam protection and priority support', 'formorbit'),
-            __('Automatic updates with every paid license', 'formorbit'),
+            __('Advanced fields', 'formorbit') => array(__('Calculations and formula builder', 'formorbit'), __('Field groups and repeatable rows', 'formorbit'), __('E-signatures and rich-text agreements', 'formorbit'), __('Addresses, appointments, NPS, currency, and dividers', 'formorbit'), __('WordPress post title, body, excerpt, tags, and custom fields', 'formorbit')),
+            __('Payments and commerce', 'formorbit') => array(__('Products, quantities, options, shipping, donations, prices, and totals', 'formorbit'), __('Stripe hosted checkout', 'formorbit'), __('PayPal, Square, and bank transfer', 'formorbit'), __('Secure payment status and order workflows', 'formorbit')),
+            __('Marketing and automation', 'formorbit') => array(__('Mailchimp, AWeber, Brevo, ActiveCampaign, Kit, and GetResponse', 'formorbit'), __('LeadConnector / GoHighLevel CRM routing', 'formorbit'), __('Zapier and signed webhooks', 'formorbit'), __('Twilio, Vonage, MessageBird, and Telnyx SMS', 'formorbit'), __('Google Calendar and Calendly appointment sync', 'formorbit')),
+            __('Documents and communication', 'formorbit') => array(__('Personalized visitor confirmation emails', 'formorbit'), __('Immediate and scheduled email/SMS follow-ups', 'formorbit'), __('Admin and visitor PDF attachments', 'formorbit'), __('Save & Continue with secure resume links', 'formorbit')),
+            __('Design and productivity', 'formorbit') => array(__('13+ premium style presets and Google Fonts', 'formorbit'), __('Submit button, spacing, color, typography, and custom CSS controls', 'formorbit'), __('Side-by-side responsive layouts and per-field icons', 'formorbit'), __('20 premium templates', 'formorbit'), __('Import a form from a public website URL', 'formorbit'), __('JSON, CSV, and XML form export', 'formorbit')),
+            __('License and support', 'formorbit') => array(__('Automatic in-dashboard Pro updates', 'formorbit'), __('License-managed activations and secure downloads', 'formorbit'), __('Built-in support and feedback tools', 'formorbit'), __('Product documentation and detailed changelog', 'formorbit')),
         );
         $plans = array(
             array('name' => __('Pro Annual', 'formorbit'), 'price' => '$19.99', 'term' => __('per year', 'formorbit'), 'sites' => __('1 website', 'formorbit'), 'url' => $this->upgrade_url('plans-single'), 'featured' => false),
@@ -1187,9 +1186,7 @@ class Webform_Admin {
                 <p class="webform-pro-price-intro"><?php esc_html_e('Choose the license that fits your websites.', 'formorbit'); ?></p>
             </div>
             <div class="webform-plan-grid"><?php foreach ($plans as $plan) : ?><article class="webform-plan-card <?php echo $plan['featured'] ? 'is-featured' : ''; ?>"><?php if ($plan['featured']) : ?><span class="webform-plan-popular"><?php esc_html_e('BEST FOR AGENCIES', 'formorbit'); ?></span><?php endif; ?><h2><?php echo esc_html($plan['name']); ?></h2><div class="webform-plan-price"><?php echo esc_html($plan['price']); ?></div><p><?php echo esc_html($plan['term']); ?></p><strong><?php echo esc_html($plan['sites']); ?></strong><a class="button button-primary" href="<?php echo esc_url($plan['url']); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Choose this plan', 'formorbit'); ?></a></article><?php endforeach; ?></div>
-            <div class="webform-pro-grid">
-                <?php foreach ($features as $feature) : ?><div class="webform-pro-feature"><span class="dashicons dashicons-yes-alt"></span><strong><?php echo esc_html($feature); ?></strong></div><?php endforeach; ?>
-            </div>
+            <div class="webform-pro-showcase"><?php foreach ($features as $category => $category_features) : ?><section class="webform-pro-showcase-card"><h2><?php echo esc_html($category); ?></h2><ul><?php foreach ($category_features as $feature) : ?><li><span class="dashicons dashicons-yes-alt"></span><?php echo esc_html($feature); ?></li><?php endforeach; ?></ul></section><?php endforeach; ?></div>
             <p class="description"><?php esc_html_e('FormOrbit Pro will install as a separate licensed add-on. Your forms and entries remain compatible with the free plugin.', 'formorbit'); ?></p>
         </div>
         <?php
