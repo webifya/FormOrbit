@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 4.9.4
+Stable tag: 4.9.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -13,6 +13,12 @@ Build responsive forms visually with multi-step layouts, templates, SMTP deliver
 == Description ==
 
 FormOrbit is a visual WordPress form builder for contact forms, registrations, surveys, polls, quizzes, applications, feedback forms, and multi-step workflows. Build in WordPress, keep your entries in WordPress, and publish anywhere with a shortcode.
+
+= A WordPress form builder for real business workflows =
+
+Create responsive contact forms, lead-generation forms, quote requests, event registrations, customer surveys, scored quizzes, polls, job applications, booking requests, newsletter forms, and multi-step onboarding forms without writing code. FormOrbit keeps form management and submission data inside WordPress while giving administrators a focused visual builder.
+
+FormOrbit Pro extends the same interface for payment forms, donation forms, order forms, contracts, electronic signatures, appointments, WordPress post submissions, CRM routing, calendar scheduling, PDF delivery, and automated email or SMS follow-ups.
 
 = Build forms without code =
 
@@ -101,6 +107,11 @@ Yes. FormOrbit Pro is an add-on that extends the Free builder, so both compatibl
 5. Copy the generated `[formorbit id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 4.9.5 =
+* Renamed Usage Insights to Compatibility Profile and replaced the technical explanation with concise customer-friendly guidance.
+* Clarified that compatibility reporting never includes forms, entries, passwords, payment information, or visitor data.
+* Expanded the WordPress.org description with practical form use cases and Pro workflow examples.
 
 = 4.9.4 =
 * Replaced the style-preview Dashicon with a centered, self-contained preview symbol.
@@ -447,7 +458,7 @@ Google Privacy Policy: https://policies.google.com/privacy
 
 Google Cloud Service Terms: https://cloud.google.com/terms/service-terms
 
-When a site administrator explicitly enables Usage Insights, FormOrbit sends a site profile to Web Ninja LLC at `https://www.webninjallc.com/wp-json/wnlm/v1/site-profile`. The profile contains the site URL and name, administrator email, installation identifier, FormOrbit edition and versions, WordPress and PHP versions, locale, timezone, environment type, multisite status, and active theme details. It does not contain form entries, form content, passwords, or visitor information. Reporting occurs when enabled and once daily until disabled.
+The optional Compatibility Profile connects to Web Ninja LLC to help improve FormOrbit updates, compatibility, and support. It shares basic website, administrator contact, WordPress, PHP, theme, locale, environment, and FormOrbit version details. It never shares forms, entries, passwords, payment information, or visitor data. Free administrators can disable it at any time; an active Pro license keeps its licensed installation profile connected.
 
 FormOrbit service information and privacy details: https://www.webninjallc.com/plugins/formorbit/
 
