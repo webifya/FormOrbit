@@ -37,6 +37,17 @@
     width: 18px;
 }
 
+.webform-wrap .webform-create-button .webform-button-icon {
+    color: #fff;
+    display: block;
+    fill: currentColor;
+    flex: 0 0 18px;
+    height: 18px;
+    opacity: 1;
+    visibility: visible;
+    width: 18px;
+}
+
 .webform-wrap .webform-live-preview-trigger .dashicons,
 .webform-wrap .webform-embed-trigger .dashicons,
 .webform-wrap .webform-open-field-picker .dashicons,
