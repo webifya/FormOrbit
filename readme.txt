@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 4.8.3
+Stable tag: 4.9.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -101,6 +101,11 @@ Yes. FormOrbit Pro is an add-on that extends the Free builder, so both compatibl
 5. Copy the generated `[formorbit id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 4.9.0 =
+* Added optional site-profile reporting for Free and Pro installations.
+* Added transparent usage-sharing controls and disclosure in FormOrbit Settings.
+* Added daily profile refreshes with a stable installation identifier.
 
 = 4.8.3 =
 * Replaced the Plugins screen Settings shortcut with a direct Add New Form action.
@@ -424,5 +429,9 @@ Google Terms of Service: https://policies.google.com/terms
 Google Privacy Policy: https://policies.google.com/privacy
 
 Google Cloud Service Terms: https://cloud.google.com/terms/service-terms
+
+When a site administrator explicitly enables Usage Insights, FormOrbit sends a site profile to Web Ninja LLC at `https://www.webninjallc.com/wp-json/wnlm/v1/site-profile`. The profile contains the site URL and name, administrator email, installation identifier, FormOrbit edition and versions, WordPress and PHP versions, locale, timezone, environment type, multisite status, and active theme details. It does not contain form entries, form content, passwords, or visitor information. Reporting occurs when enabled and once daily until disabled.
+
+FormOrbit service information and privacy details: https://www.webninjallc.com/plugins/formorbit/
 
 Site owners are responsible for disclosing this service in their own privacy policy and complying with Google's terms, privacy policy, quotas, and billing requirements.
