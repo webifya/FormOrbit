@@ -472,7 +472,7 @@ class Webform_Public {
     }
 
     private function field_type_enabled($field) {
-        $pro_types = array('calculation', 'field_group', 'signature', 'rich_text', 'divider', 'address', 'repeater', 'appointment', 'nps', 'currency', 'product', 'price', 'post_title', 'post_body', 'post_excerpt', 'post_tags', 'post_custom');
+        $pro_types = array('calculation', 'field_group', 'signature', 'rich_text', 'divider', 'address', 'repeater', 'appointment', 'nps', 'currency', 'product', 'price', 'quantity', 'product_option', 'shipping', 'donation', 'total', 'post_title', 'post_body', 'post_excerpt', 'post_tags', 'post_custom');
         return !in_array($field['type'] ?? '', $pro_types, true) || (bool) apply_filters('webform_pro_field_enabled', false, $field);
     }
 
