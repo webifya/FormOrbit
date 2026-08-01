@@ -1,7 +1,7 @@
 (function ($) {
     'use strict';
 
-    const defaults = { name: 'Name', text: 'Text', email: 'Email', textarea: 'Long text', select: 'Dropdown', radio: 'Radio', checkbox: 'Checkbox', number: 'Number', date: 'Date', time: 'Time', phone: 'Phone', url: 'Website', file: 'File upload', consent: 'I agree to the terms', poll: 'Poll question', quiz: 'Quiz question', rating: 'Rating', slider: 'Slider', hidden: 'Hidden field', html: 'HTML content', captcha: 'Security check', calculation: 'Calculation', signature: 'Signature', rich_text: 'Rich text', divider: 'Divider', field_group: 'Field group', address: 'Address', repeater: 'Repeater', appointment: 'Appointment', nps: 'NPS score', currency: 'Currency', product: 'Product selector', price: 'Price', heading: 'Heading' };
+    const defaults = { name: 'Name', text: 'Text', email: 'Email', textarea: 'Long text', select: 'Dropdown', radio: 'Radio', checkbox: 'Checkbox', number: 'Number', date: 'Date', time: 'Time', phone: 'Phone', url: 'Website', file: 'File upload', consent: 'I agree to the terms', poll: 'Poll question', quiz: 'Quiz question', rating: 'Rating', slider: 'Slider', hidden: 'Hidden field', html: 'HTML content', captcha: 'Security check', calculation: 'Calculation', signature: 'Signature', rich_text: 'Rich text', divider: 'Divider', field_group: 'Field group', address: 'Address', repeater: 'Repeater', appointment: 'Appointment', nps: 'NPS score', currency: 'Currency', product: 'Product selector', price: 'Price', post_title: 'Post title', post_body: 'Post body', post_excerpt: 'Post excerpt', post_tags: 'Post tags', post_custom: 'Post custom field', heading: 'Heading' };
     const fieldIcons = {
         '': ['No icon', 'dashicons-minus'],
         user: ['Person', 'dashicons-admin-users'],
@@ -236,7 +236,7 @@
 
     function renderFreeProCatalog() {
         if (WebformAdmin.proInstalled || WebformAdmin.proStyling || $('.webform-free-pro-catalog').length) return;
-        const fields = ['Calculation', 'Field group', 'E-signature', 'Rich text / contracts', 'Divider', 'Address', 'Repeater', 'Appointment', 'NPS score', 'Currency', 'Product selector', 'Price', 'Advanced upload'];
+        const fields = ['Calculation', 'Field group', 'E-signature', 'Rich text / contracts', 'Divider', 'Address', 'Repeater', 'Appointment', 'NPS score', 'Currency', 'Product selector', 'Price', 'WordPress post fields', 'Advanced upload'];
         const integrations = {
             'Email marketing & CRM': ['Mailchimp', 'Brevo', 'ActiveCampaign', 'Kit', 'GetResponse', 'LeadConnector / GoHighLevel'],
             'Payments': ['Stripe', 'PayPal', 'Square', 'Bank transfer'],
@@ -823,7 +823,12 @@
             nps: '<div class="webform-preview-nps"><div>' + Array.from({length: 11}, (_, index) => `<i>${index}</i>`).join('') + '</div><small><span>Not likely</span><span>Very likely</span></small></div>',
             currency: `<div class="webform-preview-control webform-preview-currency"><b>${escapeHtml(field.currency_symbol || '$')}</b><span>${placeholder || '0.00'}</span></div>`,
             product: `<div class="webform-preview-product">${(field.options || ['Standard|19.99','Premium|39.99']).map(option => { const parts = option.split('|'); return `<span><i></i><strong>${escapeHtml(parts[0])}</strong><em>${escapeHtml(parts[1] || '0.00')}</em></span>`; }).join('')}</div>`,
-            price: `<div class="webform-preview-price"><span>${escapeHtml(field.label || 'Price')}</span><strong>${escapeHtml(field.currency_code || 'USD')} ${Number(field.price_amount || 0).toFixed(2)}</strong></div>`
+            price: `<div class="webform-preview-price"><span>${escapeHtml(field.label || 'Price')}</span><strong>${escapeHtml(field.currency_code || 'USD')} ${Number(field.price_amount || 0).toFixed(2)}</strong></div>`,
+            post_title: '<div class="webform-preview-control"><span>WordPress post title</span></div>',
+            post_body: '<div class="webform-preview-control webform-preview-textarea"><span>WordPress post content</span></div>',
+            post_excerpt: '<div class="webform-preview-control webform-preview-textarea"><span>Short post summary</span></div>',
+            post_tags: '<div class="webform-preview-control"><span>news, update, featured</span></div>',
+            post_custom: `<div class="webform-preview-control"><span>${escapeHtml(field.post_meta_key || 'custom_meta_key')}</span></div>`
         };
         return previews[field.type] || `<div class="webform-preview-control"><span>${placeholder || 'Field preview'}</span></div>`;
     }
@@ -918,6 +923,27 @@
         return (schema[activeStage].fields || []).find(field => field.id === selectedId);
     }
 
+    function convertFieldType(field, nextType) {
+        if (!field || !defaults[nextType] || (!WebformAdmin.proActive && proFieldTypes.includes(nextType))) return;
+        const previousType = field.type;
+        if (previousType === nextType) return;
+        field.type = nextType;
+        const choiceTypes = ['select', 'radio', 'checkbox', 'poll', 'quiz', 'product'];
+        if (choiceTypes.includes(nextType) && (!Array.isArray(field.options) || !field.options.length)) field.options = nextType === 'product' ? ['Standard|19.99', 'Premium|39.99'] : ['Option 1', 'Option 2'];
+        if (nextType === 'textarea' && !field.rows) field.rows = 5;
+        if (nextType === 'html' && !field.html) field.html = `<p>${escapeHtml(field.label || 'Custom content')}</p>`;
+        if (nextType === 'rich_text' && !field.rich_content) field.rich_content = `<h3>${escapeHtml(field.label || 'Agreement')}</h3><p>Add your formatted content here.</p>`;
+        if (nextType === 'phone') { field.phone_country = field.phone_country || 'US'; field.phone_country_selector = field.phone_country_selector !== false; }
+        if (nextType === 'field_group' || nextType === 'repeater') field.children = Array.isArray(field.children) && field.children.length ? field.children : defaultContainerChildren(nextType);
+        if (nextType === 'calculation') { field.formula = field.formula || ''; field.decimal_places = Number(field.decimal_places ?? 2); }
+        if (nextType === 'price') { field.price_amount = Number(field.price_amount || 0); field.currency_code = field.currency_code || 'USD'; }
+        if (!choiceTypes.includes(nextType)) field.correct_answer = '';
+        selectedChildIndex = null;
+        dirty = true;
+        scheduleHistory(0);
+        render();
+    }
+
     function removeContainerChild(parent, index) {
         if (!parent || !containerChildren(parent)[index]) return;
         parent.children = containerChildren(parent).filter((child, childIndex) => childIndex !== index);
@@ -1006,8 +1032,10 @@
         const candidates = schema.flatMap(stage => stage.fields).filter(item => item.id !== field.id && !['heading','file','html','rich_text','divider'].includes(item.type));
         const condition = field.condition || { enabled: false, field_id: '', operator: 'equals', value: '' };
         const selectedIcon = fieldIcons[field.icon] || fieldIcons[''];
+        const typeOptions = Object.entries(defaults).filter(([type]) => WebformAdmin.proActive || !proFieldTypes.includes(type)).map(([type, label]) => `<option value="${type}" ${field.type === type ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('');
         $('#webform-field-settings').html(`
             <div class="webform-field-quick-actions"><p class="description">Field ID: <code>${escapeHtml(field.id)}</code></p>${WebformAdmin.proActive ? '<button type="button" class="button webform-duplicate-field" title="Duplicate field" aria-label="Duplicate field"><span class="dashicons dashicons-admin-page" aria-hidden="true"></span><span class="screen-reader-text">Duplicate field</span></button>' : ''}</div>
+            <label>Field type <small>Compatible values and options are preserved when possible.</small><select data-field-type>${typeOptions}</select></label>
             <label>${field.type === 'field_group' ? 'Group label' : field.type === 'repeater' ? 'Repeater label' : 'Label'}<input type="text" data-prop="label" value="${escapeHtml(field.label)}"></label>
             ${!['hidden','html','rich_text','divider','heading','consent','captcha'].includes(field.type) ? `<label class="webform-check"><input type="checkbox" data-prop="hide_label" ${field.hide_label ? 'checked' : ''}> Hide label on public form <small>The label remains available to screen readers.</small></label>` : ''}
             ${['html','rich_text'].includes(field.type) ? '<p class="description">The editor label helps identify this element and is hidden on the public form.</p>' : ''}
@@ -1031,6 +1059,8 @@
             ${field.type === 'currency' ? `<label>Currency symbol<input type="text" maxlength="5" data-prop="currency_symbol" value="${escapeHtml(field.currency_symbol || '$')}"></label><label>Minimum<input type="number" step="0.01" data-prop="min" value="${Number(field.min ?? 0)}"></label><label>Maximum<input type="number" step="0.01" data-prop="max" value="${Number(field.max ?? 999999999)}"></label>` : ''}
             ${field.type === 'product' ? `<p class="description">Enter each product as <code>Product name|19.99</code>.</p>` : ''}
             ${field.type === 'price' ? `<label>Amount<input type="number" min="0" step="0.01" data-prop="price_amount" value="${Number(field.price_amount || 0)}"></label><label>Currency<select data-prop="currency_code">${['USD','EUR','GBP','CAD','AUD','BDT'].map(code => `<option ${field.currency_code === code ? 'selected' : ''}>${code}</option>`).join('')}</select></label>` : ''}
+            ${field.type === 'post_title' ? `<div class="webform-post-field-settings"><p class="description"><strong>WordPress content creation</strong><br>This field controls the generated content type and publishing status.</p><label>Content type<select data-prop="post_type">${Object.entries(WebformAdmin.postTypes || {post:'Post',page:'Page'}).filter(([type]) => !['attachment','webform_form','webform_entry'].includes(type)).map(([type,label]) => `<option value="${escapeHtml(type)}" ${(field.post_type || 'post') === type ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}</select></label><label>New content status<select data-prop="post_status"><option value="draft" ${(field.post_status || 'draft') === 'draft' ? 'selected' : ''}>Draft</option><option value="pending" ${field.post_status === 'pending' ? 'selected' : ''}>Pending review</option><option value="publish" ${field.post_status === 'publish' ? 'selected' : ''}>Publish immediately</option></select></label></div>` : ''}
+            ${field.type === 'post_custom' ? `<label>Custom field meta key<input type="text" data-prop="post_meta_key" value="${escapeHtml(field.post_meta_key || '')}" placeholder="customer_reference"></label>` : ''}
             ${field.type === 'divider' ? `<hr><div class="webform-divider-settings"><h3>Divider design <span class="webform-pro-badge">PRO</span></h3>
                 <label class="webform-check"><input type="checkbox" data-prop="divider_show_label" ${field.divider_show_label ? 'checked' : ''}> Show label on public form</label>
                 <label>Label placement<select data-prop="divider_label_position"><option value="above" ${(field.divider_label_position || 'above') === 'above' ? 'selected' : ''}>Above the line</option><option value="inline" ${field.divider_label_position === 'inline' ? 'selected' : ''}>Centered in the line</option></select></label>
@@ -1077,7 +1107,7 @@
             return;
         }
         const choices = ['select', 'radio', 'checkbox', 'poll', 'quiz', 'product'].includes(type);
-        const field = { id: uid('field'), type, label: defaults[type] || 'Field', icon: '', placeholder: '', hide_label: false, required: ['consent','captcha','signature'].includes(type), options: choices ? (type === 'product' ? ['Standard|19.99', 'Premium|39.99'] : ['Option 1', 'Option 2']) : [], choice_columns: 1, children: ['field_group', 'repeater'].includes(type) ? defaultContainerChildren(type) : [], allowed_extensions: 'jpg,jpeg,png,pdf,doc,docx', max_size: 5, correct_answer: '', points: 1, default_value: '', html: '<p>Add your content here.</p>', rich_content: type === 'rich_text' ? '<h3>Agreement terms</h3><p>Describe the terms, responsibilities, and conditions of this agreement.</p><p><strong>Acceptance:</strong> Add a Consent field and E-signature below this agreement.</p>' : '', rows: 5, date_rule: 'any', date_min: '', date_max: '', min: 0, max: type === 'currency' ? 999999999 : 100, step: 1, formula: '', decimal_places: 2, group_count: 2, group_columns: 2, repeater_min: 1, repeater_max: 10, repeater_button: 'Add another row', currency_symbol: '$', price_amount: 0, currency_code: 'USD', min_date: '', max_date: '', divider_show_label: false, divider_label_position: 'above', divider_style: 'solid', divider_alignment: 'center', divider_width: 100, divider_thickness: 1, divider_color: '#dfe1e6', divider_margin_top: 10, divider_margin_bottom: 10, divider_padding_top: 0, divider_padding_bottom: 0, style: { width: type === 'divider' ? '100' : (WebformAdmin.proActive ? 'auto' : '100') }, condition: { enabled: false, field_id: '', operator: 'equals', value: '' } };
+        const field = { id: uid('field'), type, label: defaults[type] || 'Field', icon: '', placeholder: '', hide_label: false, required: ['consent','captcha','signature','post_title'].includes(type), options: choices ? (type === 'product' ? ['Standard|19.99', 'Premium|39.99'] : ['Option 1', 'Option 2']) : [], choice_columns: 1, children: ['field_group', 'repeater'].includes(type) ? defaultContainerChildren(type) : [], allowed_extensions: 'jpg,jpeg,png,pdf,doc,docx', max_size: 5, correct_answer: '', points: 1, default_value: '', html: '<p>Add your content here.</p>', rich_content: type === 'rich_text' ? '<h3>Agreement terms</h3><p>Describe the terms, responsibilities, and conditions of this agreement.</p><p><strong>Acceptance:</strong> Add a Consent field and E-signature below this agreement.</p>' : '', rows: 5, date_rule: 'any', date_min: '', date_max: '', min: 0, max: type === 'currency' ? 999999999 : 100, step: 1, formula: '', decimal_places: 2, group_count: 2, group_columns: 2, repeater_min: 1, repeater_max: 10, repeater_button: 'Add another row', currency_symbol: '$', price_amount: 0, currency_code: 'USD', post_meta_key: '', post_type: 'post', post_status: 'draft', min_date: '', max_date: '', divider_show_label: false, divider_label_position: 'above', divider_style: 'solid', divider_alignment: 'center', divider_width: 100, divider_thickness: 1, divider_color: '#dfe1e6', divider_margin_top: 10, divider_margin_bottom: 10, divider_padding_top: 0, divider_padding_bottom: 0, style: { width: type === 'divider' ? '100' : (WebformAdmin.proActive ? 'auto' : '100') }, condition: { enabled: false, field_id: '', operator: 'equals', value: '' } };
         schema[activeStage].fields.push(field);
         selectedId = field.id;
         selectedChildIndex = ['field_group', 'repeater'].includes(type) ? 0 : null;
@@ -1200,6 +1230,9 @@
         selectedChildIndex = null;
         dirty = true;
         render();
+    });
+    $(document).on('change', '#webform-field-settings [data-field-type]', function () {
+        convertFieldType(selectedField(), String($(this).val() || 'text'));
     });
     $(document).on('input change', '#webform-field-settings [data-prop]', function () {
         const field = selectedField();
