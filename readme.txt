@@ -4,41 +4,93 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 4.8.0
+Stable tag: 4.8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-The all-in-one WordPress form builder with drag-and-drop editing, multi-step forms, SMTP configuration, imports, analytics, and more.
+Build responsive forms visually with multi-step layouts, templates, SMTP delivery, imports, analytics, polls, quizzes, and secure entries.
 
 == Description ==
 
-FormOrbit provides a native WordPress form-building experience:
+FormOrbit is a visual WordPress form builder for contact forms, registrations, surveys, polls, quizzes, applications, feedback forms, and multi-step workflows. Build in WordPress, keep your entries in WordPress, and publish anywhere with a shortcode.
 
-* Drag-and-drop field ordering
-* Multiple stages with progress indicators
-* Name, text, email, textarea, dropdown, radio, checkbox, number, date, phone, URL, consent, secure file upload, and heading fields
-* Conditional field visibility
-* Required-field and email validation
-* AJAX submission without page reload
-* WordPress-native entry storage and admin entry browser
-* Email notifications
-* Entry filtering, pagination, deletion, and CSV export
-* One-click form duplication
-* Configurable submit labels and confirmation redirects
-* Shortcode embedding
-* Nonces, capability checks, sanitization, escaping, and a spam honeypot
-* Login requirements and total submission limits
+= Build forms without code =
+
+* Drag-and-drop field ordering with responsive live previews
+* Multi-step forms with editable stage names and progress navigation
+* Text, name, email, long text, dropdown, radio, checkbox, number, date, time, phone, website, consent, upload, rating, slider, hidden, HTML, heading, page-break, and CAPTCHA fields
+* Safe field-type conversion while preserving compatible labels, choices, styling, and validation
+* Conditional field visibility, required fields, validation, and AJAX submission
+* 10 ready-to-customize templates for common business workflows
+* Modern, minimal, and rounded style presets with configurable colors
+
+= Collect, understand, and manage responses =
+
+* WordPress-native entry storage with filtering, pagination, deletion, and CSV export
 * Polls with live percentage results
 * Scored quizzes with configurable answers and points
-* 10 free ready-to-customize form templates
-* Time, slider, rating, hidden, HTML, CAPTCHA, and page-break tools
-* Modern, minimal, and rounded style presets with custom colors
-* Optional Google reCAPTCHA v2 verification
-* Import converters for WPForms, Gravity Forms, Fluent Forms, and Contact Form 7
-* Form views, unique visitors, engagement, submissions, conversion, date ranges, and per-form analytics
-* Safe field-type conversion that preserves compatible labels, choices, styling, and validation
+* Analytics for views, unique visitors, engagement, submissions, conversion, dates, and individual forms
+* Admin email notifications and customizable success messages or redirects
+* Login requirements, submission limits, honeypot protection, and Google reCAPTCHA support
 
-FormOrbit is created by Mahfuzar Rahman. Advanced automation, payment, document, and marketing features are available in a separately distributed Pro add-on.
+= Email delivery and migration tools =
+
+* Built-in SMTP presets for Mailgun, Brevo, SendGrid, Amazon SES, Postmark, Mailjet, MailerSend, Gmail, Google Workspace, Microsoft 365, Outlook, Zoho Mail, and custom SMTP
+* Import tools for WPForms, Gravity Forms, Fluent Forms, Contact Form 7, Formidable Forms, and Forminator
+* One-click form duplication and easy shortcode or PHP-template copying
+
+= Upgrade to FormOrbit Pro =
+
+[FormOrbit Pro](https://www.webninjallc.com/plugins/formorbit/) extends the same builder with:
+
+* Calculations, signatures, agreements, repeaters, field groups, appointment, commerce, donation, order-total, and WordPress post fields
+* Stripe, PayPal, and Square hosted checkout plus bank-transfer workflows
+* Mailchimp, AWeber, Brevo, ActiveCampaign, Kit, GetResponse, GoHighLevel, calendars, Zapier, and webhooks
+* Twilio, Vonage, MessageBird, and Telnyx SMS notifications
+* Scheduled email and SMS follow-ups, visitor email templates, PDF attachments, and Save & Continue
+* Public website form importing, premium templates, Google Fonts, advanced styling, saved themes, and custom CSS
+
+Plans:
+
+* [Single-site annual — $19.99/year](https://www.webninjallc.com/product/formorbit-pro/)
+* [Up to 10 sites — $99.99/year](https://www.webninjallc.com/product/formorbit-pro-bundle/)
+* [Single-site lifetime — $249.99](https://www.webninjallc.com/product/formorbit-lifetime/)
+
+FormOrbit is created by Mahfuzar Rahman and maintained by Web Ninja LLC.
+
+== Frequently Asked Questions ==
+
+= Can I build multi-step forms in the free version? =
+
+Yes. Add and rename stages, move fields between them, and publish the completed form with the generated shortcode.
+
+= Where are submissions stored? =
+
+Entries are stored in your WordPress database and managed from the FormOrbit Entries screen. FormOrbit does not require a third-party form-storage account.
+
+= Can I send email through my own provider? =
+
+Yes. Email Delivery includes presets for popular SMTP services and a custom SMTP option. Your provider may require an app password, SMTP credential, or verified sender domain.
+
+= Does FormOrbit include spam protection? =
+
+Yes. Forms use WordPress nonces, server-side validation, sanitization, a honeypot, rate protection, and optional Google reCAPTCHA.
+
+= Can I import forms from another plugin? =
+
+Yes. The Tools screen supports several popular WordPress form-builder exports. FormOrbit Pro can also inspect a supported public HTML form from a website URL and convert its fields into an editable form.
+
+= Does the free plugin collect payments? =
+
+Payment and commerce fields are part of FormOrbit Pro. Pro sends customers to supported providers' secure hosted checkout pages so FormOrbit does not store card details.
+
+= Will my forms disappear if FormOrbit Pro is deactivated? =
+
+No. Form structures and entries remain stored. Pro-only fields become unavailable for editing and are not rendered publicly until Pro is active with a valid license.
+
+= Do I need FormOrbit Free when using Pro? =
+
+Yes. FormOrbit Pro is an add-on that extends the Free builder, so both compatible plugins remain installed and active.
 
 == Installation ==
 
@@ -49,6 +101,10 @@ FormOrbit is created by Mahfuzar Rahman. Advanced automation, payment, document,
 5. Copy the generated `[formorbit id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 4.8.1 =
+* Rebuilt the WordPress.org description around clear use cases, Free features, migration tools, security, and data ownership.
+* Added a complete FAQ and transparent FormOrbit Pro feature and pricing information.
 
 = 4.8.0 =
 * Added builder compatibility and upgrade previews for Pro commerce fields, SMS providers, scheduled follow-ups, and public URL importing.
