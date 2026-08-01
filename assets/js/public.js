@@ -6,6 +6,23 @@
             const stages = Array.from(root.querySelectorAll('.webform-stage'));
             const steps = Array.from(root.querySelectorAll('.webform-steps li'));
             let current = 0;
+            const formId = Number(root.dataset.formId || 0);
+            function track(eventName, unique) {
+                if (!formId || !window.WebformPublic?.analyticsNonce) return;
+                const body = new URLSearchParams({ action: 'formorbit_track_event', nonce: WebformPublic.analyticsNonce, form_id: String(formId), event: eventName, unique: unique ? '1' : '' });
+                if (navigator.sendBeacon) navigator.sendBeacon(WebformPublic.ajaxUrl, body);
+                else fetch(WebformPublic.ajaxUrl, { method: 'POST', body, credentials: 'same-origin', keepalive: true }).catch(function () {});
+            }
+            let uniqueView = false;
+            try {
+                const key = `formorbit-viewed-${formId}`;
+                uniqueView = !sessionStorage.getItem(key);
+                sessionStorage.setItem(key, '1');
+            } catch (error) { uniqueView = false; }
+            track('view', uniqueView);
+            let engagementTracked = false;
+            form.addEventListener('input', function () { if (!engagementTracked) { engagementTracked = true; track('click', false); } }, { passive: true });
+            form.addEventListener('click', function (event) { if (!engagementTracked && event.target.closest('input,select,textarea,button')) { engagementTracked = true; track('click', false); } }, { passive: true });
 
             function fieldValue(id) {
                 const elements = Array.from(form.elements).filter(element => element.name === `fields[${id}]` || element.name === `fields[${id}][]`);
