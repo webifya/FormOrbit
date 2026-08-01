@@ -54,8 +54,8 @@ class Webform_Admin {
     }
 
     public function plugin_action_links($links) {
-        $settings = '<a href="' . esc_url(admin_url('admin.php?page=formorbit-settings')) . '">' . esc_html__('Settings', 'formorbit') . '</a>';
-        array_unshift($links, $settings);
+        $add_form = '<a href="' . esc_url(admin_url('admin.php?page=formorbit-builder')) . '">' . esc_html__('Add New Form', 'formorbit') . '</a>';
+        array_unshift($links, $add_form);
         if (!$this->is_pro_active()) {
             $upgrade = '<a href="' . esc_url($this->upgrade_url('plugins-page')) . '" target="_blank" rel="noopener noreferrer" style="color:#5b3fc1;font-weight:700">' . esc_html__('Go Pro', 'formorbit') . '</a>';
             array_splice($links, 1, 0, array($upgrade));
@@ -122,6 +122,7 @@ class Webform_Admin {
         wp_enqueue_style('webform-field-style-upgrades', WEBFORM_URL . 'assets/css/field-style-upgrades.css', array('webform-responsive-upgrades'), WEBFORM_VERSION);
         wp_enqueue_style('webform-public-preview', WEBFORM_URL . 'assets/css/public.css', array('webform-field-style-upgrades'), WEBFORM_VERSION);
         wp_enqueue_style('webform-preset-preview', WEBFORM_URL . 'assets/css/preset-preview.css', array('webform-public-preview'), WEBFORM_VERSION);
+        wp_enqueue_style('formorbit-icon-alignment', WEBFORM_URL . 'assets/css/icon-alignment.css', array('webform-preset-preview'), WEBFORM_VERSION);
         wp_enqueue_script('jquery-ui-sortable');
         wp_enqueue_script('jquery-ui-droppable');
         wp_enqueue_script('webform-admin', WEBFORM_URL . 'assets/js/admin.js', array('jquery', 'jquery-ui-sortable', 'jquery-ui-droppable'), WEBFORM_VERSION, true);
