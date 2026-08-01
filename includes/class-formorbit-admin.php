@@ -743,6 +743,7 @@ class Webform_Admin {
     public function settings_page() {
         if (!current_user_can('manage_options')) return;
         $stored_settings = (array) get_option('webform_global_settings', array());
+        $profile_status = (array) get_option('formorbit_site_profile_status', array());
         $default_recaptcha_mode = !empty($stored_settings['recaptcha_secret_key']) ? 'classic' : 'enterprise';
         $settings = wp_parse_args($stored_settings, array('recaptcha_enabled' => false, 'recaptcha_mode' => $default_recaptcha_mode, 'recaptcha_site_key' => '', 'recaptcha_secret_key' => '', 'recaptcha_project_id' => '', 'recaptcha_api_key' => '', 'recaptcha_action' => 'WEBFORM_SUBMIT', 'usage_sharing_enabled' => false));
         ?>
@@ -757,6 +758,7 @@ class Webform_Admin {
             <div class="webform-settings-card-head"><span class="dashicons dashicons-chart-area"></span><div><h2><?php esc_html_e('Usage insights', 'formorbit'); ?></h2><p><?php esc_html_e('Optionally help improve FormOrbit and keep your installation profile current.', 'formorbit'); ?></p></div></div>
             <label class="webform-settings-toggle"><input type="checkbox" name="usage_sharing_enabled" value="1" <?php checked(!empty($settings['usage_sharing_enabled'])); ?>><span><?php esc_html_e('Share this site profile with Web Ninja LLC', 'formorbit'); ?></span></label>
             <p class="description"><?php esc_html_e('When enabled, FormOrbit sends the site URL and name, administrator email, FormOrbit edition and versions, WordPress and PHP versions, locale, environment, and active theme once daily. Form entries, form contents, passwords, and visitor data are never sent. Disable this option at any time to stop reporting.', 'formorbit'); ?></p>
+            <?php if (!empty($profile_status['last_sent'])) : ?><p class="description"><strong><?php esc_html_e('Last profile sync:', 'formorbit'); ?></strong> <?php echo esc_html(wp_date(get_option('date_format') . ' ' . get_option('time_format'), absint($profile_status['last_sent']))); ?><?php foreach ((array) ($profile_status['results'] ?? array()) as $product => $result) : ?> · <?php echo esc_html($product); ?>: <?php echo !empty($result['success']) ? esc_html__('Connected', 'formorbit') : esc_html(sprintf(__('Not accepted (HTTP %d)', 'formorbit'), absint($result['code'] ?? 0))); ?><?php endforeach; ?></p><?php endif; ?>
             <button class="button button-primary"><?php esc_html_e('Save settings', 'formorbit'); ?></button>
         </form></div>
         <?php
