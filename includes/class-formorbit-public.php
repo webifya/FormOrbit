@@ -12,6 +12,9 @@ class Webform_Public {
         add_action('wp_ajax_nopriv_webform_submit', array($this, 'submit'));
         add_action('wp_ajax_formorbit_submit', array($this, 'submit'));
         add_action('wp_ajax_nopriv_formorbit_submit', array($this, 'submit'));
+        add_action('wp_ajax_formorbit_track_event', array($this, 'track_event'));
+        add_action('wp_ajax_nopriv_formorbit_track_event', array($this, 'track_event'));
+        add_action('webform_after_submission', array($this, 'track_submission'), 5, 2);
     }
 
     public function preview() {
@@ -68,7 +71,7 @@ class Webform_Public {
             $script_url = $recaptcha['recaptcha_mode'] === 'enterprise' ? 'https://www.google.com/recaptcha/enterprise.js' : 'https://www.google.com/recaptcha/api.js';
             wp_enqueue_script('google-recaptcha', $script_url, array(), null, true);
         }
-        wp_localize_script('webform-public', 'WebformPublic', array('ajaxUrl' => admin_url('admin-ajax.php')));
+        wp_localize_script('webform-public', 'WebformPublic', array('ajaxUrl' => admin_url('admin-ajax.php'), 'analyticsNonce' => wp_create_nonce('formorbit_analytics')));
         ob_start();
         ?>
         <?php $available_presets = apply_filters('webform_style_presets', array('modern' => 'Modern', 'minimal' => 'Minimal', 'rounded' => 'Rounded')); $preset = array_key_exists($settings['style_preset'] ?? '', $available_presets) ? $settings['style_preset'] : 'modern'; $style_variables = apply_filters('webform_inline_style_variables', array('--wf-accent' => $settings['accent_color'] ?? '#6c4bd4', '--wf-button-text' => $settings['button_text_color'] ?? '#ffffff'), $settings, $form_id); $inline_style = ''; foreach ($style_variables as $property => $property_value) $inline_style .= sanitize_key($property) . ':' . sanitize_text_field($property_value) . ';'; do_action('webform_before_form_markup', $form_id, $settings); ?>
@@ -100,6 +103,34 @@ class Webform_Public {
         </div>
         <?php
         return ob_get_clean();
+    }
+
+    public function track_event() {
+        check_ajax_referer('formorbit_analytics', 'nonce');
+        $form_id = absint($_POST['form_id'] ?? 0);
+        $event = sanitize_key(wp_unslash($_POST['event'] ?? ''));
+        if (!$form_id || get_post_type($form_id) !== 'webform_form' || !in_array($event, array('view', 'click'), true)) wp_send_json_error(array(), 400);
+        $metrics = $event === 'view' ? array('views' => 1, 'visitors' => !empty($_POST['unique']) ? 1 : 0) : array('clicks' => 1);
+        $this->record_analytics($form_id, $metrics);
+        wp_send_json_success(array());
+    }
+
+    public function track_submission($entry_id, $form_id) {
+        $this->record_analytics(absint($form_id), array('submissions' => 1));
+    }
+
+    private function record_analytics($form_id, $increments) {
+        if (!$form_id) return;
+        $date = current_time('Y-m-d');
+        $option = 'formorbit_analytics_' . current_time('Y_m');
+        $stored = (array) get_option($option, array());
+        if (!isset($stored[$date])) $stored[$date] = array();
+        if (!isset($stored[$date][$form_id])) $stored[$date][$form_id] = array('views' => 0, 'visitors' => 0, 'clicks' => 0, 'submissions' => 0);
+        foreach ($increments as $metric => $amount) {
+            if (!in_array($metric, array('views', 'visitors', 'clicks', 'submissions'), true)) continue;
+            $stored[$date][$form_id][$metric] = absint($stored[$date][$form_id][$metric] ?? 0) + absint($amount);
+        }
+        update_option($option, $stored, false);
     }
 
     private function render_field($field) {
@@ -441,7 +472,7 @@ class Webform_Public {
     }
 
     private function field_type_enabled($field) {
-        $pro_types = array('calculation', 'field_group', 'signature', 'rich_text', 'divider', 'address', 'repeater', 'appointment', 'nps', 'currency', 'product', 'price');
+        $pro_types = array('calculation', 'field_group', 'signature', 'rich_text', 'divider', 'address', 'repeater', 'appointment', 'nps', 'currency', 'product', 'price', 'post_title', 'post_body', 'post_excerpt', 'post_tags', 'post_custom');
         return !in_array($field['type'] ?? '', $pro_types, true) || (bool) apply_filters('webform_pro_field_enabled', false, $field);
     }
 
