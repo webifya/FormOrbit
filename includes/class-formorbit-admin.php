@@ -56,6 +56,10 @@ class Webform_Admin {
     public function plugin_action_links($links) {
         $settings = '<a href="' . esc_url(admin_url('admin.php?page=formorbit-settings')) . '">' . esc_html__('Settings', 'formorbit') . '</a>';
         array_unshift($links, $settings);
+        if (!$this->is_pro_active()) {
+            $upgrade = '<a href="' . esc_url($this->upgrade_url('plugins-page')) . '" target="_blank" rel="noopener noreferrer" style="color:#5b3fc1;font-weight:700">' . esc_html__('Go Pro', 'formorbit') . '</a>';
+            array_splice($links, 1, 0, array($upgrade));
+        }
         return $links;
     }
 
