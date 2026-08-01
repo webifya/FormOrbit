@@ -744,7 +744,7 @@ class Webform_Admin {
         if (!current_user_can('manage_options')) return;
         $stored_settings = (array) get_option('webform_global_settings', array());
         $default_recaptcha_mode = !empty($stored_settings['recaptcha_secret_key']) ? 'classic' : 'enterprise';
-        $settings = wp_parse_args($stored_settings, array('recaptcha_enabled' => false, 'recaptcha_mode' => $default_recaptcha_mode, 'recaptcha_site_key' => '', 'recaptcha_secret_key' => '', 'recaptcha_project_id' => '', 'recaptcha_api_key' => '', 'recaptcha_action' => 'WEBFORM_SUBMIT'));
+        $settings = wp_parse_args($stored_settings, array('recaptcha_enabled' => false, 'recaptcha_mode' => $default_recaptcha_mode, 'recaptcha_site_key' => '', 'recaptcha_secret_key' => '', 'recaptcha_project_id' => '', 'recaptcha_api_key' => '', 'recaptcha_action' => 'WEBFORM_SUBMIT', 'usage_sharing_enabled' => false));
         ?>
         <div class="wrap webform-wrap"><div class="webform-page-head"><div><h1><?php esc_html_e('FormOrbit Settings', 'formorbit'); ?></h1><p><?php esc_html_e('Global security and service configuration.', 'formorbit'); ?></p></div></div>
         <form class="webform-settings-card webform-recaptcha-settings" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post"><input type="hidden" name="action" value="formorbit_save_global_settings"><?php wp_nonce_field('webform_save_global_settings'); ?>
@@ -754,6 +754,9 @@ class Webform_Admin {
             <label><?php esc_html_e('Site key', 'formorbit'); ?><input name="recaptcha_site_key" value="<?php echo esc_attr($settings['recaptcha_site_key']); ?>" autocomplete="off"><small><?php esc_html_e('This is the value used in the data-sitekey attribute Google provides.', 'formorbit'); ?></small></label>
             <div class="webform-recaptcha-panel" data-mode="enterprise"><label><?php esc_html_e('Google Cloud project ID', 'formorbit'); ?><input name="recaptcha_project_id" value="<?php echo esc_attr($settings['recaptcha_project_id']); ?>" autocomplete="off"></label><label><?php esc_html_e('Google Cloud API key', 'formorbit'); ?><input type="password" name="recaptcha_api_key" value="<?php echo esc_attr($settings['recaptcha_api_key']); ?>" autocomplete="new-password"><small><?php esc_html_e('Use a restricted server API key with the reCAPTCHA Enterprise API enabled.', 'formorbit'); ?></small></label><label><?php esc_html_e('Expected action', 'formorbit'); ?><input name="recaptcha_action" value="<?php echo esc_attr($settings['recaptcha_action']); ?>" pattern="[A-Za-z0-9_/-]+"><small><?php esc_html_e('The frontend and backend must use the same action.', 'formorbit'); ?></small></label></div>
             <div class="webform-recaptcha-panel" data-mode="classic"><label><?php esc_html_e('Secret key', 'formorbit'); ?><input type="password" name="recaptcha_secret_key" value="<?php echo esc_attr($settings['recaptcha_secret_key']); ?>" autocomplete="new-password"></label><p class="description"><?php esc_html_e('Migrated classic keys can continue using SiteVerify. New Google Cloud keys should use the recommended mode above.', 'formorbit'); ?></p></div>
+            <div class="webform-settings-card-head"><span class="dashicons dashicons-chart-area"></span><div><h2><?php esc_html_e('Usage insights', 'formorbit'); ?></h2><p><?php esc_html_e('Optionally help improve FormOrbit and keep your installation profile current.', 'formorbit'); ?></p></div></div>
+            <label class="webform-settings-toggle"><input type="checkbox" name="usage_sharing_enabled" value="1" <?php checked(!empty($settings['usage_sharing_enabled'])); ?>><span><?php esc_html_e('Share this site profile with Web Ninja LLC', 'formorbit'); ?></span></label>
+            <p class="description"><?php esc_html_e('When enabled, FormOrbit sends the site URL and name, administrator email, FormOrbit edition and versions, WordPress and PHP versions, locale, environment, and active theme once daily. Form entries, form contents, passwords, and visitor data are never sent. Disable this option at any time to stop reporting.', 'formorbit'); ?></p>
             <button class="button button-primary"><?php esc_html_e('Save settings', 'formorbit'); ?></button>
         </form></div>
         <?php
@@ -762,6 +765,7 @@ class Webform_Admin {
     public function save_global_settings() {
         if (!current_user_can('manage_options')) wp_die(esc_html__('Permission denied.', 'formorbit'));
         check_admin_referer('webform_save_global_settings');
+        $usage_sharing_enabled = !empty($_POST['usage_sharing_enabled']);
         update_option('webform_global_settings', array(
             'recaptcha_enabled' => !empty($_POST['recaptcha_enabled']),
             'recaptcha_mode' => in_array($_POST['recaptcha_mode'] ?? '', array('enterprise', 'classic'), true) ? sanitize_key(wp_unslash($_POST['recaptcha_mode'])) : 'enterprise',
@@ -770,7 +774,9 @@ class Webform_Admin {
             'recaptcha_project_id' => sanitize_text_field(wp_unslash($_POST['recaptcha_project_id'] ?? '')),
             'recaptcha_api_key' => sanitize_text_field(wp_unslash($_POST['recaptcha_api_key'] ?? '')),
             'recaptcha_action' => preg_replace('/[^A-Za-z0-9_\\/-]/', '', wp_unslash($_POST['recaptcha_action'] ?? 'WEBFORM_SUBMIT')),
+            'usage_sharing_enabled' => $usage_sharing_enabled,
         ), false);
+        if ($usage_sharing_enabled) do_action('formorbit_site_profile_sync');
         wp_safe_redirect(admin_url('admin.php?page=formorbit-settings'));
         exit;
     }
