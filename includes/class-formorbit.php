@@ -52,6 +52,7 @@ final class Webform {
 
     public static function activate() {
         self::instance()->register_post_types();
+        if (!get_option('formorbit_activated_at')) update_option('formorbit_activated_at', time(), false);
         flush_rewrite_rules();
     }
 }
