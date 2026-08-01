@@ -2,8 +2,8 @@
 /**
  * Plugin Name: FormOrbit
  * Plugin URI: https://www.webninjallc.com/plugins/formorbit/
- * Description: Build responsive contact, multi-step, survey, quiz and registration forms with visual editing, templates, SMTP, analytics and secure entries.
- * Version: 4.9.4
+ * Description: Build responsive contact forms, multi-step forms, surveys, quizzes and registrations with visual editing, templates, SMTP, analytics and secure entries.
+ * Version: 4.9.5
  * Author: Mahfuzar Rahman
  * Author URI: https://profiles.wordpress.org/mahfuzar/
  * License: GPLv2 or later
@@ -19,7 +19,7 @@ if (defined('WEBFORM_FILE')) {
     return;
 }
 
-define('WEBFORM_VERSION', '4.9.4');
+define('WEBFORM_VERSION', '4.9.5');
 define('WEBFORM_EDITION', 'free');
 define('WEBFORM_FILE', __FILE__);
 define('WEBFORM_PATH', plugin_dir_path(__FILE__));
