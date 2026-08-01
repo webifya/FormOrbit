@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 4.7.1
+Stable tag: 4.8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +49,10 @@ FormOrbit is created by Mahfuzar Rahman. Advanced automation, payment, document,
 5. Copy the generated `[formorbit id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 4.8.0 =
+* Added builder compatibility and upgrade previews for Pro commerce fields, SMS providers, scheduled follow-ups, and public URL importing.
+* Extended safe field-type conversion for the new Pro field families.
 
 = 4.7.1 =
 * Merged the standard and recommended Pro field catalogs into one field picker.
