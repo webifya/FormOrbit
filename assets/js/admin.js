@@ -1707,8 +1707,8 @@
         $('.webform-property-panel').removeClass('is-active').filter(`[data-panel="${panel}"]`).addClass('is-active');
     });
     let requestedPanel = new URLSearchParams(window.location.search).get('panel');
-    if (requestedPanel === 'pdf') requestedPanel = 'confirmation';
-    if (requestedPanel && ['field', 'confirmation', 'integrations', 'access', 'style'].includes(requestedPanel)) {
+    if (requestedPanel === 'pdf') requestedPanel = WebformAdmin.proActive ? 'settings' : 'confirmation';
+    if (requestedPanel && ['field', 'confirmation', 'integrations', 'access', 'style', 'settings'].includes(requestedPanel)) {
         $(`.webform-property-tabs button[data-panel="${requestedPanel}"]`).trigger('click');
     }
     window.addEventListener('beforeunload', function (event) {
