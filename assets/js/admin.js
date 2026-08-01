@@ -242,7 +242,6 @@
             'Payments': ['Stripe', 'PayPal', 'Square', 'Bank transfer'],
             'Automation & documents': ['Zapier', 'Webhooks', 'PDF notifications']
         };
-        $('.webform-pro-field-preview-only .webform-pro-field-list').html(fields.map(name => `<div><span class="dashicons dashicons-lock"></span>${name}</div>`).join(''));
         const catalog = `<h2>Integrations</h2>
             <p class="description">Connect form submissions to email marketing, payments, automation, and document tools with FormOrbit Pro.</p>
             <div class="webform-free-pro-catalog">
