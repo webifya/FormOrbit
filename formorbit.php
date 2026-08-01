@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name: FormOrbit
-  * Plugin URI: https://webninjallc.com/plugins/formorbit
+ * Plugin URI: https://www.webninjallc.com/plugins/formorbit/
  * Description: A visual drag-and-drop, multi-step form builder for WordPress.
- * Version: 4.6.4
+ * Version: 4.7.0
  * Author: Mahfuzar Rahman
- * Author URI: https://www.webninjallc.com/
+ * Author URI: https://profiles.wordpress.org/mahfuzar/
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: formorbit
@@ -19,7 +19,7 @@ if (defined('WEBFORM_FILE')) {
     return;
 }
 
-define('WEBFORM_VERSION', '4.6.0');
+define('WEBFORM_VERSION', '4.7.0');
 define('WEBFORM_EDITION', 'free');
 define('WEBFORM_FILE', __FILE__);
 define('WEBFORM_PATH', plugin_dir_path(__FILE__));
