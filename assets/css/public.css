@@ -277,14 +277,6 @@
     color:#f2b827
 }
 
-.webform-signature-canvas {
-    background:#fff;
-    border:1px solid var(--wf-border);
-    border-radius:7px;
-    max-width:100%;
-    touch-action:none
-}
-
 .webform-stage.is-active {
     column-gap:2%;
     flex-wrap:wrap
@@ -316,10 +308,6 @@
 .webform-public input::placeholder,.webform-public textarea::placeholder {
     color:color-mix(in srgb,var(--wf-text) 55%,transparent);
     opacity:1
-}
-
-.webform-public .webform-field-price,.webform-public .webform-product-options label>span,.webform-public .webform-order-total {
-    color:var(--wf-text)
 }
 
 .webform-name-fields {

@@ -217,6 +217,43 @@
     $('#webform-undo').on('click', function () { applyHistory(historyIndex - 1); });
     $('#webform-redo').on('click', function () { applyHistory(historyIndex + 1); });
 
+    $('.webform-device-switcher [data-device]').on('click', function () {
+        const device = String($(this).data('device'));
+        $('.webform-device-switcher [data-device]').removeClass('is-active');
+        $(this).addClass('is-active');
+        $('.webform-canvas-panel')
+            .removeClass('webform-preview-tablet webform-preview-mobile')
+            .addClass(device === 'desktop' ? '' : `webform-preview-${device}`);
+    });
+
+    function updateConfirmationOptions() {
+        const type = String($('#webform-confirmation-type').val() || 'message');
+        $('.webform-confirmation-option').attr('hidden', true);
+        $(`.webform-confirmation-option[data-confirmation-option="${type}"]`).removeAttr('hidden');
+    }
+
+    $('#webform-confirmation-type').on('change', updateConfirmationOptions);
+    updateConfirmationOptions();
+
+    $('#webform-open-embed').on('click', function () {
+        $('#webform-embed-panel').removeAttr('hidden').attr('aria-hidden', 'false');
+    });
+    $('.webform-editor-embed-close,.webform-editor-embed-backdrop').on('click', function () {
+        $('#webform-embed-panel').attr({ hidden: true, 'aria-hidden': 'true' });
+    });
+    $('.webform-copy-embed').on('click', function () {
+        const button = $(this);
+        const text = $(`#${button.data('copy-target')}`).text();
+        navigator.clipboard.writeText(text).then(function () {
+            button.find('.webform-copy-label').text('Copied');
+            window.setTimeout(function () { button.find('.webform-copy-label').text('Copy'); }, 1200);
+        });
+    });
+    $('.webform-template-close,.webform-template-choice[href="#"]').on('click', function (event) {
+        event.preventDefault();
+        $('#webform-template-modal').remove();
+    });
+
     $('.webform-property-tabs button').on('click', function () {
         const panel = String($(this).data('panel'));
         $('.webform-property-tabs button').removeClass('is-active');

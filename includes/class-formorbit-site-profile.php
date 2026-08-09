@@ -28,7 +28,6 @@ final class FormOrbit_Site_Profile {
             'product' => 'formorbit',
             'version' => defined('WEBFORM_VERSION') ? WEBFORM_VERSION : '',
             'edition' => 'free',
-            'license_key' => '',
         ));
         $site_data = $this->site_data();
         $results = array();
@@ -44,7 +43,6 @@ final class FormOrbit_Site_Profile {
                 'product_slug' => $product['product'],
                 'plugin_version' => $product['version'],
                 'contact_email' => $site_data['admin_email'],
-                'license' => $product['license_key'],
                 'telemetry_consent' => 'yes',
             ));
             $response = wp_safe_remote_post(self::ENDPOINT, array(

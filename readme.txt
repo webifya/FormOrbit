@@ -96,7 +96,7 @@ No. Form structures and entries remain stored. Features supplied by the separate
 
 = Do I need FormOrbit Free when using Pro? =
 
-Yes. FormOrbit Pro is an add-on that extends the Free builder, so both compatible plugins remain installed and active.
+No. FormOrbit Pro is distributed as a separate standalone plugin and can run without FormOrbit Free.
 
 == Installation ==
 
@@ -111,7 +111,7 @@ Yes. FormOrbit Pro is an add-on that extends the Free builder, so both compatibl
 = 4.9.6 =
 * Removed all Pro field implementations, schemas, previews, sanitizers, and license-dependent field gates from the free plugin.
 * Kept only generic extension hooks for separately distributed add-ons.
-* Replaced disabled upgrade controls with informational links to the separate Pro product.
+* Removed paid-feature previews and disabled upgrade controls from operational Free screens.
 * Made Compatibility Profile sharing optional in every Free installation.
 * Documented the public human-readable source and development process.
 
