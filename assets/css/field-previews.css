@@ -69,6 +69,86 @@
     font-size: 25px;
 }
 
+.webform-preview-name {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.webform-preview-name i {
+    background: #fff;
+    border: 1px solid #c7c9cc;
+    border-radius: 6px;
+    color: #8c8f94;
+    font-size: 12px;
+    font-style: normal;
+    min-height: 38px;
+    padding: 9px 11px;
+}
+
+.webform-preview-control {
+    position: relative;
+}
+
+.webform-preview-icon {
+    color: #787c82;
+    font-style: normal;
+    position: absolute;
+    right: 11px;
+}
+
+.webform-preview-slider {
+    background: linear-gradient(#c7c9cc, #c7c9cc) center / calc(100% - 24px) 3px no-repeat #fff;
+    color: transparent;
+}
+
+.webform-preview-hidden {
+    background: repeating-linear-gradient(-45deg, #f6f7f7, #f6f7f7 6px, #eceef0 6px, #eceef0 12px);
+    border-style: dashed;
+}
+
+.webform-preview-unsupported {
+    background: #fcf9e8;
+    border: 1px solid #dba617;
+    border-radius: 6px;
+    color: #6e5500;
+    display: block;
+    font-size: 12px;
+    padding: 10px 12px;
+}
+
+.webform-unsupported-notice {
+    margin: 0 0 16px;
+}
+
+.webform-date-range,
+.webform-condition-controls {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.webform-date-range[hidden],
+.webform-condition-controls[hidden] {
+    display: none;
+}
+
+.webform-conditional-settings {
+    border-top: 1px solid #dcdcde;
+    margin-top: 16px;
+    padding-top: 14px;
+}
+
+.webform-conditional-settings summary {
+    cursor: pointer;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.webform-condition-value {
+    grid-column: 1 / -1;
+}
+
 @media (max-width: 700px) {
     .webform-field-card {
         gap: 9px;

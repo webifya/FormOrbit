@@ -102,6 +102,12 @@
             return fieldExtensions[field.type].preview(field, escapeHtml);
         }
         const placeholder = escapeHtml(field.placeholder || field.label || '');
+        if (!fieldLabels[field.type]) {
+            return '<span class="webform-preview-unsupported">This field requires the plugin that created it.</span>';
+        }
+        if (field.type === 'name') {
+            return '<span class="webform-preview-name"><i>First name</i><i>Last name</i></span>';
+        }
         if (field.type === 'textarea') return `<span class="webform-preview-control webform-preview-textarea">${placeholder}</span>`;
         if (field.type === 'select') return `<span class="webform-preview-control">${escapeHtml((field.options || [])[0] || 'Select an option')} ▾</span>`;
         if (['radio', 'checkbox', 'poll', 'quiz'].includes(field.type)) {
@@ -115,7 +121,11 @@
         if (field.type === 'heading') return '';
         if (field.type === 'captcha') return '<span class="webform-preview-control">Google reCAPTCHA</span>';
         if (field.type === 'hidden') return '<span class="webform-preview-control">Hidden value</span>';
-        return `<span class="webform-preview-control">${placeholder}</span>`;
+        const previewIcons = {
+            email: '✉', number: '#', date: '▣', time: '◷', phone: '☎', url: '↗'
+        };
+        const icon = previewIcons[field.type] ? `<i class="webform-preview-icon">${previewIcons[field.type]}</i>` : '';
+        return `<span class="webform-preview-control webform-preview-${escapeHtml(field.type)}">${placeholder}${icon}</span>`;
     }
 
     function fieldCard(field) {
@@ -153,6 +163,21 @@
             $('#webform-field-settings').html('<p class="description">Select a field to edit its options.</p>');
             return;
         }
+        if (!fieldLabels[field.type] && !fieldExtensions[field.type]) {
+            $('#webform-field-settings').html(`
+                <div class="notice notice-warning inline webform-unsupported-notice">
+                    <p><strong>Unsupported field type:</strong> ${escapeHtml(field.type)}</p>
+                    <p>Activate the plugin that created this field, remove it, or convert it to a supported Free field.</p>
+                </div>
+                <label>Convert field to
+                    <select data-field-type>
+                        <option value="">Choose a field type</option>
+                        ${Object.entries(fieldLabels).map(([type, label]) => `<option value="${type}">${escapeHtml(label)}</option>`).join('')}
+                    </select>
+                </label>
+            `);
+            return;
+        }
         const options = Object.entries(fieldLabels).map(([type, label]) => `<option value="${type}" ${field.type === type ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('');
         const choices = choiceTypes.includes(field.type);
         $('#webform-field-settings').html(`
@@ -168,8 +193,20 @@
             ${field.type === 'hidden' ? `<label>Default value<input type="text" data-prop="default_value" value="${escapeHtml(field.default_value || '')}"></label>` : ''}
             ${field.type === 'html' ? `<label>Safe HTML content<textarea rows="8" data-prop="html">${escapeHtml(field.html || '')}</textarea></label>` : ''}
             ${field.type === 'textarea' ? `<label>Visible rows<input type="number" min="2" max="30" data-prop="rows" value="${Number(field.rows || 5)}"></label>` : ''}
+            ${field.type === 'date' ? `<label>Date availability<select data-prop="date_rule"><option value="any" ${field.date_rule === 'any' || !field.date_rule ? 'selected' : ''}>Any date</option><option value="future" ${field.date_rule === 'future' ? 'selected' : ''}>Today and future dates</option><option value="past" ${field.date_rule === 'past' ? 'selected' : ''}>Today and past dates</option><option value="custom" ${field.date_rule === 'custom' ? 'selected' : ''}>Custom range</option></select></label><div class="webform-date-range" ${field.date_rule === 'custom' ? '' : 'hidden'}><label>Earliest date<input type="date" data-prop="date_min" value="${escapeHtml(field.date_min || '')}"></label><label>Latest date<input type="date" data-prop="date_max" value="${escapeHtml(field.date_max || '')}"></label></div>` : ''}
+            ${field.type === 'phone' ? `<label>Default country<select data-prop="phone_country">${[['US', 'United States (+1)'], ['CA', 'Canada (+1)'], ['GB', 'United Kingdom (+44)'], ['AU', 'Australia (+61)'], ['BD', 'Bangladesh (+880)'], ['IN', 'India (+91)'], ['PK', 'Pakistan (+92)'], ['AE', 'United Arab Emirates (+971)'], ['SA', 'Saudi Arabia (+966)']].map(([code, name]) => `<option value="${code}" ${String(field.phone_country || 'US') === code ? 'selected' : ''}>${name}</option>`).join('')}</select></label><label class="webform-check"><input type="checkbox" data-prop="phone_country_selector" ${field.phone_country_selector !== false ? 'checked' : ''}> Let visitors choose a country code</label>` : ''}
             ${field.type === 'slider' ? `<label>Minimum<input type="number" data-prop="min" value="${Number(field.min || 0)}"></label><label>Maximum<input type="number" data-prop="max" value="${Number(field.max || 100)}"></label><label>Step<input type="number" min="0.01" step="0.01" data-prop="step" value="${Number(field.step || 1)}"></label>` : ''}
+            <label class="webform-check"><input type="checkbox" data-prop="row_start" ${field.row_start ? 'checked' : ''}> Start a new row before this field</label>
             ${!['heading', 'hidden', 'html'].includes(field.type) ? `<label class="webform-check"><input type="checkbox" data-prop="required" ${field.required ? 'checked' : ''}> Required field</label>` : ''}
+            <details class="webform-conditional-settings" ${field.condition && field.condition.enabled ? 'open' : ''}>
+                <summary>Conditional visibility</summary>
+                <label class="webform-check"><input type="checkbox" data-condition-prop="enabled" ${field.condition && field.condition.enabled ? 'checked' : ''}> Show this field only when a rule matches</label>
+                <div class="webform-condition-controls" ${field.condition && field.condition.enabled ? '' : 'hidden'}>
+                    <label>Field<select data-condition-prop="field_id"><option value="">Choose field</option>${(schema[activeStage].fields || []).filter((candidate) => candidate.id !== field.id && fieldLabels[candidate.type]).map((candidate) => `<option value="${escapeHtml(candidate.id)}" ${field.condition && field.condition.field_id === candidate.id ? 'selected' : ''}>${escapeHtml(candidate.label)}</option>`).join('')}</select></label>
+                    <label>Operator<select data-condition-prop="operator">${[['equals', 'Equals'], ['not_equals', 'Does not equal'], ['contains', 'Contains'], ['starts_with', 'Starts with'], ['ends_with', 'Ends with'], ['greater_than', 'Greater than'], ['less_than', 'Less than'], ['not_empty', 'Is not empty'], ['empty', 'Is empty']].map(([value, label]) => `<option value="${value}" ${field.condition && field.condition.operator === value ? 'selected' : ''}>${label}</option>`).join('')}</select></label>
+                    <label class="webform-condition-value">Value<input type="text" data-condition-prop="value" value="${escapeHtml(field.condition && field.condition.value || '')}"></label>
+                </div>
+            </details>
         `);
         if (fieldExtensions[field.type] && typeof fieldExtensions[field.type].settings === 'function') {
             fieldExtensions[field.type].settings(field, $('#webform-field-settings'), escapeHtml);
@@ -206,14 +243,36 @@
     $(document).on('click', '.webform-palette-item', function () { addField(String($(this).data('type'))); });
     $(document).on('click', '.webform-open-field-picker', function () { $('#webform-field-picker').addClass('is-open').attr('aria-hidden', 'false'); });
     $(document).on('click', '.webform-field-picker-close,.webform-field-picker-backdrop', function () { $('#webform-field-picker').removeClass('is-open').attr('aria-hidden', 'true'); });
-    $(document).on('click', '.webform-field-card', function (event) { if ($(event.target).closest('.webform-remove-field').length) return; selectedId = String($(this).data('id')); render(); });
+    function activatePropertyPanel(panel) {
+        $('.webform-property-tabs button').removeClass('is-active');
+        $(`.webform-property-tabs button[data-panel="${panel}"]`).addClass('is-active');
+        $('.webform-property-panel').removeClass('is-active');
+        $(`.webform-property-panel[data-panel="${panel}"]`).addClass('is-active');
+    }
+
+    $(document).on('click', '.webform-field-card', function (event) {
+        if ($(event.target).closest('.webform-remove-field').length) return;
+        selectedId = String($(this).data('id'));
+        render();
+        activatePropertyPanel('field');
+    });
     $(document).on('click', '.webform-remove-field', function (event) { event.stopPropagation(); const id = String($(this).closest('.webform-field-card').data('id')); schema[activeStage].fields = schema[activeStage].fields.filter((field) => field.id !== id); if (selectedId === id) selectedId = null; dirty = true; pushHistory(); render(); });
     $(document).on('click', '.webform-stage-tab', function () { activeStage = Number($(this).data('stage')); selectedId = null; render(); });
     $(document).on('click', '.webform-edit-stage', function (event) { event.stopPropagation(); const index = Number($(this).closest('.webform-stage-tab').data('stage')); const title = window.prompt('Stage name', schema[index].title); if (title) { schema[index].title = title.trim(); dirty = true; pushHistory(); render(); } });
     $(document).on('click', '.webform-remove-stage', function (event) { event.stopPropagation(); const index = Number($(this).closest('.webform-stage-tab').data('stage')); if (schema.length > 1 && window.confirm('Remove this stage and its fields?')) { schema.splice(index, 1); activeStage = Math.max(0, activeStage - 1); selectedId = null; dirty = true; pushHistory(); render(); } });
     $('#webform-add-stage').on('click', function (event) { event.preventDefault(); schema.push({ id: uid('stage'), title: `Stage ${schema.length + 1}`, fields: [] }); activeStage = schema.length - 1; selectedId = null; dirty = true; pushHistory(); render(); });
-    $(document).on('change', '[data-field-type]', function () { const field = selectedField(); const type = String($(this).val()); if (!field || !fieldLabels[type]) return; field.type = type; field.label = field.label || fieldLabels[type]; if (choiceTypes.includes(type) && !(field.options || []).length) field.options = ['Option 1', 'Option 2']; dirty = true; pushHistory(); render(); });
-    $(document).on('input change', '#webform-field-settings [data-prop]', function (event) { const field = selectedField(); if (!field) return; const prop = String($(this).data('prop')); if (['required', 'hide_label'].includes(prop)) field[prop] = $(this).is(':checked'); else if (prop === 'options') field[prop] = String($(this).val()).split('\n').map((value) => value.trim()).filter(Boolean); else field[prop] = $(this).val(); dirty = true; scheduleHistory(); if (event.type === 'change') render(); });
+    $(document).on('change', '[data-field-type]', function () { const field = selectedField(); const type = String($(this).val()); if (!field || !fieldLabels[type]) return; field.type = type; field.label = fieldLabels[type]; if (choiceTypes.includes(type) && !(field.options || []).length) field.options = ['Option 1', 'Option 2']; dirty = true; pushHistory(); render(); });
+    $(document).on('input change', '#webform-field-settings [data-prop]', function (event) { const field = selectedField(); if (!field) return; const prop = String($(this).data('prop')); if (['required', 'hide_label', 'row_start', 'phone_country_selector'].includes(prop)) field[prop] = $(this).is(':checked'); else if (prop === 'options') field[prop] = String($(this).val()).split('\n').map((value) => value.trim()).filter(Boolean); else field[prop] = $(this).val(); dirty = true; scheduleHistory(); if (event.type === 'change') render(); });
+    $(document).on('input change', '#webform-field-settings [data-condition-prop]', function (event) {
+        const field = selectedField();
+        if (!field) return;
+        field.condition = field.condition || { enabled: false, field_id: '', operator: 'equals', value: '' };
+        const prop = String($(this).data('condition-prop'));
+        field.condition[prop] = prop === 'enabled' ? $(this).is(':checked') : $(this).val();
+        dirty = true;
+        scheduleHistory();
+        if (event.type === 'change') render();
+    });
     $('#webform-undo').on('click', function () { applyHistory(historyIndex - 1); });
     $('#webform-redo').on('click', function () { applyHistory(historyIndex + 1); });
 
@@ -255,14 +314,15 @@
     });
 
     $('.webform-property-tabs button').on('click', function () {
-        const panel = String($(this).data('panel'));
-        $('.webform-property-tabs button').removeClass('is-active');
-        $(this).addClass('is-active');
-        $('.webform-property-panel').removeClass('is-active');
-        $(`.webform-property-panel[data-panel="${panel}"]`).addClass('is-active');
+        activatePropertyPanel(String($(this).data('panel')));
     });
 
     $('#webform-save').on('click', function () {
+        const unsupported = schema.flatMap((stage) => stage.fields || []).filter((field) => !fieldLabels[field.type] && !fieldExtensions[field.type]);
+        if (unsupported.length) {
+            window.alert('This form contains unsupported fields. Activate the plugin that created them, or convert/remove each highlighted field before saving.');
+            return;
+        }
         const button = $(this).prop('disabled', true);
         const settings = {
             success_message: $('#webform-success-message').val(), confirmation_type: $('#webform-confirmation-type').val(),
