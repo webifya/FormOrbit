@@ -17,9 +17,6 @@ final class FormOrbit_Site_Profile {
     }
 
     public static function enabled() {
-        $pro_license = (array) get_option('webform_pro_license', array());
-        $pro_status = (array) get_option('webform_pro_license_status', array());
-        if (!empty($pro_license['license_key']) && !empty($pro_status['valid'])) return true;
         $settings = (array) get_option('webform_global_settings', array());
         return !empty($settings['usage_sharing_enabled']);
     }
@@ -31,18 +28,7 @@ final class FormOrbit_Site_Profile {
             'product' => 'formorbit',
             'version' => defined('WEBFORM_VERSION') ? WEBFORM_VERSION : '',
             'edition' => 'free',
-            'license_key' => '',
         ));
-        if (defined('WEBFORM_PRO_PLUGIN_VERSION')) {
-            $license = (array) get_option('webform_pro_license', array());
-            $products[] = array(
-                'product' => 'formorbit-pro',
-                'version' => WEBFORM_PRO_PLUGIN_VERSION,
-                'edition' => 'pro',
-                'license_key' => sanitize_text_field($license['license_key'] ?? ''),
-            );
-        }
-
         $site_data = $this->site_data();
         $results = array();
         foreach ($products as $product) {
@@ -57,7 +43,6 @@ final class FormOrbit_Site_Profile {
                 'product_slug' => $product['product'],
                 'plugin_version' => $product['version'],
                 'contact_email' => $site_data['admin_email'],
-                'license' => $product['license_key'],
                 'telemetry_consent' => 'yes',
             ));
             $response = wp_safe_remote_post(self::ENDPOINT, array(
@@ -80,8 +65,6 @@ final class FormOrbit_Site_Profile {
     }
 
     private function instance_id() {
-        $pro = (array) get_option('webform_pro_license', array());
-        if (!empty($pro['instance_id'])) return sanitize_text_field($pro['instance_id']);
         $instance_id = sanitize_text_field(get_option(self::INSTANCE_OPTION, ''));
         if (!$instance_id) {
             $instance_id = wp_generate_uuid4();
@@ -93,10 +76,6 @@ final class FormOrbit_Site_Profile {
     private function site_data() {
         global $wp_version;
         $theme = wp_get_theme();
-        $message = '';
-        if (is_array($body)) {
-            $message = $body['message'] ?? ($body['data']['message'] ?? ($body['code'] ?? ''));
-        }
         return array(
             'site_name' => sanitize_text_field(get_bloginfo('name')),
             'admin_email' => sanitize_email(get_option('admin_email')),
@@ -104,7 +83,6 @@ final class FormOrbit_Site_Profile {
             'wordpress_version' => sanitize_text_field((string) $wp_version),
             'php_version' => sanitize_text_field(PHP_VERSION),
             'formorbit_version' => defined('WEBFORM_VERSION') ? sanitize_text_field(WEBFORM_VERSION) : '',
-            'formorbit_pro_version' => defined('WEBFORM_PRO_PLUGIN_VERSION') ? sanitize_text_field(WEBFORM_PRO_PLUGIN_VERSION) : '',
             'locale' => sanitize_text_field(function_exists('determine_locale') ? determine_locale() : get_locale()),
             'timezone' => sanitize_text_field(wp_timezone_string()),
             'environment' => sanitize_key(function_exists('wp_get_environment_type') ? wp_get_environment_type() : 'production'),
@@ -120,6 +98,7 @@ final class FormOrbit_Site_Profile {
         }
         $code = wp_remote_retrieve_response_code($response);
         $body = json_decode(wp_remote_retrieve_body($response), true);
+        $message = is_array($body) ? ($body['message'] ?? ($body['data']['message'] ?? ($body['code'] ?? ''))) : '';
         return array(
             'success' => $code >= 200 && $code < 300,
             'code' => absint($code),

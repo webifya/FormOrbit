@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 4.9.5
+Stable tag: 4.9.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -92,11 +92,11 @@ Payment and commerce fields are part of FormOrbit Pro. Pro sends customers to su
 
 = Will my forms disappear if FormOrbit Pro is deactivated? =
 
-No. Form structures and entries remain stored. Pro-only fields become unavailable for editing and are not rendered publicly until Pro is active with a valid license.
+No. Form structures and entries remain stored. Features supplied by the separately distributed add-on require that add-on to remain installed and active.
 
 = Do I need FormOrbit Free when using Pro? =
 
-Yes. FormOrbit Pro is an add-on that extends the Free builder, so both compatible plugins remain installed and active.
+No. FormOrbit Pro is distributed as a separate standalone plugin and can run without FormOrbit Free.
 
 == Installation ==
 
@@ -107,6 +107,13 @@ Yes. FormOrbit Pro is an add-on that extends the Free builder, so both compatibl
 5. Copy the generated `[formorbit id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 4.9.6 =
+* Removed all Pro field implementations, schemas, previews, sanitizers, and license-dependent field gates from the free plugin.
+* Kept only generic extension hooks for separately distributed add-ons.
+* Removed paid-feature previews and disabled upgrade controls from operational Free screens.
+* Made Compatibility Profile sharing optional in every Free installation.
+* Documented the public human-readable source and development process.
 
 = 4.9.5 =
 * Renamed Usage Insights to Compatibility Profile and replaced the technical explanation with concise customer-friendly guidance.
@@ -123,7 +130,6 @@ Yes. FormOrbit Pro is an add-on that extends the Free builder, so both compatibl
 
 = 4.9.2 =
 * Improved site-profile compatibility and surfaced server validation messages.
-* Made profile synchronization automatic when a valid Pro license is active.
 * Rebuilt the Upgrade to Pro screen with a complete categorized feature showcase.
 
 = 4.9.1 =
@@ -215,7 +221,6 @@ Yes. FormOrbit Pro is an add-on that extends the Free builder, so both compatibl
 * Added a one-click action for moving a child field back to the main form.
 * Added automatic expansion of Name and Address fields into their editable component fields.
 * Moved detailed child options into a compact Advanced settings panel.
-* Preserved licensed container schemas when Pro is temporarily inactive.
 
 = 4.3.1 =
 * Reorganized the FormOrbit admin menu around common form-building workflows.
@@ -307,7 +312,6 @@ Yes. FormOrbit Pro is an add-on that extends the Free builder, so both compatibl
 * Added a dedicated Name field with responsive first-name and last-name inputs.
 * Added the Rich Text / Agreement field to the visible Pro field catalog.
 * Added shared builder support for Pro rich-text editing, media, previews, and safe frontend rendering.
-* Preserved Rich Text fields in locked mode when FormOrbit Pro is unavailable.
 
 = 2.6.2 =
 * Moved the secure Preview shortcut beside each active form title.
@@ -337,7 +341,6 @@ Yes. FormOrbit Pro is an add-on that extends the Free builder, so both compatibl
 = 4.0.0 =
 This release removes the historical webform.php compatibility loader. Sites upgrading directly from a version older than 3.2.0 may need to reactivate FormOrbit once after installing the update.
 * Moved Email Delivery directly below Add New for faster access.
-* Added the safe label markup extension used by licensed field icons.
 
 = 2.5.0 =
 * Added JSON, CSV, and XML form imports with automatic format detection.
@@ -353,7 +356,6 @@ This release removes the historical webform.php compatibility loader. Sites upgr
 = 2.0.0 =
 * Added desktop, tablet, and mobile builder preview widths.
 * Added Free previews for reusable Pro themes and per-field styling.
-* Added a licensed field-style schema and frontend extension path.
 * Improved responsive field layouts and mobile fallbacks.
 
 = 1.9.0 =
@@ -373,7 +375,6 @@ This release removes the historical webform.php compatibility loader. Sites upgr
 * Added Google Cloud reCAPTCHA checkbox support using Enterprise assessments.
 * Kept classic and migrated v2 SiteVerify compatibility for existing keys.
 * Added Site Key, Cloud project, restricted API key, and expected-action controls.
-* Added Pro integration cards to the locked Pro feature section.
 
 = 1.7.0 =
 * Replaced the permanent field sidebar with a spacious, icon-based Add Field picker.
@@ -387,7 +388,6 @@ This release removes the historical webform.php compatibility loader. Sites upgr
 = 1.6.0 =
 * Reorganized form settings into Field, Confirmation, Access, and Style panels.
 * Made the field palette more compact and professional.
-* Added locked Pro field previews to the free builder.
 * Added global Google reCAPTCHA v2 configuration and server verification.
 * Added import conversion for WPForms, Gravity Forms, Fluent Forms, and Contact Form 7 exports.
 * Suppressed unrelated plugin notices only inside the form editor.
@@ -458,8 +458,15 @@ Google Privacy Policy: https://policies.google.com/privacy
 
 Google Cloud Service Terms: https://cloud.google.com/terms/service-terms
 
-The optional Compatibility Profile connects to Web Ninja LLC to help improve FormOrbit updates, compatibility, and support. It shares basic website, administrator contact, WordPress, PHP, theme, locale, environment, and FormOrbit version details. It never shares forms, entries, passwords, payment information, or visitor data. Free administrators can disable it at any time; an active Pro license keeps its licensed installation profile connected.
+The optional Compatibility Profile connects to Web Ninja LLC to help improve FormOrbit updates, compatibility, and support. It shares basic website, administrator contact, WordPress, PHP, theme, locale, environment, and FormOrbit version details. It never shares forms, entries, passwords, payment information, or visitor data. Administrators can enable or disable it at any time.
 
 FormOrbit service information and privacy details: https://www.webninjallc.com/plugins/formorbit/
 
 Site owners are responsible for disclosing this service in their own privacy policy and complying with Google's terms, privacy policy, quotas, and billing requirements.
+
+== Source code and development ==
+
+The complete, human-readable source for FormOrbit is publicly maintained at:
+https://github.com/webifya/FormOrbit
+
+The JavaScript and CSS files distributed in `assets/` are the maintained source files. They are not generated, transpiled, bundled, or minified, and no private source or build step is required to reproduce them. Contributors can edit these files directly. Release packages are created from the tagged repository contents by the public GitHub Actions workflow in `.github/workflows/deploy.yml`.

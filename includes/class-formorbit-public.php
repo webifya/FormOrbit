@@ -88,6 +88,7 @@ class Webform_Public {
                     <section class="webform-stage <?php echo $stage_index === 0 ? 'is-active' : ''; ?>" data-stage="<?php echo esc_attr($stage_index); ?>" <?php echo $stage_index === 0 ? '' : 'hidden'; ?>>
                         <?php if (count($schema) > 1) : ?><h2><?php echo esc_html($stage['title']); ?></h2><?php endif; ?>
                         <?php foreach ($stage['fields'] as $field) : ?>
+                            <?php if (!$this->is_supported_field_type($field['type'] ?? '')) continue; ?>
                             <?php if (!empty($field['row_start'])) : ?><span class="webform-row-break" aria-hidden="true"></span><?php endif; ?>
                             <?php $this->render_field($field); ?>
                         <?php endforeach; ?>
@@ -134,7 +135,6 @@ class Webform_Public {
     }
 
     private function render_field($field) {
-        if (!$this->field_type_enabled($field)) return;
         $id = 'webform-' . $field['id'];
         $name = 'fields[' . $field['id'] . ']';
         $field_class = apply_filters('webform_field_custom_class', '', $field);
@@ -297,6 +297,12 @@ class Webform_Public {
         <?php
     }
 
+    private function is_supported_field_type($type) {
+        $base_types = array('name', 'text', 'email', 'textarea', 'select', 'radio', 'checkbox', 'number', 'date', 'time', 'phone', 'url', 'file', 'consent', 'poll', 'quiz', 'rating', 'slider', 'hidden', 'html', 'captcha', 'heading');
+        $allowed_types = array_unique(array_merge($base_types, (array) apply_filters('webform_allowed_field_types', $base_types)));
+        return in_array($type, $allowed_types, true);
+    }
+
     public function submit() {
         $form_id = isset($_POST['form_id']) ? absint($_POST['form_id']) : 0;
         if (!$form_id || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'] ?? '')), 'webform_submit_' . $form_id)) {
@@ -336,7 +342,7 @@ class Webform_Public {
         $poll_answers = array();
         foreach ($schema as $stage) {
             foreach ($stage['fields'] as $field) {
-                if (!$this->field_type_enabled($field)) continue;
+                if (!$this->is_supported_field_type($field['type'] ?? '')) continue;
                 if (in_array($field['type'], array('heading', 'html'), true) || !apply_filters('webform_process_field', true, $field, $form_id)) continue;
                 if (!$this->condition_passes($field['condition'] ?? array(), $posted)) continue;
                 $value = $posted[$field['id']] ?? '';
@@ -469,11 +475,6 @@ class Webform_Public {
         );
         $response = apply_filters('webform_submission_response', $response, $entry_id, $form_id, $data, $settings);
         wp_send_json_success($response);
-    }
-
-    private function field_type_enabled($field) {
-        $pro_types = array('calculation', 'field_group', 'signature', 'rich_text', 'divider', 'address', 'repeater', 'appointment', 'nps', 'currency', 'product', 'price', 'quantity', 'product_option', 'shipping', 'donation', 'total', 'post_title', 'post_body', 'post_excerpt', 'post_tags', 'post_custom');
-        return !in_array($field['type'] ?? '', $pro_types, true) || (bool) apply_filters('webform_pro_field_enabled', false, $field);
     }
 
     private function date_bounds($field) {
