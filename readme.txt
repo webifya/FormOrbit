@@ -112,7 +112,13 @@ No. FormOrbit Pro is distributed as a separate standalone plugin and can run wit
 * Removed all Pro field implementations, schemas, previews, sanitizers, and license-dependent field gates from the free plugin.
 * Kept only generic extension hooks for separately distributed add-ons.
 * Removed paid-feature previews and disabled upgrade controls from operational Free screens.
+* Restored the responsive form-builder layout and distinct previews for supported Free field types.
+* Added editor controls for date ranges, phone-country behavior, conditional visibility, and row layout.
+* Opened the Field settings tab automatically when a field is selected.
+* Added safe compatibility notices for unsupported add-on fields instead of rendering them as text fields.
+* Prevented unsupported fields from being submitted or silently converted when their providing add-on is inactive.
 * Made Compatibility Profile sharing optional in every Free installation.
+* Removed license-related values from the optional Free compatibility payload.
 * Documented the public human-readable source and development process.
 
 = 4.9.5 =
