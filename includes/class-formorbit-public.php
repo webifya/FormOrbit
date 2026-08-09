@@ -134,7 +134,6 @@ class Webform_Public {
     }
 
     private function render_field($field) {
-        if (!$this->field_type_enabled($field)) return;
         $id = 'webform-' . $field['id'];
         $name = 'fields[' . $field['id'] . ']';
         $field_class = apply_filters('webform_field_custom_class', '', $field);
@@ -336,7 +335,6 @@ class Webform_Public {
         $poll_answers = array();
         foreach ($schema as $stage) {
             foreach ($stage['fields'] as $field) {
-                if (!$this->field_type_enabled($field)) continue;
                 if (in_array($field['type'], array('heading', 'html'), true) || !apply_filters('webform_process_field', true, $field, $form_id)) continue;
                 if (!$this->condition_passes($field['condition'] ?? array(), $posted)) continue;
                 $value = $posted[$field['id']] ?? '';
@@ -469,11 +467,6 @@ class Webform_Public {
         );
         $response = apply_filters('webform_submission_response', $response, $entry_id, $form_id, $data, $settings);
         wp_send_json_success($response);
-    }
-
-    private function field_type_enabled($field) {
-        $pro_types = array('calculation', 'field_group', 'signature', 'rich_text', 'divider', 'address', 'repeater', 'appointment', 'nps', 'currency', 'product', 'price', 'quantity', 'product_option', 'shipping', 'donation', 'total', 'post_title', 'post_body', 'post_excerpt', 'post_tags', 'post_custom');
-        return !in_array($field['type'] ?? '', $pro_types, true) || (bool) apply_filters('webform_pro_field_enabled', false, $field);
     }
 
     private function date_bounds($field) {
