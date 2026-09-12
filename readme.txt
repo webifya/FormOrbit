@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 4.9.9
+Stable tag: 5.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -107,6 +107,15 @@ Yes. FormOrbit Pro is an add-on that extends the Free builder, so both compatibl
 5. Copy the generated `[formorbit id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 5.0.0 =
+* Display stages as connected editor sections and move fields between them.
+* Duplicate fields, configure scoped custom CSS, and use rich-text confirmation messages.
+* Show the submit button on the editor canvas with left, center, or right alignment.
+* Reveal embed codes immediately after saving a new form.
+* Customize stage heading size and hide public stage names.
+* Add hex color inputs and seven distinct free appearance presets.
+* Improve national phone-number grouping for supported default countries.
 
 = 4.9.5 =
 * Renamed Usage Insights to Compatibility Profile and replaced the technical explanation with concise customer-friendly guidance.

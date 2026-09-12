@@ -1,0 +1,15 @@
+.webform-public.webform-style-orbit-paper{background:#faf4e6;color:#382e22;border:1px solid #c9bea7;box-shadow:5px 5px 0 #c9bea7;border-radius:0;font-family:Georgia,serif}
+.webform-public.webform-style-orbit-night{background:#101b35;color:#edf3ff;border:1px solid #405781;border-radius:20px}
+.webform-public.webform-style-orbit-terminal{background:#071b12;color:#b9ffc8;border:2px solid #4ccb78;border-radius:0;font-family:monospace}
+.webform-public.webform-style-orbit-editorial{background:#fff;color:#1c1c1c;border-top:8px solid #1c1c1c;border-radius:0;font-family:Georgia,serif}
+.webform-public.webform-style-orbit-ocean{background:linear-gradient(135deg,#dff8f8,#e3edff);color:#123d58;border:0;border-radius:28px;box-shadow:0 15px 45px #123d5826}
+.webform-public.webform-style-orbit-brutalist{background:#ffef75;color:#151515;border:3px solid #151515;border-radius:0;box-shadow:8px 8px 0 #151515}
+.webform-public.webform-style-orbit-glass{background:linear-gradient(145deg,#eee8ff,#fff1f7);color:#38234e;border:1px solid #d8c7e8;border-radius:24px;box-shadow:0 16px 50px #80549c26}
+.webform-public[class*="webform-style-orbit-"] label,.webform-public[class*="webform-style-orbit-"] h2,.webform-public[class*="webform-style-orbit-"] legend,.webform-public[class*="webform-style-orbit-"] .webform-steps{color:inherit}
+.webform-public.webform-style-orbit-night input,.webform-public.webform-style-orbit-night textarea,.webform-public.webform-style-orbit-night select{background:#1d2b48;color:#edf3ff;border-color:#53668c}
+.webform-public.webform-style-orbit-terminal input,.webform-public.webform-style-orbit-terminal textarea,.webform-public.webform-style-orbit-terminal select{background:#102c1c;color:#b9ffc8;border-color:#4ccb78;border-radius:0}
+.webform-public.webform-style-orbit-brutalist input,.webform-public.webform-style-orbit-brutalist textarea,.webform-public.webform-style-orbit-brutalist select{border:2px solid #151515;border-radius:0}
+.webform-public.webform-style-orbit-editorial input,.webform-public.webform-style-orbit-editorial textarea,.webform-public.webform-style-orbit-editorial select{border-radius:0;border-width:0 0 1px;background:#f7f7f7}
+.webform-public.webform-style-orbit-night input::placeholder,.webform-public.webform-style-orbit-night textarea::placeholder{color:#b7c4df}
+.webform-public.webform-style-orbit-terminal input::placeholder,.webform-public.webform-style-orbit-terminal textarea::placeholder{color:#85b892}
+

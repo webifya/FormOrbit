@@ -1,0 +1,10 @@
+.formorbit-builder-stage{width:100%;min-width:0;margin-bottom:24px;padding:16px;background:#fff;border:1px solid #ddd;border-radius:12px;box-sizing:border-box}
+.formorbit-stage-fields{display:flex;flex-wrap:wrap;gap:16px;min-height:100px;padding:12px 0}
+.formorbit-stage-fields>.webform-field-card{box-sizing:border-box;min-width:0;flex:0 0 100%}
+.formorbit-stage-fields>.webform-field-card[style]{flex:0 0 var(--preview-width,100%);max-width:var(--preview-width,100%)}
+.formorbit-editor-actions{padding:20px}
+.formorbit-preview-overlay{position:fixed;inset:0;background:#17112b99;z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px}
+.formorbit-preview-dialog{background:white;padding:24px;max-width:900px;width:100%;max-height:85vh;overflow:auto;border-radius:16px}
+.formorbit-hex{max-width:130px;margin-left:8px!important;font-family:monospace}
+.webform-duplicate-field{position:relative;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;color:#6045c6}
+@media(max-width:650px){.formorbit-stage-fields>.webform-field-card{flex-basis:100%!important;width:100%!important}}

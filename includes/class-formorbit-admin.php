@@ -124,6 +124,7 @@ class Webform_Admin {
         wp_enqueue_script('jquery-ui-sortable');
         wp_enqueue_script('jquery-ui-droppable');
         wp_enqueue_script('webform-admin', WEBFORM_URL . 'assets/js/admin.js', array('jquery', 'jquery-ui-sortable', 'jquery-ui-droppable'), WEBFORM_VERSION, true);
+        wp_enqueue_script('formorbit-appearance', WEBFORM_URL . 'assets/js/appearance.js', array('webform-admin'), WEBFORM_VERSION, true);
         wp_localize_script('webform-admin', 'WebformAdmin', apply_filters('webform_admin_script_data', array(
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('webform_admin'),
