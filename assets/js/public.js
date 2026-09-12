@@ -106,7 +106,9 @@
                     if (country === 'US' || country === 'CA') {
                         event.target.value = digits.length > 6 ? `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}` : (digits.length > 3 ? `(${digits.slice(0, 3)}) ${digits.slice(3)}` : digits);
                     } else {
-                        event.target.value = digits.replace(/(\d{3})(?=\d)/g, '$1 ').trim();
+                        const groups = {GB:[5,6], AU:[4,3,3], BD:[5,6], IN:[5,5], PK:[4,7], AE:[3,3,4], SA:[3,3,4]}[country] || [3,3,3,3,3];
+                        let offset = 0;
+                        event.target.value = groups.map(size => { const part = digits.slice(offset, offset + size); offset += size; return part; }).filter(Boolean).join(' ');
                     }
                 }
             });

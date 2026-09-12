@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/formorbit-appearance.php';
 
 defined('ABSPATH') || exit;
 

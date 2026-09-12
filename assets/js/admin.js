@@ -134,6 +134,7 @@
             <div class="webform-field-preview"><strong>${escapeHtml(field.label)}${field.required ? ' <em>*</em>' : ''}</strong>${preview(field)}</div>
             <span class="webform-type">${escapeHtml(fieldLabels[field.type] || field.type)}</span>
             <button type="button" class="webform-remove-field" title="Remove">×</button>
+            <button type="button" class="webform-duplicate-field" title="Duplicate field" aria-label="Duplicate field"><span class="dashicons dashicons-admin-page"></span></button>
         </div>`;
     }
 
@@ -142,9 +143,9 @@
         $('#webform-stage-tabs').html(schema.map((stage, index) =>
             `<button type="button" class="webform-stage-tab ${index === activeStage ? 'is-active' : ''}" data-stage="${index}"><span>${escapeHtml(stage.title)}</span><span class="dashicons dashicons-edit webform-edit-stage" title="Rename stage"></span>${schema.length > 1 ? '<span class="webform-remove-stage" title="Remove stage">×</span>' : ''}</button>`
         ).join(''));
-        const fields = schema[activeStage].fields || [];
-        $('#webform-canvas').html(fields.length ? fields.map(fieldCard).join('') : '<div class="webform-drop-empty"><strong>Start building your form</strong><small>Add a field, then drag it into the order you want.</small><button type="button" class="button button-primary webform-open-field-picker">Add your first field</button></div>');
-        $('#webform-canvas').sortable({
+        $('#webform-canvas').html(schema.map((stage, index) => '<section class="formorbit-builder-stage" data-stage="' + index + '"><h3>' + escapeHtml(stage.title) + '</h3><div class="formorbit-stage-fields" data-stage="' + index + '">' + (stage.fields || []).map(fieldCard).join('') + '</div><button type="button" class="button formorbit-stage-add" data-stage="' + index + '">Add field</button></section>').join(''));
+        $('.formorbit-stage-fields').sortable({
+            connectWith: '.formorbit-stage-fields',
             items: '.webform-field-card',
             handle: '.webform-drag',
             update: function () {
@@ -155,6 +156,17 @@
             }
         });
         renderSettings();
+        const originalUpdate = $('.formorbit-stage-fields').first().sortable('option', 'update');
+        $('.formorbit-stage-fields').sortable('option', 'update', function (event, ui) {
+            const fields = schema.flatMap(stage => stage.fields || []);
+            $('.formorbit-stage-fields').each(function () {
+                schema[Number($(this).data('stage'))].fields = $(this).children('.webform-field-card').map(function () { return fields.find(field => field.id === String($(this).data('id'))); }).get().filter(Boolean);
+            });
+            activeStage = Number($(this).data('stage'));
+            dirty = true; pushHistory();
+            const crossedStage = ui && ui.item && (ui.sender || Number(ui.item.closest('.formorbit-stage-fields').data('stage')) !== Number($(this).data('stage')));
+            if (originalUpdate && !crossedStage) originalUpdate.call(this, event, ui);
+        });
     }
 
     function renderSettings() {
@@ -251,8 +263,9 @@
     }
 
     $(document).on('click', '.webform-field-card', function (event) {
-        if ($(event.target).closest('.webform-remove-field').length) return;
+        if ($(event.target).closest('.webform-remove-field,.webform-duplicate-field').length) return;
         selectedId = String($(this).data('id'));
+        activeStage = Number($(this).closest('.formorbit-stage-fields').data('stage'));
         render();
         activatePropertyPanel('field');
     });
@@ -274,6 +287,20 @@
         if (event.type === 'change') render();
     });
     $('#webform-undo').on('click', function () { applyHistory(historyIndex - 1); });
+    $(document).on('click', '.formorbit-stage-add', function () {
+        activeStage = Number($(this).data('stage'));
+        $('.webform-open-field-picker').first().trigger('click');
+    });
+    $(document).on('click', '.webform-duplicate-field', function (event) {
+        event.stopPropagation();
+        const source = schema[activeStage].fields.find(field => field.id === String($(this).closest('.webform-field-card').data('id')));
+        if (!source) return;
+        const copy = JSON.parse(JSON.stringify(source));
+        function renew(field) { field.id = uid('field'); (field.children || []).forEach(renew); }
+        renew(copy);
+        schema[activeStage].fields.splice(schema[activeStage].fields.indexOf(source) + 1, 0, copy);
+        selectedId = copy.id; dirty = true; pushHistory(); render();
+    });
     $('#webform-redo').on('click', function () { applyHistory(historyIndex + 1); });
 
     $('.webform-device-switcher [data-device]').on('click', function () {
@@ -318,6 +345,7 @@
     });
 
     $('#webform-save').on('click', function () {
+        if (window.tinyMCE) window.tinyMCE.triggerSave();
         const unsupported = schema.flatMap((stage) => stage.fields || []).filter((field) => !fieldLabels[field.type] && !fieldExtensions[field.type]);
         if (unsupported.length) {
             window.alert('This form contains unsupported fields. Activate the plugin that created them, or convert/remove each highlighted field before saving.');
@@ -340,6 +368,9 @@
         }).done(function (response) {
             if (!response.success) return;
             $('#webform-id').val(response.data.id);
+            $('#webform-editor-shortcode').text(response.data.shortcode);
+            $('#webform-editor-php').text('<?php echo do_shortcode( \'' + response.data.shortcode + '\' ); ?>');
+            $('#webform-open-embed').removeAttr('hidden');
             dirty = false;
             if (window.history.replaceState) window.history.replaceState({}, '', WebformAdmin.formsUrl.replace('page=formorbit', `page=formorbit-builder&form_id=${response.data.id}`));
         }).always(function () { button.prop('disabled', false); });
@@ -359,6 +390,9 @@
 
     window.addEventListener('beforeunload', function (event) { if (dirty) { event.preventDefault(); event.returnValue = ''; } });
     window.FormOrbitBuilder = {
+        setActiveStage(index) { activeStage = index; },
+        getSchema() { return schema; },
+        getActiveStage() { return activeStage; },
         registerFieldTypes(types) {
             Object.entries(types || {}).forEach(([type, definition]) => {
                 fieldLabels[type] = definition.label || type;
