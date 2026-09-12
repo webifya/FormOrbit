@@ -9,7 +9,7 @@ add_action('wp_enqueue_scripts', function () { wp_enqueue_style('formorbit-free-
 add_action('admin_enqueue_scripts', function () {
     if (wp_script_is('webform-admin', 'enqueued')) wp_enqueue_style('formorbit-appearance', WEBFORM_URL . 'assets/css/appearance.css', array('webform-admin'), WEBFORM_VERSION);
     if (wp_script_is('webform-admin', 'enqueued')) wp_enqueue_style('formorbit-free-presets', WEBFORM_URL . 'assets/css/free-presets.css', array('formorbit-appearance'), WEBFORM_VERSION);
-});
+}, 20);
 add_action('webform_confirmation_message_editor', function ($settings) {
     if (defined('WEBFORM_PRO_PLUGIN_VERSION')) return;
     wp_editor($settings['success_message'] ?? __('Thanks! Your response has been submitted.', 'formorbit'), 'webform-success-message', array('textarea_name' => 'success_message', 'textarea_rows' => 8, 'media_buttons' => true));

@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 5.0.0
+Stable tag: 5.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -107,6 +107,10 @@ Yes. FormOrbit Pro is an add-on that extends the Free builder, so both compatibl
 5. Copy the generated `[formorbit id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 5.0.1 =
+* Fix preview stylesheet loading so the popup does not appear at the page bottom.
+* Keep editor scroll position while opening and closing preview.
 
 = 5.0.0 =
 * Display stages as connected editor sections and move fields between them.
