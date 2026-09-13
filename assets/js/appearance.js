@@ -28,15 +28,20 @@
     });
     refresh();
     if (!$('.webform-live-preview-trigger').length && $('#webform-save').length) {
-        $('<button type="button" class="button">Preview</button>').insertBefore('#webform-save').on('click', function () {
+        $('<button type="button" class="button" id="formorbit-open-preview">Preview</button>').insertBefore('#webform-save').on('click', function (event) {
+            event.preventDefault();
+            if ($('.formorbit-preview-overlay').length) return;
+            const trigger = this;
             const dialog = $('<div class="formorbit-preview-overlay" role="dialog" aria-modal="true" aria-label="Form preview"><div class="formorbit-preview-dialog"><button type="button" class="button formorbit-preview-close">Close preview</button><div class="webform-public"></div></div></div>');
             const form = dialog.find('.webform-public').addClass('webform-style-' + $('#webform-style-preset').val());
             form.append($('#webform-canvas').children().clone());
             form.find('button,.webform-drag,.webform-type').remove();
             form.append($('.formorbit-editor-actions').clone());
-            dialog.find('.formorbit-preview-close').on('click', function () { dialog.remove(); $('#webform-save').trigger('focus'); });
+            dialog.find('.formorbit-preview-close').on('click', function () { dialog.remove(); $('body').removeClass('formorbit-preview-open'); trigger.focus({preventScroll:true}); });
             dialog.on('keydown', function (event) { if (event.key === 'Escape') dialog.find('.formorbit-preview-close').trigger('click'); });
-            dialog.appendTo('body').find('.formorbit-preview-close').trigger('focus');
+            dialog.appendTo('body');
+            $('body').addClass('formorbit-preview-open');
+            dialog.find('.formorbit-preview-close')[0].focus({preventScroll:true});
         });
     }
 }(jQuery));
