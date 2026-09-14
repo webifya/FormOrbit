@@ -12,6 +12,8 @@ class Webform_Public {
         add_action('wp_ajax_nopriv_webform_submit', array($this, 'submit'));
         add_action('wp_ajax_formorbit_submit', array($this, 'submit'));
         add_action('wp_ajax_nopriv_formorbit_submit', array($this, 'submit'));
+        add_action('wp_ajax_formorbit_submission_token', array($this, 'submission_token'));
+        add_action('wp_ajax_nopriv_formorbit_submission_token', array($this, 'submission_token'));
         add_action('wp_ajax_formorbit_track_event', array($this, 'track_event'));
         add_action('wp_ajax_nopriv_formorbit_track_event', array($this, 'track_event'));
         add_action('webform_after_submission', array($this, 'track_submission'), 5, 2);
@@ -303,10 +305,28 @@ class Webform_Public {
         return in_array($type, $allowed_types, true);
     }
 
+    /**
+     * Issue a current token for a publicly available form, outside page caches.
+     * This read-only endpoint must work when the page's nonce has expired.
+     */
+    public function submission_token() {
+        nocache_headers();
+        $form_id = isset($_POST['form_id']) ? absint($_POST['form_id']) : 0;
+        if (!$form_id || get_post_type($form_id) !== 'webform_form' || get_post_status($form_id) !== 'publish') {
+            wp_send_json_error(array('message' => __('This form is unavailable.', 'formorbit')), 404);
+        }
+        $settings = (array) get_post_meta($form_id, '_webform_settings', true);
+        $error = $this->availability_error($form_id, $settings);
+        if ($error) {
+            wp_send_json_error(array('message' => $error), 403);
+        }
+        wp_send_json_success(array('nonce' => wp_create_nonce('webform_submit_' . $form_id)));
+    }
+
     public function submit() {
         $form_id = isset($_POST['form_id']) ? absint($_POST['form_id']) : 0;
         if (!$form_id || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'] ?? '')), 'webform_submit_' . $form_id)) {
-            wp_send_json_error(array('message' => __('Your session expired. Refresh and try again.', 'formorbit')), 403);
+            wp_send_json_error(array('code' => 'formorbit_session_expired', 'message' => __('Your session expired. Please try submitting again.', 'formorbit')), 403);
         }
         if (!empty($_POST['website'])) {
             wp_send_json_success(array('message' => __('Thanks! Your response has been submitted.', 'formorbit')));

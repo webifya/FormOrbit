@@ -121,8 +121,22 @@
                 button.disabled = true;
                 message.className = 'webform-message';
                 message.textContent = 'Submitting…';
-                fetch(WebformPublic.ajaxUrl, { method: 'POST', body: new FormData(form), credentials: 'same-origin' })
-                    .then(response => response.json())
+                const submission = new FormData(form);
+                const send = () => fetch(WebformPublic.ajaxUrl, { method: 'POST', body: submission, credentials: 'same-origin', cache: 'no-store' }).then(response => response.json());
+                send().then(function (response) {
+                    // Only retry an explicit nonce rejection, before any entry is created.
+                    if (response.success || response.data?.code !== 'formorbit_session_expired') return response;
+                    const tokenRequest = new URLSearchParams({ action: 'formorbit_submission_token', form_id: submission.get('form_id') });
+                    return fetch(WebformPublic.ajaxUrl, { method: 'POST', body: tokenRequest, credentials: 'same-origin', cache: 'no-store' })
+                        .then(result => result.json())
+                        .then(function (fresh) {
+                            if (!fresh.success || !fresh.data?.nonce) throw new Error(fresh.data?.message || 'Unable to refresh your session. Please try again.');
+                            submission.set('nonce', fresh.data.nonce);
+                            const nonceInput = form.querySelector('input[name="nonce"]');
+                            if (nonceInput) nonceInput.value = fresh.data.nonce;
+                            return send();
+                        });
+                })
                     .then(function (response) {
                         if (!response.success) {
                             if (response.data && response.data.errors) {
