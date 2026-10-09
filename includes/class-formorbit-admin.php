@@ -701,9 +701,26 @@ class Webform_Admin {
 
     public function suppress_editor_notices() {
         $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
-        if ($page !== 'formorbit-builder') return;
-        remove_all_actions('admin_notices');
-        remove_all_actions('all_admin_notices');
+        if ($page !== 'formorbit' && strpos($page, 'formorbit-') !== 0) return;
+        // Keep actionable FormOrbit notices; unrelated plugin notices remain on other screens.
+        global $wp_filter;
+        foreach (array('admin_notices', 'all_admin_notices') as $hook) {
+            if (empty($wp_filter[$hook]->callbacks)) continue;
+            foreach ($wp_filter[$hook]->callbacks as $priority => $callbacks) {
+                foreach ($callbacks as $callback) {
+                    $function = $callback['function'];
+                    $owner = is_array($function) ? (is_object($function[0]) ? get_class($function[0]) : $function[0]) : '';
+                    $ours = preg_match('/^(?:Webform|FormOrbit)_/i', $owner);
+                    if (!$ours || (is_array($function) && $function[1] === 'review_notice')) remove_action($hook, $function, $priority);
+                }
+            }
+        }
+        // WordPress moves notices after this marker instead of into the first panel heading.
+        add_action('admin_notices', array($this, 'notice_boundary'), PHP_INT_MAX);
+    }
+
+    public function notice_boundary() {
+        echo '<div class="wp-header-end formorbit-notice-boundary"></div>';
     }
 
     public function builder_admin_title($admin_title, $title) {

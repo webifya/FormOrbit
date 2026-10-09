@@ -7,6 +7,8 @@ define('WEBFORM_PATH', dirname(__DIR__, 2) . (is_dir(dirname(__DIR__, 2) . '/cor
 $hooks=[]; $meta=[]; $admin=true;
 function add_filter($tag,$cb,$priority=10,$args=1){global $hooks;$hooks[$tag][$priority][]=[$cb,$args];}
 function add_action($tag,$cb,$priority=10,$args=1){add_filter($tag,$cb,$priority,$args);}
+function remove_action($tag,$cb,$priority=10){global $removed_actions;$removed_actions[]=[$tag,$cb,$priority];}
+function wp_unslash($value){return is_string($value)?stripslashes($value):$value;}
 function apply_filters($tag,$value,...$args){global $hooks;$items=$hooks[$tag]??[];ksort($items);foreach($items as $group)foreach($group as [$cb,$count])$value=call_user_func_array($cb,array_slice(array_merge([$value],$args),0,$count));return $value;}
 function do_action($tag,...$args){global $hooks;$items=$hooks[$tag]??[];ksort($items);foreach($items as $group)foreach($group as [$cb,$count])call_user_func_array($cb,array_slice($args,0,$count));}
 function has_action($tag){global $hooks;return !empty($hooks[$tag]);}
@@ -53,6 +55,11 @@ $html=$public->shortcode(['id'=>1]);check(str_contains($html,'Edit this form'),'
 $admin=false;$html=$public->shortcode(['id'=>1]);check(!str_contains($html,'Edit this form'),'Visitor cannot see admin edit link');
 $fn=new ReflectionMethod(FormOrbit_Drafts::class,'sanitize_draft_value');$fn->setAccessible(true);check($fn->invoke($drafts,[['name'=>'<b>A</b>']])[0]['name']==='A','Nested draft values retained and sanitized');
 check(!apply_filters('formorbit_integrations_enabled',false),'Free does not activate Pro connectors');
+$removed_actions=[];
+$wp_filter=['admin_notices'=>(object)['callbacks'=>[10=>[['function'=>'unrelated_plugin_notice'],['function'=>[$editor,'review_notice']],['function'=>['Webform_Pro_Admin','license_notice']]]]]];
+$_GET['page']='dashboard';$editor->suppress_editor_notices();check(count($removed_actions)===0,'Other admin screens retain notices');
+$_GET['page']='formorbit-pro';$editor->suppress_editor_notices();check(count($removed_actions)===2,'FormOrbit hides third-party and review notices but preserves own actionable notices');
+unset($_GET['page']);
 $styled = $sanitize->invoke($editor,[['fields'=>[['id'=>'title','type'=>'heading','label'=>'Heading','style'=>['customized'=>true,'font_size'=>48,'font_family'=>'Georgia,serif','font_style'=>'italic','font_weight'=>'700']]]]]);
 check($styled[0]['fields'][0]['style']['font_size']===48 && $styled[0]['fields'][0]['style']['font_family']==='Georgia,serif','Field typography survives saving');
 $meta[2]=['_webform_schema'=>$styled,'_webform_settings'=>$settings];
