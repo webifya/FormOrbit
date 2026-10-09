@@ -1,11 +1,47 @@
 .formorbit-builder-stage{width:100%;min-width:0;margin-bottom:24px;padding:16px;background:#fff;border:1px solid #ddd;border-radius:12px;box-sizing:border-box}
-.formorbit-stage-fields{display:flex;flex-wrap:wrap;gap:16px;min-height:100px;padding:12px 0}
+.formorbit-stage-fields{display:flex;flex-wrap:wrap;gap:16px 2%;min-height:120px;padding:12px 0;align-items:flex-start}
 .formorbit-stage-fields>.webform-field-card{box-sizing:border-box;min-width:0;flex:0 0 100%}
 .formorbit-stage-fields>.webform-field-card[style]{flex:0 0 var(--preview-width,100%);max-width:var(--preview-width,100%)}
 .formorbit-editor-actions{padding:20px}
-.formorbit-preview-overlay{position:fixed;inset:0;background:#17112b99;z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px}
-.formorbit-preview-dialog{background:white;padding:24px;max-width:900px;width:100%;max-height:85vh;overflow:auto;border-radius:16px}
-.formorbit-preview-open{overflow:hidden}
 .formorbit-hex{max-width:130px;margin-left:8px!important;font-family:monospace}
 .webform-duplicate-field{position:relative;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;color:#6045c6}
-@media(max-width:650px){.formorbit-stage-fields>.webform-field-card{flex-basis:100%!important;width:100%!important}}
+.formorbit-stage-fields>.webform-field-card{position:relative;padding:42px 16px 16px!important;margin:0!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:12px!important}
+.formorbit-stage-fields>.webform-field-card>.webform-field-preview{width:100%;min-width:0}
+.formorbit-stage-fields>.webform-field-card>.webform-drag{position:absolute!important;left:auto!important;right:48px!important;top:12px!important;cursor:grab}
+.formorbit-stage-fields>.webform-field-card>.webform-remove-field{position:absolute!important;top:8px!important;right:10px!important;width:28px;height:28px}
+.formorbit-stage-fields>.webform-field-card>.webform-duplicate-field{position:absolute!important;top:9px!important;right:80px!important;width:28px;height:28px}
+.formorbit-stage-fields>.webform-field-card>.webform-type{align-self:flex-end;position:static!important}
+.webform-wrap .button .dashicons{display:inline-flex!important;align-items:center;justify-content:center;vertical-align:middle;margin-top:0!important;line-height:1!important;transform:none!important;color:inherit!important}
+.webform-wrap .button{align-items:center;gap:6px}
+.webform-property-panel :is(input,select,textarea){box-sizing:border-box;max-width:100%;min-width:0}
+.webform-property-panel label{min-width:0;overflow-wrap:anywhere}
+.webform-style-control-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.webform-style-color-grid label{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.webform-style-color-grid .formorbit-hex{width:100px;max-width:100%;margin:0!important}
+.formorbit-stage-fields .webform-field-card[style*="auto"]{flex:1 1 240px;max-width:100%}
+.formorbit-stage-fields .webform-field-preview :is(input,textarea,select){max-width:100%;box-sizing:border-box}
+.formorbit-stage-fields .webform-sort-placeholder{box-sizing:border-box;min-height:72px;border:2px dashed #7156d4;border-radius:10px;background:#f0ebff}
+.webform-canvas-toolbar{position:sticky;top:32px;background:#fff;z-index:20}
+.webform-style-control-grid input{width:100%}
+.formorbit-integration-category,.formorbit-field-design{border:1px solid #ded9ea;border-radius:10px;margin:12px 0;padding:12px;background:#fff}
+.formorbit-integration-category summary,.formorbit-field-design summary{cursor:pointer;font-weight:600;line-height:1.5}
+.formorbit-integration-category summary span{float:right;font-size:11px;color:#6741be}
+.webform-pro-child-editor,.webform-child-modal .webform-pro-child-editor{display:block!important;min-width:0!important;width:100%!important;box-sizing:border-box}
+.webform-pro-child-editor label{display:flex!important;flex-direction:column!important;gap:6px;min-width:0}
+.webform-pro-child-editor input:not([type=checkbox]),.webform-pro-child-editor select,.webform-pro-child-editor textarea{width:100%;max-width:100%;box-sizing:border-box}
+.webform-contact-route{min-width:0;overflow:visible}
+.webform-contact-route select{width:100%;max-width:100%;min-width:0}
+.webform-nested-dropzone .webform-nested-child{display:flex;align-items:center;gap:6px;min-width:0;flex-wrap:wrap;font-style:normal;padding:10px;box-sizing:border-box}
+.webform-nested-child button{border:1px solid #ded9ea;background:#fff;color:#5843a1;border-radius:5px;min-width:26px;min-height:26px;padding:2px 6px;cursor:pointer;font-size:12px}
+.webform-nested-child .formorbit-child-edit{margin-left:auto}
+.webform-pro-child-list{display:flex!important;flex-direction:column;gap:12px}
+.webform-pro-child{display:block!important;min-width:0;width:100%;box-sizing:border-box}
+.webform-pro-child>label{display:flex;flex-direction:column;gap:5px;margin:10px 0}
+.webform-pro-child-head{display:flex;align-items:center;gap:8px;cursor:pointer}
+.webform-pro-child-head>span:nth-child(2){flex:1;min-width:0}
+.webform-pro-child-head small{display:block;color:#646970}
+.webform-field-preview>strong,.webform-live-preview-field>label{color:var(--local-label,inherit)!important}
+.webform-field-preview .webform-preview-control,.webform-live-preview-field .webform-preview-control{color:var(--local-text,inherit)!important;background:var(--local-background,var(--live-field-background,#fff))!important;border-radius:var(--local-radius,7px)!important}
+.webform-pro-access-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr))!important}
+@media(max-width:1100px){.webform-builder{grid-template-columns:minmax(0,1fr)!important}.webform-properties{width:100%!important;max-width:none!important;position:static!important}}
+@media(max-width:650px){.formorbit-stage-fields>.webform-field-card{flex:0 0 100%!important;width:100%!important;max-width:100%!important}.webform-canvas-panel{padding:12px!important}.formorbit-builder-stage{padding:12px}.webform-style-control-grid{grid-template-columns:1fr}.webform-live-preview-fields>.webform-live-preview-field{width:100%!important;flex-basis:100%!important;max-width:100%!important}}

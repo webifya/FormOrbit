@@ -1,0 +1,23 @@
+name: Shared builder regression checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: PHP syntax and behavior
+        run: |
+          find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l
+          php .github/tests/parity.php
+      - name: Builder interactions
+        run: |
+          npm install --prefix "$RUNNER_TEMP/formorbit-tests" --no-audit --no-fund jsdom@22 jquery@3 jquery-ui-dist@1.13
+          FORMORBIT_TEST_DEPS="$RUNNER_TEMP/formorbit-tests/node_modules" node .github/tests/builder.cjs

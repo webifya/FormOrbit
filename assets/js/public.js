@@ -1,6 +1,16 @@
 (function () {
     'use strict';
     document.addEventListener('DOMContentLoaded', function () {
+        if (window.Intl && Intl.DisplayNames) {
+            let regionNames;
+            try { regionNames = new Intl.DisplayNames([document.documentElement.lang || 'en'], { type: 'region' }); } catch (error) { regionNames = null; }
+            if (regionNames) document.querySelectorAll('.webform-phone-country option,.webform-country-select option').forEach(function (option) {
+                const prefix = option.dataset.prefix || '';
+                let name = option.value;
+                try { name = regionNames.of(option.value) || option.value; } catch (error) { name = option.value; }
+                option.textContent = prefix ? `${name} (${prefix})` : name;
+            });
+        }
         document.querySelectorAll('.webform-public').forEach(function (root) {
             const form = root.querySelector('form');
             const stages = Array.from(root.querySelectorAll('.webform-stage'));

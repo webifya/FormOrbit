@@ -14,12 +14,21 @@ final class Webform {
     }
 
     private function __construct() {
+        require_once WEBFORM_PATH . 'includes/formorbit-countries.php';
         require_once WEBFORM_PATH . 'includes/class-formorbit-admin.php';
         require_once WEBFORM_PATH . 'includes/class-formorbit-public.php';
         require_once WEBFORM_PATH . 'includes/class-formorbit-mailer.php';
         require_once WEBFORM_PATH . 'includes/class-formorbit-site-profile.php';
 
         add_action('init', array($this, 'register_post_types'));
+        require_once WEBFORM_PATH . 'includes/class-formorbit-fields.php';
+        require_once WEBFORM_PATH . 'includes/class-formorbit-form-tools.php';
+        require_once WEBFORM_PATH . 'includes/class-formorbit-drafts.php';
+        require_once WEBFORM_PATH . 'includes/class-formorbit-documents.php';
+        new FormOrbit_Fields();
+        new FormOrbit_Form_Tools();
+        new FormOrbit_Drafts();
+        new FormOrbit_Documents();
         new Webform_Admin();
         new Webform_Public();
         new Webform_Mailer();

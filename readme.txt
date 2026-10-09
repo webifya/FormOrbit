@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 5.0.2
+Stable tag: 6.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -18,7 +18,7 @@ FormOrbit is a visual WordPress form builder for contact forms, registrations, s
 
 Create responsive contact forms, lead-generation forms, quote requests, event registrations, customer surveys, scored quizzes, polls, job applications, booking requests, newsletter forms, and multi-step onboarding forms without writing code. FormOrbit keeps form management and submission data inside WordPress while giving administrators a focused visual builder.
 
-FormOrbit Pro extends the same interface for payment forms, donation forms, order forms, contracts, electronic signatures, appointments, WordPress post submissions, CRM routing, calendar scheduling, PDF delivery, and automated email or SMS follow-ups.
+Free and Pro now share the complete field and design toolkit. Pro adds licensed connections to payment gateways, email marketing and CRM platforms, calendars, SMS providers, Zapier and webhooks.
 
 = Build forms without code =
 
@@ -27,8 +27,10 @@ FormOrbit Pro extends the same interface for payment forms, donation forms, orde
 * Text, name, email, long text, dropdown, radio, checkbox, number, date, time, phone, website, consent, upload, rating, slider, hidden, HTML, heading, page-break, and CAPTCHA fields
 * Safe field-type conversion while preserving compatible labels, choices, styling, and validation
 * Conditional field visibility, required fields, validation, and AJAX submission
-* 10 ready-to-customize templates for common business workflows
-* Modern, minimal, and rounded style presets with configurable colors
+* More than 30 ready-to-customize templates for common business workflows
+* All style presets, font family and font sizes, heading size, line height, colors, field spacing, button design, form padding and corner radius
+* Calculations, groups, repeaters, signatures, agreements, commerce and WordPress post fields
+* Scoped custom CSS, saved themes, responsive field widths and configurable icons
 
 = Collect, understand, and manage responses =
 
@@ -43,18 +45,19 @@ FormOrbit Pro extends the same interface for payment forms, donation forms, orde
 
 * Built-in SMTP presets for Mailgun, Brevo, SendGrid, Amazon SES, Postmark, Mailjet, MailerSend, Gmail, Google Workspace, Microsoft 365, Outlook, Zoho Mail, and custom SMTP
 * Import tools for WPForms, Gravity Forms, Fluent Forms, Contact Form 7, Formidable Forms, and Forminator
-* One-click form duplication and easy shortcode or PHP-template copying
+* JSON, CSV and XML form export, plus importing from public HTML form URLs
+* One-click form and field duplication and easy shortcode or PHP-template copying
+* Save & Continue, personalized visitor emails, scheduled email follow-ups and PDF attachments
+* Admin-only Edit this form links on public forms
 
 = Upgrade to FormOrbit Pro =
 
 [FormOrbit Pro](https://www.webninjallc.com/plugins/formorbit/) extends the same builder with:
 
-* Calculations, signatures, agreements, repeaters, field groups, appointment, commerce, donation, order-total, and WordPress post fields
 * Stripe, PayPal, and Square hosted checkout plus bank-transfer workflows
 * Mailchimp, AWeber, Brevo, ActiveCampaign, Kit, GetResponse, GoHighLevel, calendars, Zapier, and webhooks
 * Twilio, Vonage, MessageBird, and Telnyx SMS notifications
-* Scheduled email and SMS follow-ups, visitor email templates, PDF attachments, and Save & Continue
-* Public website form importing, premium templates, Google Fonts, advanced styling, saved themes, and custom CSS
+* Scheduled SMS follow-ups through configured providers
 
 Plans:
 
@@ -84,19 +87,19 @@ Yes. Forms use WordPress nonces, server-side validation, sanitization, a honeypo
 
 = Can I import forms from another plugin? =
 
-Yes. The Tools screen supports several popular WordPress form-builder exports. FormOrbit Pro can also inspect a supported public HTML form from a website URL and convert its fields into an editable form.
+Yes. The Tools screen supports several popular WordPress form-builder exports. Both editions can also inspect a supported public HTML form from a website URL and convert its fields into an editable form.
 
 = Does the free plugin collect payments? =
 
-Payment and commerce fields are part of FormOrbit Pro. Pro sends customers to supported providers' secure hosted checkout pages so FormOrbit does not store card details.
+Product, quantity, price, donation and total fields are included in Free. Connecting a payment gateway requires Pro and a configured provider account. Card details are collected on the provider's secure hosted checkout page, not stored by FormOrbit.
 
 = Will my forms disappear if FormOrbit Pro is deactivated? =
 
-No. Form structures and entries remain stored. Pro-only fields become unavailable for editing and are not rendered publicly until Pro is active with a valid license.
+No. With FormOrbit Free 6.0 or newer active, all fields and design controls continue to work. External Pro integrations require an active Pro license. Saved service settings are retained when switching editions.
 
 = Do I need FormOrbit Free when using Pro? =
 
-Yes. FormOrbit Pro is an add-on that extends the Free builder, so both compatible plugins remain installed and active.
+No. FormOrbit Pro includes the shared builder and can run by itself. If both editions are installed, keep both updated to compatible versions.
 
 == Installation ==
 
@@ -107,6 +110,16 @@ Yes. FormOrbit Pro is an add-on that extends the Free builder, so both compatibl
 5. Copy the generated `[formorbit id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 6.0.0 =
+* Shared builder feature set across Free and Pro: advanced fields, all templates and presets, typography, custom CSS, saved themes, access controls, Save & Continue, visitor email templates and PDF notifications.
+* Form exports in JSON, CSV and XML and public HTML form importing are now available in Free.
+* Pro licensing now gates external payment, CRM, calendar, SMS and automation integrations rather than field and design controls.
+* Added heading size, line height, form padding, form corner radius, input padding and label-weight settings.
+* Added admin-only public-form editing links and a WordPress toolbar menu.
+* Fixed cross-stage drag-and-drop commits, responsive field widths, nested field editing and move-out controls, icon alignment and save error feedback.
+* Improved preview typography and submit styling, retained nested saved-progress values, refreshed expired draft tokens, and corrected access scheduling to use the WordPress timezone.
+* Preserved existing form IDs, shortcodes, fields, entries and dormant service configuration.
 
 = 5.0.2 =
 * Automatically refresh expired submission tokens and retry once without clearing entered fields.
@@ -461,6 +474,14 @@ This release removes the historical webform.php compatibility loader. Sites upgr
 * Initial release.
 
 == External services ==
+
+= Google Fonts (optional) =
+
+Selecting a Google font loads its stylesheet and font files from Google on pages containing the form. The visitor browser connects to Google, which receives normal request information such as the IP address. Choose Theme default or a system font to avoid these requests. Terms: https://policies.google.com/terms . Privacy: https://policies.google.com/privacy .
+
+= Public form importing =
+
+When an administrator supplies a public form URL, FormOrbit requests that page from its website to read supported HTML fields. The destination receives the server IP address and requested URL. No form entries, license keys or integration credentials are included. Only import forms you have permission to reuse.
 
 This plugin can use Google reCAPTCHA to detect automated or abusive submissions. The service is contacted only when a site administrator enables reCAPTCHA, supplies credentials, and places a CAPTCHA field in a form.
 

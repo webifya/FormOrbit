@@ -3,7 +3,9 @@
 defined('ABSPATH') || exit; // FormOrbit public rendering.
 
 class Webform_Public {
+    private $rendered_forms = array();
     public function __construct() {
+        add_action('admin_bar_menu', array($this, 'edit_form_menu'), 90);
         add_shortcode('formorbit', array($this, 'shortcode'));
         // Keep the legacy shortcode as a compatibility alias for existing sites.
         add_shortcode('webform', array($this, 'shortcode'));
@@ -17,6 +19,14 @@ class Webform_Public {
         add_action('wp_ajax_formorbit_track_event', array($this, 'track_event'));
         add_action('wp_ajax_nopriv_formorbit_track_event', array($this, 'track_event'));
         add_action('webform_after_submission', array($this, 'track_submission'), 5, 2);
+    }
+
+    public function edit_form_menu($bar) {
+        if (is_admin() || !current_user_can('manage_options') || !$this->rendered_forms) return;
+        $bar->add_node(array('id' => 'formorbit-edit', 'title' => __('Edit forms on this page', 'formorbit'), 'href' => admin_url('admin.php?page=formorbit')));
+        foreach ($this->rendered_forms as $id => $title) {
+            $bar->add_node(array('id' => 'formorbit-edit-' . $id, 'parent' => 'formorbit-edit', 'title' => $title, 'href' => admin_url('admin.php?page=formorbit-builder&form_id=' . $id)));
+        }
     }
 
     public function preview() {
@@ -58,6 +68,7 @@ class Webform_Public {
             return current_user_can('manage_options') ? '<p>' . esc_html__('Form not found.', 'formorbit') . '</p>' : '';
         }
         $schema = get_post_meta($form_id, '_webform_schema', true);
+        if (current_user_can('manage_options')) $this->rendered_forms[$form_id] = get_the_title($form_id);
         $settings = get_post_meta($form_id, '_webform_settings', true);
         if (!$schema) {
             return '';
@@ -76,6 +87,7 @@ class Webform_Public {
         wp_localize_script('webform-public', 'WebformPublic', array('ajaxUrl' => admin_url('admin-ajax.php'), 'analyticsNonce' => wp_create_nonce('formorbit_analytics')));
         ob_start();
         ?>
+        <?php if (current_user_can('manage_options')) : ?><div class="formorbit-admin-edit"><a href="<?php echo esc_url(admin_url('admin.php?page=formorbit-builder&form_id=' . $form_id)); ?>"><?php esc_html_e('Edit this form', 'formorbit'); ?></a></div><?php endif; ?>
         <?php $available_presets = apply_filters('webform_style_presets', array('modern' => 'Modern', 'minimal' => 'Minimal', 'rounded' => 'Rounded')); $preset = array_key_exists($settings['style_preset'] ?? '', $available_presets) ? $settings['style_preset'] : 'modern'; $style_variables = apply_filters('webform_inline_style_variables', array('--wf-accent' => $settings['accent_color'] ?? '#6c4bd4', '--wf-button-text' => $settings['button_text_color'] ?? '#ffffff'), $settings, $form_id); $inline_style = ''; foreach ($style_variables as $property => $property_value) $inline_style .= sanitize_key($property) . ':' . sanitize_text_field($property_value) . ';'; do_action('webform_before_form_markup', $form_id, $settings); ?>
         <div id="webform-<?php echo esc_attr($form_id); ?>" class="webform-public webform-style-<?php echo esc_attr($preset); ?>" style="<?php echo esc_attr($inline_style); ?>" data-form-id="<?php echo esc_attr($form_id); ?>">
             <?php if (count($schema) > 1) : ?><div class="webform-progress" role="progressbar" aria-valuemin="1" aria-valuemax="<?php echo esc_attr(count($schema)); ?>" aria-valuenow="1"><div class="webform-progress-bar"></div></div><ol class="webform-steps"><?php foreach ($schema as $index => $stage) : ?><li class="<?php echo $index === 0 ? 'is-active' : ''; ?>" <?php echo $index === 0 ? 'aria-current="step"' : ''; ?>><?php echo esc_html($stage['title']); ?></li><?php endforeach; ?></ol><?php endif; ?>
@@ -180,12 +192,25 @@ class Webform_Public {
         $condition = !empty($field['condition']['enabled']) ? $field['condition'] : array();
         $condition_attr = ' data-field-id="' . esc_attr($field['id']) . '"' . ($condition ? ' data-condition="' . esc_attr(wp_json_encode($condition)) . '"' : '');
         if ($field['type'] === 'name') {
+            $name_format = $field['name_format'] ?? 'first_last';
+            $name_parts = array(
+                'full' => array('full' => __('Full name', 'formorbit')),
+                'first' => array('first' => __('First name', 'formorbit')),
+                'middle' => array('middle' => __('Middle name', 'formorbit')),
+                'last' => array('last' => __('Last name', 'formorbit')),
+                'first_middle' => array('first' => __('First name', 'formorbit'), 'middle' => __('Middle name', 'formorbit')),
+                'first_last' => array('first' => __('First name', 'formorbit'), 'last' => __('Last name', 'formorbit')),
+                'middle_last' => array('middle' => __('Middle name', 'formorbit'), 'last' => __('Last name', 'formorbit')),
+                'first_middle_last' => array('first' => __('First name', 'formorbit'), 'middle' => __('Middle name', 'formorbit'), 'last' => __('Last name', 'formorbit')),
+            );
+            $visible_parts = $name_parts[$name_format] ?? $name_parts['first_last'];
             ?>
             <fieldset class="webform-field webform-field-name <?php echo esc_attr($field_class); ?>"<?php echo $condition_attr; ?>>
                 <legend<?php echo $label_class; ?>><?php echo $label_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></legend>
-                <div class="webform-name-fields">
-                    <label for="<?php echo esc_attr($id . '-first'); ?>"><span><?php esc_html_e('First name', 'formorbit'); ?></span><input id="<?php echo esc_attr($id . '-first'); ?>" type="text" name="<?php echo esc_attr($name . '[first]'); ?>" maxlength="100" autocomplete="given-name" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $required; ?>></label>
-                    <label for="<?php echo esc_attr($id . '-last'); ?>"><span><?php esc_html_e('Last name', 'formorbit'); ?></span><input id="<?php echo esc_attr($id . '-last'); ?>" type="text" name="<?php echo esc_attr($name . '[last]'); ?>" maxlength="100" autocomplete="family-name" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $required; ?>></label>
+                <div class="webform-name-fields webform-name-fields-<?php echo esc_attr(count($visible_parts)); ?>">
+                    <?php foreach ($visible_parts as $part => $part_label) : $autocomplete = $part === 'first' ? 'given-name' : ($part === 'middle' ? 'additional-name' : ($part === 'last' ? 'family-name' : 'name')); ?>
+                        <label for="<?php echo esc_attr($id . '-' . $part); ?>"><span><?php echo esc_html($part_label); ?></span><input id="<?php echo esc_attr($id . '-' . $part); ?>" type="text" name="<?php echo esc_attr($name . '[' . $part . ']'); ?>" maxlength="100" autocomplete="<?php echo esc_attr($autocomplete); ?>" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $required; ?>></label>
+                    <?php endforeach; ?>
                 </div>
                 <span class="webform-error" id="<?php echo esc_attr($describedby); ?>"></span>
             </fieldset>
@@ -208,26 +233,18 @@ class Webform_Public {
             return;
         }
         if ($field['type'] === 'consent') {
+            $consent_text = nl2br(esc_html($field['consent_text'] ?? $field['label']));
+            $consent_link = !empty($field['consent_url']) ? ' <a href="' . esc_url($field['consent_url']) . '" target="_blank" rel="noopener noreferrer">' . esc_html($field['consent_link_text'] ?? __('Read the policy', 'formorbit')) . '</a>' : '';
             ?>
             <div class="webform-field webform-field-consent <?php echo esc_attr($field_class); ?>"<?php echo $condition_attr; ?>>
-                <label for="<?php echo esc_attr($id); ?>"><input id="<?php echo esc_attr($id); ?>" type="checkbox" name="<?php echo esc_attr($name); ?>" value="Yes" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $required; ?>> <?php echo $label_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></label>
+                <label for="<?php echo esc_attr($id); ?>"><input id="<?php echo esc_attr($id); ?>" type="checkbox" name="<?php echo esc_attr($name); ?>" value="Yes" aria-describedby="<?php echo esc_attr($describedby); ?>"<?php echo $required; ?>> <span><?php echo $consent_text . $consent_link; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php if ($required) : ?> <span aria-hidden="true">*</span><?php endif; ?></span></label>
                 <span class="webform-error" id="<?php echo esc_attr($describedby); ?>"></span>
             </div>
             <?php
             return;
         }
         if ($field['type'] === 'phone') {
-            $countries = array(
-                'US' => array('+1', __('United States', 'formorbit')),
-                'CA' => array('+1', __('Canada', 'formorbit')),
-                'GB' => array('+44', __('United Kingdom', 'formorbit')),
-                'AU' => array('+61', __('Australia', 'formorbit')),
-                'BD' => array('+880', __('Bangladesh', 'formorbit')),
-                'IN' => array('+91', __('India', 'formorbit')),
-                'PK' => array('+92', __('Pakistan', 'formorbit')),
-                'AE' => array('+971', __('United Arab Emirates', 'formorbit')),
-                'SA' => array('+966', __('Saudi Arabia', 'formorbit')),
-            );
+            $countries = formorbit_phone_countries();
             $default_country = isset($countries[$field['phone_country'] ?? '']) ? $field['phone_country'] : 'US';
             ?>
             <div class="webform-field webform-field-phone <?php echo esc_attr($field_class); ?>"<?php echo $condition_attr; ?>>
@@ -236,12 +253,12 @@ class Webform_Public {
                     <?php if (($field['phone_country_selector'] ?? true) !== false) : ?>
                         <select name="<?php echo esc_attr($name . '[country]'); ?>" class="webform-phone-country" aria-label="<?php esc_attr_e('Country calling code', 'formorbit'); ?>">
                             <?php foreach ($countries as $code => $country) : ?>
-                                <option value="<?php echo esc_attr($code); ?>" data-prefix="<?php echo esc_attr($country[0]); ?>" <?php selected($default_country, $code); ?>><?php echo esc_html($code . ' ' . $country[0]); ?></option>
+                                <option value="<?php echo esc_attr($code); ?>" data-prefix="<?php echo esc_attr($country); ?>" <?php selected($default_country, $code); ?>><?php echo esc_html($code . ' ' . $country); ?></option>
                             <?php endforeach; ?>
                         </select>
                     <?php else : ?>
                         <input type="hidden" name="<?php echo esc_attr($name . '[country]'); ?>" value="<?php echo esc_attr($default_country); ?>">
-                        <span class="webform-phone-prefix"><?php echo esc_html($countries[$default_country][0]); ?></span>
+                        <span class="webform-phone-prefix"><?php echo esc_html($countries[$default_country]); ?></span>
                     <?php endif; ?>
                     <input type="tel" id="<?php echo esc_attr($id); ?>" class="webform-phone-number" name="<?php echo esc_attr($name . '[number]'); ?>" maxlength="24" autocomplete="tel-national" inputmode="tel" aria-describedby="<?php echo esc_attr($describedby); ?>" placeholder="<?php echo esc_attr($field['placeholder']); ?>"<?php echo $required; ?>>
                 </div>
@@ -371,13 +388,19 @@ class Webform_Public {
                 $value = apply_filters('webform_raw_submission_value', $value, $field, $form_id, $posted);
                 $name_incomplete = false;
                 if ($field['type'] === 'name') {
-                    $first_name = is_array($value) ? sanitize_text_field($value['first'] ?? '') : '';
-                    $last_name = is_array($value) ? sanitize_text_field($value['last'] ?? '') : '';
-                    $name_incomplete = !empty($field['required']) && (!$first_name || !$last_name);
-                    $value = trim($first_name . ' ' . $last_name);
+                    $format_parts = array(
+                        'full' => array('full'), 'first' => array('first'), 'middle' => array('middle'), 'last' => array('last'),
+                        'first_middle' => array('first', 'middle'), 'first_last' => array('first', 'last'),
+                        'middle_last' => array('middle', 'last'), 'first_middle_last' => array('first', 'middle', 'last'),
+                    );
+                    $required_parts = $format_parts[$field['name_format'] ?? 'first_last'] ?? $format_parts['first_last'];
+                    $submitted_parts = array();
+                    foreach ($required_parts as $part) $submitted_parts[$part] = is_array($value) ? sanitize_text_field($value[$part] ?? '') : '';
+                    $name_incomplete = !empty($field['required']) && in_array('', $submitted_parts, true);
+                    $value = trim(implode(' ', $submitted_parts));
                 }
                 if ($field['type'] === 'phone' && is_array($value)) {
-                    $country_codes = array('US' => '1', 'CA' => '1', 'GB' => '44', 'AU' => '61', 'BD' => '880', 'IN' => '91', 'PK' => '92', 'AE' => '971', 'SA' => '966');
+                    $country_codes = array_map(function ($prefix) { return ltrim($prefix, '+'); }, formorbit_phone_countries());
                     $country = strtoupper(sanitize_key($value['country'] ?? ($field['phone_country'] ?? 'US')));
                     $digits = preg_replace('/\D+/', '', (string) ($value['number'] ?? ''));
                     $code = $country_codes[$country] ?? '1';

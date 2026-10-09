@@ -469,6 +469,30 @@
     grid-template-columns:repeat(3,1fr)
 }
 
+.webform-template-category {
+    margin:26px 0 34px
+}
+
+.webform-template-category-head {
+    align-items:end;
+    border-bottom:1px solid #ddd8e8;
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:16px;
+    padding-bottom:12px
+}
+
+.webform-template-category-head h2 {
+    color:#32284a;
+    font-size:20px;
+    margin:0 0 4px
+}
+
+.webform-template-category-head p {
+    color:#646970;
+    margin:0
+}
+
 .webform-template-card {
     background:#fff;
     border:1px solid #dcdcde;
@@ -479,12 +503,7 @@
     padding:22px
 }
 
-.webform-template-card>.dashicons {
-    color:#6548c7;
-    font-size:30px;
-    height:34px;
-    width:34px
-}
+.webform-template-card-top{align-items:center;display:flex;justify-content:space-between;margin-bottom:14px}.webform-template-icon{align-items:center;background:linear-gradient(135deg,#eee9ff,#fff);border:1px solid #d7cdf3;border-radius:12px;color:#6548c7;display:flex;height:48px;justify-content:center;width:48px}.webform-template-icon .dashicons{font-size:25px;height:25px;width:25px}.webform-template-card-top .webform-pro-badge{background:#eee8ff;border-radius:999px;color:#5437ae;font-size:10px;font-weight:800;letter-spacing:.08em;padding:6px 9px}
 
 .webform-template-card h2 {
     margin:12px 0 4px
@@ -493,6 +512,28 @@
 .webform-template-card p {
     color:#646970;
     flex:1
+}
+
+.webform-template-actions {
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px
+}
+
+.webform-template-meta{border-bottom:1px solid #ebe7f2;border-top:1px solid #ebe7f2;color:#646970;display:flex;gap:14px;margin:2px 0 15px;padding:10px 0}.webform-template-meta>span{align-items:center;display:flex;font-size:11px;font-weight:650;gap:5px}.webform-template-meta .dashicons{color:#745bc1;font-size:14px;height:14px;width:14px}
+
+.webform-template-actions .button {
+    align-items:center;
+    display:inline-flex;
+    gap:5px;
+    justify-content:center;
+    margin:0
+}
+
+.webform-template-actions .dashicons {
+    font-size:16px;
+    height:16px;
+    width:16px
 }
 
 .webform-template-pro {
@@ -698,30 +739,6 @@
     content:"★";
     font-size:12px;
     margin-right:4px
-}
-
-.webform-template-card:has(.webform-pro-badge):before {
-    color:#6548c7;
-    content:"\f174";
-    display:block;
-    font:normal 32px/1 dashicons;
-    margin-bottom:12px
-}
-
-.webform-template-card:nth-child(4n+1):has(.webform-pro-badge):before {
-    content:"\f508"
-}
-
-.webform-template-card:nth-child(4n+2):has(.webform-pro-badge):before {
-    content:"\f145"
-}
-
-.webform-template-card:nth-child(4n+3):has(.webform-pro-badge):before {
-    content:"\f313"
-}
-
-.webform-template-card:nth-child(4n):has(.webform-pro-badge):before {
-    content:"\f481"
 }
 
 .webform-plan-grid {

@@ -19,29 +19,17 @@
     const canvas = document.getElementById('webform-canvas');
     if (canvas) new MutationObserver(refresh).observe(canvas, {childList:true});
     $(document).on('input change', '#webform-submit-alignment,#webform-submit-label', refresh);
-    $('input[type=color]').each(function () {
+    function colors() { $('input[type=color]:not([data-hex-ready])').each(function () {
         const input = $(this);
+        input.attr('data-hex-ready', '1');
         const hex = $('<input type="text" class="formorbit-hex" maxlength="7" aria-label="Hex color">').val(input.val());
         input.after(hex);
         hex.on('change', function () { if (/^#[0-9a-f]{6}$/i.test(this.value)) input.val(this.value).trigger('change'); else this.value = input.val(); });
         input.on('input change', function () { hex.val(input.val()); });
-    });
+    }); }
+    colors();
+    const properties = document.querySelector('.webform-properties');
+    if (properties) new MutationObserver(colors).observe(properties, {childList:true, subtree:true});
+    document.addEventListener('formorbit:field-settings-rendered', colors);
     refresh();
-    if (!$('.webform-live-preview-trigger').length && $('#webform-save').length) {
-        $('<button type="button" class="button" id="formorbit-open-preview">Preview</button>').insertBefore('#webform-save').on('click', function (event) {
-            event.preventDefault();
-            if ($('.formorbit-preview-overlay').length) return;
-            const trigger = this;
-            const dialog = $('<div class="formorbit-preview-overlay" role="dialog" aria-modal="true" aria-label="Form preview"><div class="formorbit-preview-dialog"><button type="button" class="button formorbit-preview-close">Close preview</button><div class="webform-public"></div></div></div>');
-            const form = dialog.find('.webform-public').addClass('webform-style-' + $('#webform-style-preset').val());
-            form.append($('#webform-canvas').children().clone());
-            form.find('button,.webform-drag,.webform-type').remove();
-            form.append($('.formorbit-editor-actions').clone());
-            dialog.find('.formorbit-preview-close').on('click', function () { dialog.remove(); $('body').removeClass('formorbit-preview-open'); trigger.focus({preventScroll:true}); });
-            dialog.on('keydown', function (event) { if (event.key === 'Escape') dialog.find('.formorbit-preview-close').trigger('click'); });
-            dialog.appendTo('body');
-            $('body').addClass('formorbit-preview-open');
-            dialog.find('.formorbit-preview-close')[0].focus({preventScroll:true});
-        });
-    }
 }(jQuery));

@@ -28,6 +28,7 @@ class Webform_Admin {
         add_action('admin_post_formorbit_dismiss_review', array($this, 'dismiss_review'));
         add_action('admin_head', array($this, 'suppress_editor_notices'), 1);
         add_action('admin_notices', array($this, 'review_notice'));
+        add_filter('admin_title', array($this, 'builder_admin_title'), 20, 2);
         add_filter('plugin_action_links_' . plugin_basename(WEBFORM_FILE), array($this, 'plugin_action_links'));
     }
 
@@ -96,6 +97,7 @@ class Webform_Admin {
             'webform-entries' => 'formorbit-entries',
             'webform-import' => 'formorbit-tools',
             'formorbit-import' => 'formorbit-tools',
+            'formorbit-pro-import-url' => 'formorbit-import-url',
             'webform-settings' => 'formorbit-settings',
             'webform-pro' => 'formorbit-pro',
             'webform-email-delivery' => 'formorbit-email-delivery',
@@ -115,21 +117,22 @@ class Webform_Admin {
         if (strpos($page, 'formorbit') !== 0 && strpos($hook, 'formorbit') === false) {
             return;
         }
-        wp_enqueue_style('webform-admin', WEBFORM_URL . 'assets/css/admin.css', array(), WEBFORM_VERSION);
-        wp_enqueue_style('webform-builder-layout', WEBFORM_URL . 'assets/css/builder-refresh.css', array('webform-admin'), WEBFORM_VERSION);
-        wp_enqueue_style('webform-responsive-controls', WEBFORM_URL . 'assets/css/responsive-upgrades.css', array('webform-builder-layout'), WEBFORM_VERSION);
-        wp_enqueue_style('webform-field-previews', WEBFORM_URL . 'assets/css/field-previews.css', array('webform-responsive-controls'), WEBFORM_VERSION);
-        wp_enqueue_style('webform-public-preview', WEBFORM_URL . 'assets/css/public.css', array('webform-field-previews'), WEBFORM_VERSION);
-        wp_enqueue_style('formorbit-icon-alignment', WEBFORM_URL . 'assets/css/icon-alignment.css', array('webform-public-preview'), WEBFORM_VERSION);
+        wp_enqueue_style('webform-admin', WEBFORM_URL . 'assets/css/admin.css', array(), (string) filemtime(WEBFORM_PATH . 'assets/css/admin.css'));
+        wp_enqueue_style('webform-builder-layout', WEBFORM_URL . 'assets/css/builder-refresh.css', array('webform-admin'), (string) filemtime(WEBFORM_PATH . 'assets/css/builder-refresh.css'));
+        wp_enqueue_style('webform-responsive-controls', WEBFORM_URL . 'assets/css/responsive-upgrades.css', array('webform-builder-layout'), (string) filemtime(WEBFORM_PATH . 'assets/css/responsive-upgrades.css'));
+        wp_enqueue_style('webform-field-previews', WEBFORM_URL . 'assets/css/field-previews.css', array('webform-responsive-controls'), (string) filemtime(WEBFORM_PATH . 'assets/css/field-previews.css'));
+        wp_enqueue_style('webform-public-preview', WEBFORM_URL . 'assets/css/public.css', array('webform-field-previews'), (string) filemtime(WEBFORM_PATH . 'assets/css/public.css'));
+        wp_enqueue_style('formorbit-icon-alignment', WEBFORM_URL . 'assets/css/icon-alignment.css', array('webform-public-preview'), (string) filemtime(WEBFORM_PATH . 'assets/css/icon-alignment.css'));
         wp_enqueue_script('jquery-ui-sortable');
         wp_enqueue_script('jquery-ui-droppable');
-        wp_enqueue_script('webform-admin', WEBFORM_URL . 'assets/js/admin.js', array('jquery', 'jquery-ui-sortable', 'jquery-ui-droppable'), WEBFORM_VERSION, true);
+        wp_enqueue_script('webform-admin', WEBFORM_URL . 'assets/js/admin.js', array('jquery', 'jquery-ui-sortable', 'jquery-ui-droppable'), (string) filemtime(WEBFORM_PATH . 'assets/js/admin.js'), true);
         wp_enqueue_script('formorbit-appearance', WEBFORM_URL . 'assets/js/appearance.js', array('webform-admin'), WEBFORM_VERSION, true);
         wp_localize_script('webform-admin', 'WebformAdmin', apply_filters('webform_admin_script_data', array(
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('webform_admin'),
             'formsUrl' => admin_url('admin.php?page=formorbit'),
             'postTypes' => array_map(function ($type) { return $type->labels->singular_name; }, get_post_types(array('show_ui' => true), 'objects')),
+            'phoneCountries' => formorbit_phone_countries(),
         )));
     }
 
@@ -280,8 +283,9 @@ class Webform_Admin {
         if (!$form && $template_key) {
             $templates = $this->free_templates();
             $schema = isset($templates[$template_key]) ? $templates[$template_key]['schema'] : '';
+            $template_settings = isset($templates[$template_key]['settings']) ? (array) $templates[$template_key]['settings'] : array();
         }
-        $settings = $form ? get_post_meta($form_id, '_webform_settings', true) : array();
+        $settings = $form ? get_post_meta($form_id, '_webform_settings', true) : ($template_settings ?? array());
         $shortcode = $form_id ? '[formorbit id="' . $form_id . '"]' : '';
         $php_embed = $form_id ? "<?php echo do_shortcode( '[formorbit id=\"" . $form_id . "\"]' ); ?>" : '';
         ?>
@@ -292,6 +296,7 @@ class Webform_Admin {
                     <span id="webform-save-status"></span>
                     <div class="webform-history-actions" role="group" aria-label="<?php esc_attr_e('Edit history', 'formorbit'); ?>"><button type="button" class="button" id="webform-undo" disabled title="<?php esc_attr_e('Undo last change', 'formorbit'); ?>" aria-label="<?php esc_attr_e('Undo last change', 'formorbit'); ?>"><span class="dashicons dashicons-undo" aria-hidden="true"></span></button><button type="button" class="button" id="webform-redo" disabled title="<?php esc_attr_e('Redo last change', 'formorbit'); ?>" aria-label="<?php esc_attr_e('Redo last change', 'formorbit'); ?>"><span class="dashicons dashicons-redo" aria-hidden="true"></span></button></div>
                     <button type="button" class="button webform-embed-trigger" id="webform-open-embed" aria-haspopup="dialog" aria-controls="webform-embed-panel"<?php echo $form_id ? '' : ' hidden'; ?>><span class="dashicons dashicons-editor-code" aria-hidden="true"></span><?php esc_html_e('Embed', 'formorbit'); ?></button>
+                    <button type="button" class="button webform-live-preview-trigger" id="webform-open-preview"><span class="dashicons dashicons-visibility" aria-hidden="true"></span><?php esc_html_e('Preview', 'formorbit'); ?></button>
                     <button type="button" class="button button-primary button-hero" id="webform-save"><?php esc_html_e('Save form', 'formorbit'); ?></button>
                 </div>
             </div>
@@ -328,7 +333,6 @@ class Webform_Admin {
             <div class="webform-builder">
                 <aside class="webform-field-picker" id="webform-field-picker" aria-hidden="true">
                     <div class="webform-field-picker-backdrop"></div><div class="webform-field-picker-dialog"><div class="webform-field-picker-head"><div><h2><?php esc_html_e('Add a field', 'formorbit'); ?></h2><p><?php esc_html_e('Choose a field to add to the current stage.', 'formorbit'); ?></p></div><button type="button" class="webform-field-picker-close" aria-label="<?php esc_attr_e('Close field picker', 'formorbit'); ?>">×</button></div>
-                    <h3><?php esc_html_e('Standard fields', 'formorbit'); ?></h3>
                     <div id="webform-palette" class="webform-palette">
                         <?php
                         $standard_fields = array(
@@ -358,8 +362,41 @@ class Webform_Admin {
                         );
                         $fields = apply_filters('webform_field_palette', $standard_fields);
                         $field_icons = array('name' => 'dashicons-admin-users', 'text' => 'dashicons-editor-textcolor', 'email' => 'dashicons-email', 'textarea' => 'dashicons-editor-alignleft', 'select' => 'dashicons-arrow-down-alt2', 'radio' => 'dashicons-marker', 'checkbox' => 'dashicons-yes', 'number' => 'dashicons-editor-ol', 'date' => 'dashicons-calendar', 'time' => 'dashicons-clock', 'phone' => 'dashicons-phone', 'url' => 'dashicons-admin-links', 'file' => 'dashicons-upload', 'consent' => 'dashicons-privacy', 'poll' => 'dashicons-chart-bar', 'quiz' => 'dashicons-welcome-learn-more', 'rating' => 'dashicons-star-filled', 'slider' => 'dashicons-image-flip-horizontal', 'hidden' => 'dashicons-hidden', 'html' => 'dashicons-editor-code', 'captcha' => 'dashicons-shield', 'page_break' => 'dashicons-controls-forward', 'heading' => 'dashicons-heading');
-                        foreach ($fields as $type => $label) {
-                            printf('<button type="button" class="webform-palette-item" data-type="%s"><span class="dashicons %s"></span><span>%s</span></button>', esc_attr($type), esc_attr($field_icons[$type] ?? 'dashicons-plus-alt2'), esc_html($label));
+                        $field_groups = array(
+                            __('Contact fields', 'formorbit') => array('name', 'text', 'email', 'textarea', 'phone', 'url'),
+                            __('Choice fields', 'formorbit') => array('select', 'radio', 'checkbox', 'consent', 'poll', 'quiz'),
+                            __('Numbers and dates', 'formorbit') => array('number', 'date', 'time', 'rating', 'slider'),
+                            __('Uploads and layout', 'formorbit') => array('file', 'heading', 'html', 'page_break', 'hidden', 'captcha'),
+                        );
+                        $rendered_types = array();
+                        foreach ($field_groups as $group_label => $group_types) {
+                            $available = array_intersect($group_types, array_keys($fields));
+                            if (!$available) continue;
+                            echo '<section class="webform-palette-section"><h3>' . esc_html($group_label) . '</h3><div class="webform-palette-grid">';
+                            foreach ($available as $type) {
+                                $rendered_types[] = $type;
+                                printf('<button type="button" class="webform-palette-item" data-type="%s"><span class="dashicons %s"></span><span>%s</span></button>', esc_attr($type), esc_attr($field_icons[$type] ?? 'dashicons-plus-alt2'), esc_html($fields[$type]));
+                            }
+                            echo '</div></section>';
+                        }
+                        $pro_types = array_diff(array_keys($fields), $rendered_types);
+                        if ($pro_types) {
+                            $pro_groups = array(
+                                __('Advanced forms', 'formorbit') => array('calculation', 'field_group', 'repeater', 'signature', 'rich_text', 'divider', 'address', 'appointment', 'nps'),
+                                __('Commerce and payments', 'formorbit') => array('currency', 'product', 'price', 'quantity', 'product_option', 'shipping', 'donation', 'total'),
+                                __('WordPress content', 'formorbit') => array('post_title', 'post_body', 'post_excerpt', 'post_tags', 'post_custom'),
+                            );
+                            echo '<section class="webform-palette-section webform-palette-pro"><div class="webform-palette-section-title"><h3>' . esc_html__('Pro fields', 'formorbit') . '</h3><span>' . esc_html__('ADVANCED', 'formorbit') . '</span></div>';
+                            foreach ($pro_groups as $pro_group_label => $pro_group_types) {
+                                $available_pro = array_intersect($pro_group_types, $pro_types);
+                                if (!$available_pro) continue;
+                                echo '<h4>' . esc_html($pro_group_label) . '</h4><div class="webform-palette-grid">';
+                                foreach ($available_pro as $type) {
+                                    printf('<button type="button" class="webform-palette-item" data-type="%s"><span class="dashicons %s"></span><span>%s</span></button>', esc_attr($type), esc_attr($field_icons[$type] ?? 'dashicons-plus-alt2'), esc_html($fields[$type]));
+                                }
+                                echo '</div>';
+                            }
+                            echo '</section>';
                         }
                         ?>
                     </div>
@@ -387,7 +424,7 @@ class Webform_Admin {
                     <?php do_action('webform_builder_access_controls', $settings, $form_id); ?>
                     </div><div class="webform-property-panel" data-panel="style"><h2><?php esc_html_e('Appearance', 'formorbit'); ?></h2>
                     <?php $free_presets = array('modern' => __('Modern', 'formorbit'), 'minimal' => __('Minimal', 'formorbit'), 'rounded' => __('Rounded', 'formorbit')); $all_presets = apply_filters('webform_style_presets', $free_presets); ?>
-                    <label><?php esc_html_e('Style preset', 'formorbit'); ?><span class="webform-preset-picker"><select id="webform-style-preset"><?php foreach ($all_presets as $preset_key => $preset_label) : ?><option value="<?php echo esc_attr($preset_key); ?>" <?php selected($settings['style_preset'] ?? 'modern', $preset_key); ?>><?php echo esc_html($preset_label); ?></option><?php endforeach; ?></select></span></label>
+                    <label><?php esc_html_e('Style preset', 'formorbit'); ?><span class="webform-preset-picker"><select id="webform-style-preset"><?php foreach ($all_presets as $preset_key => $preset_label) : ?><option value="<?php echo esc_attr($preset_key); ?>" <?php selected($settings['style_preset'] ?? 'modern', $preset_key); ?>><?php echo esc_html($preset_label); ?></option><?php endforeach; ?></select><button type="button" class="button webform-live-preview-trigger" title="<?php esc_attr_e('Preview current form and style', 'formorbit'); ?>"><span class="dashicons dashicons-visibility" aria-hidden="true"></span></button></span></label>
                     <label><?php esc_html_e('Accent color', 'formorbit'); ?><input type="color" id="webform-accent-color" value="<?php echo esc_attr($settings['accent_color'] ?? '#6c4bd4'); ?>"></label>
                     <label><?php esc_html_e('Button text color', 'formorbit'); ?><input type="color" id="webform-button-text-color" value="<?php echo esc_attr($settings['button_text_color'] ?? '#ffffff'); ?>"></label>
                     <?php do_action('webform_builder_style_controls', $settings); ?>
@@ -395,6 +432,7 @@ class Webform_Admin {
                     <?php do_action('webform_builder_property_panels', $form_id, $settings); ?>
                 </aside>
             </div>
+            <div class="webform-live-preview-modal" id="webform-live-preview-modal" hidden aria-hidden="true"><button type="button" class="webform-live-preview-backdrop" aria-label="<?php esc_attr_e('Close preview', 'formorbit'); ?>"></button><div class="webform-live-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="webform-live-preview-title"><header><div><small><?php esc_html_e('CURRENT UNSAVED FORM', 'formorbit'); ?></small><h2 id="webform-live-preview-title"></h2></div><div class="webform-live-preview-devices"><button type="button" class="is-active" data-live-preview-device="desktop"><span class="dashicons dashicons-desktop"></span></button><button type="button" data-live-preview-device="tablet"><span class="dashicons dashicons-tablet"></span></button><button type="button" data-live-preview-device="mobile"><span class="dashicons dashicons-smartphone"></span></button><button type="button" class="webform-live-preview-close" aria-label="<?php esc_attr_e('Close preview', 'formorbit'); ?>">×</button></div></header><div class="webform-live-preview-viewport is-desktop"><div id="webform-live-preview-form"></div></div><p><?php esc_html_e('This preview uses the current unsaved schema and appearance settings. Submissions are disabled.', 'formorbit'); ?></p></div></div>
             <?php if (!$form_id && !$template_key) : ?><div class="webform-template-modal" id="webform-template-modal" role="dialog" aria-modal="true" aria-labelledby="webform-template-title"><div class="webform-template-dialog"><button type="button" class="webform-template-close" aria-label="<?php esc_attr_e('Close', 'formorbit'); ?>">×</button><h2 id="webform-template-title"><?php esc_html_e('Choose a starting template', 'formorbit'); ?></h2><p><?php esc_html_e('Select a template or start from a blank form.', 'formorbit'); ?></p><div class="webform-template-modal-grid"><a class="webform-template-choice" href="#"><strong><?php esc_html_e('Blank Form', 'formorbit'); ?></strong><span><?php esc_html_e('Build from scratch', 'formorbit'); ?></span></a><?php foreach ($this->free_templates() as $key => $template) : ?><a class="webform-template-choice" href="<?php echo esc_url(admin_url('admin.php?page=formorbit-builder&template=' . $key)); ?>"><strong><?php echo esc_html($template['name']); ?></strong><span><?php echo esc_html($template['description']); ?></span></a><?php endforeach; ?></div></div></div><?php endif; ?>
         </div>
         <?php
@@ -465,7 +503,7 @@ class Webform_Admin {
         $confirmation_types = array_keys(apply_filters('webform_confirmation_types', array('message' => 'Message', 'redirect' => 'Redirect')));
         $clean_settings = array(
             'success_message' => wp_kses_post($settings['success_message'] ?? ''),
-            'confirmation_type' => in_array($settings['confirmation_type'] ?? 'message', $confirmation_types, true) ? $settings['confirmation_type'] : 'message',
+            'confirmation_type' => in_array($settings['confirmation_type'] ?? 'message', $confirmation_types, true) ? ($settings['confirmation_type'] ?? 'message') : 'message',
             'notification_email' => sanitize_email($settings['notification_email'] ?? ''),
             'submit_label' => sanitize_text_field($settings['submit_label'] ?? __('Submit', 'formorbit')),
             'redirect_url' => esc_url_raw($settings['redirect_url'] ?? ''),
@@ -476,7 +514,16 @@ class Webform_Admin {
             'accent_color' => sanitize_hex_color($settings['accent_color'] ?? '') ?: '#6c4bd4',
             'button_text_color' => sanitize_hex_color($settings['button_text_color'] ?? '') ?: '#ffffff',
         );
-        update_post_meta($form_id, '_webform_settings', apply_filters('webform_sanitize_form_settings', $clean_settings, $settings, $form_id));
+        $clean_settings = apply_filters('webform_sanitize_form_settings', $clean_settings, $settings, $form_id);
+        // Keep dormant service configuration when editing without an activated connector.
+        if (!apply_filters('formorbit_integrations_enabled', false)) {
+            $stored = (array) get_post_meta($form_id, '_webform_settings', true);
+            foreach (array('webhook_url', 'mailchimp_list', 'brevo_list', 'activecampaign_list', 'leadconnector_enabled', 'contact_integrations', 'calendar_provider', 'payment_provider', 'admin_sms_enabled', 'user_sms_enabled', 'user_sms_phone_field', 'sms_message') as $key) {
+                if (array_key_exists($key, $stored)) $clean_settings[$key] = $stored[$key];
+                else unset($clean_settings[$key]);
+            }
+        }
+        update_post_meta($form_id, '_webform_settings', $clean_settings);
         wp_send_json_success(array('id' => $form_id, 'message' => __('Saved', 'formorbit'), 'shortcode' => '[formorbit id="' . $form_id . '"]'));
     }
 
@@ -504,7 +551,7 @@ class Webform_Admin {
                     $field_id = 'field_' . ($stage_index + 1) . '_' . ($field_index + 1) . '_' . wp_generate_password(6, false, false);
                 }
                 $seen_ids[$field_id] = true;
-                $date_rule = in_array($field['date_rule'] ?? 'any', array('any', 'future', 'past', 'custom'), true) ? $field['date_rule'] : 'any';
+                $date_rule = in_array($field['date_rule'] ?? 'any', array('any', 'future', 'past', 'custom'), true) ? ($field['date_rule'] ?? 'any') : 'any';
                 $date_min = sanitize_text_field($field['date_min'] ?? '');
                 $date_max = sanitize_text_field($field['date_max'] ?? '');
                 $date_min_object = DateTime::createFromFormat('!Y-m-d', $date_min);
@@ -536,8 +583,12 @@ class Webform_Admin {
                     'date_rule' => $date_rule,
                     'date_min' => $date_min,
                     'date_max' => $date_max,
-                    'phone_country' => in_array(strtoupper($field['phone_country'] ?? 'US'), array('US', 'CA', 'GB', 'AU', 'BD', 'IN', 'PK', 'AE', 'SA'), true) ? strtoupper($field['phone_country']) : 'US',
+                    'phone_country' => isset(formorbit_phone_countries()[strtoupper($field['phone_country'] ?? 'US')]) ? strtoupper($field['phone_country'] ?? 'US') : 'US',
                     'phone_country_selector' => !isset($field['phone_country_selector']) || !empty($field['phone_country_selector']),
+                    'name_format' => in_array($field['name_format'] ?? 'first_last', array('full', 'first', 'middle', 'last', 'first_middle', 'first_last', 'middle_last', 'first_middle_last'), true) ? ($field['name_format'] ?? 'first_last') : 'first_last',
+                    'consent_text' => substr(sanitize_textarea_field($field['consent_text'] ?? ($field['label'] ?? '')), 0, 1000),
+                    'consent_url' => esc_url_raw($field['consent_url'] ?? ''),
+                    'consent_link_text' => substr(sanitize_text_field($field['consent_link_text'] ?? __('Read the policy', 'formorbit')), 0, 120),
                     'min' => floatval($field['min'] ?? 0),
                     'max' => floatval($field['max'] ?? 100),
                     'step' => max(0.01, floatval($field['step'] ?? 1)),
@@ -653,6 +704,14 @@ class Webform_Admin {
         if ($page !== 'formorbit-builder') return;
         remove_all_actions('admin_notices');
         remove_all_actions('all_admin_notices');
+    }
+
+    public function builder_admin_title($admin_title, $title) {
+        $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+        if ($page !== 'formorbit-builder') return $admin_title;
+        $form_id = isset($_GET['form_id']) ? absint($_GET['form_id']) : 0;
+        if (!$form_id || get_post_type($form_id) !== 'webform_form') return $admin_title;
+        return sprintf(__('Edit “%1$s” ‹ FormOrbit — %2$s', 'formorbit'), get_the_title($form_id), get_bloginfo('name'));
     }
 
     public function settings_page() {
@@ -1038,15 +1097,24 @@ class Webform_Admin {
 
     public function templates_page() {
         if (!current_user_can('manage_options')) return;
+        $templates = $this->free_templates();
+        $groups = array();
+        foreach ($templates as $key => $template) {
+            $category = $template['category'] ?? (!empty($template['pro']) ? __('Premium templates', 'formorbit') : __('Essential templates', 'formorbit'));
+            $groups[$category][$key] = $template;
+        }
         ?>
         <div class="wrap webform-wrap">
             <div class="webform-page-head"><div><h1><?php esc_html_e('Form Templates', 'formorbit'); ?></h1><p><?php esc_html_e('Start with a complete form, then customize every field and stage.', 'formorbit'); ?></p></div></div>
-            <div class="webform-template-grid">
+            <section class="webform-template-category"><div class="webform-template-category-head"><div><h2><?php esc_html_e('Start from scratch', 'formorbit'); ?></h2><p><?php esc_html_e('Build a completely custom form.', 'formorbit'); ?></p></div></div><div class="webform-template-grid">
                 <div class="webform-template-card"><span class="dashicons dashicons-plus-alt2"></span><h2><?php esc_html_e('Blank Form', 'formorbit'); ?></h2><p><?php esc_html_e('Start with an empty stage.', 'formorbit'); ?></p><a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=formorbit-builder')); ?>"><?php esc_html_e('Create', 'formorbit'); ?></a></div>
-                <?php foreach ($this->free_templates() as $key => $template) : ?>
-                    <div class="webform-template-card"><span class="dashicons <?php echo esc_attr($template['icon']); ?>"></span><h2><?php echo esc_html($template['name']); ?></h2><p><?php echo esc_html($template['description']); ?></p><a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=formorbit-builder&template=' . $key)); ?>"><?php esc_html_e('Use template', 'formorbit'); ?></a></div>
+            </div></section>
+            <?php foreach ($groups as $category => $category_templates) : ?><section class="webform-template-category"><div class="webform-template-category-head"><div><h2><?php echo esc_html($category); ?></h2><p><?php echo esc_html(sprintf(_n('%d ready-to-use template', '%d ready-to-use templates', count($category_templates), 'formorbit'), count($category_templates))); ?></p></div></div><div class="webform-template-grid">
+                <?php foreach ($category_templates as $key => $template) : ?>
+                    <?php $stage_count = count((array) ($template['schema'] ?? array())); $field_count = array_sum(array_map(function ($stage) { return count((array) ($stage['fields'] ?? array())); }, (array) ($template['schema'] ?? array()))); ?>
+                    <div class="webform-template-card <?php echo !empty($template['pro']) ? 'webform-template-pro' : ''; ?>"><div class="webform-template-card-top"><span class="webform-template-icon"><span class="dashicons <?php echo esc_attr($template['icon']); ?>"></span></span><?php if (!empty($template['pro'])) : ?><span class="webform-pro-badge">PRO</span><?php endif; ?></div><h2><?php echo esc_html($template['name']); ?></h2><p><?php echo esc_html($template['description']); ?></p><div class="webform-template-meta"><span><span class="dashicons dashicons-controls-repeat" aria-hidden="true"></span><?php echo esc_html(sprintf(_n('%d stage', '%d stages', $stage_count, 'formorbit'), $stage_count)); ?></span><span><span class="dashicons dashicons-list-view" aria-hidden="true"></span><?php echo esc_html(sprintf(_n('%d field', '%d fields', $field_count, 'formorbit'), $field_count)); ?></span></div><div class="webform-template-actions"><a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=formorbit-builder&template=' . $key)); ?>"><?php esc_html_e('Use template', 'formorbit'); ?></a><a class="button" target="_blank" rel="noopener" href="<?php echo esc_url(admin_url('admin.php?page=formorbit-builder&template=' . $key . '&preview=1')); ?>"><span class="dashicons dashicons-visibility" aria-hidden="true"></span><?php esc_html_e('Preview', 'formorbit'); ?></a></div></div>
                 <?php endforeach; ?>
-            </div>
+            </div></section><?php endforeach; ?>
         </div>
         <?php
     }
@@ -1077,12 +1145,10 @@ class Webform_Admin {
     public function pro_page() {
         if (!current_user_can('manage_options')) return;
         $features = array(
-            __('Advanced fields', 'formorbit') => array(__('Calculations and formula builder', 'formorbit'), __('Field groups and repeatable rows', 'formorbit'), __('E-signatures and rich-text agreements', 'formorbit'), __('Addresses, appointments, NPS, currency, and dividers', 'formorbit'), __('WordPress post title, body, excerpt, tags, and custom fields', 'formorbit')),
-            __('Payments and commerce', 'formorbit') => array(__('Products, quantities, options, shipping, donations, prices, and totals', 'formorbit'), __('Stripe hosted checkout', 'formorbit'), __('PayPal, Square, and bank transfer', 'formorbit'), __('Secure payment status and order workflows', 'formorbit')),
-            __('Marketing and automation', 'formorbit') => array(__('Mailchimp, AWeber, Brevo, ActiveCampaign, Kit, and GetResponse', 'formorbit'), __('LeadConnector / GoHighLevel CRM routing', 'formorbit'), __('Zapier and signed webhooks', 'formorbit'), __('Twilio, Vonage, MessageBird, and Telnyx SMS', 'formorbit'), __('Google Calendar and Calendly appointment sync', 'formorbit')),
-            __('Documents and communication', 'formorbit') => array(__('Personalized visitor confirmation emails', 'formorbit'), __('Immediate and scheduled email/SMS follow-ups', 'formorbit'), __('Admin and visitor PDF attachments', 'formorbit'), __('Save & Continue with secure resume links', 'formorbit')),
-            __('Design and productivity', 'formorbit') => array(__('13+ premium style presets and Google Fonts', 'formorbit'), __('Submit button, spacing, color, typography, and custom CSS controls', 'formorbit'), __('Side-by-side responsive layouts and per-field icons', 'formorbit'), __('20 premium templates', 'formorbit'), __('Import a form from a public website URL', 'formorbit'), __('JSON, CSV, and XML form export', 'formorbit')),
-            __('License and support', 'formorbit') => array(__('Automatic in-dashboard Pro updates', 'formorbit'), __('License-managed activations and secure downloads', 'formorbit'), __('Built-in support and feedback tools', 'formorbit'), __('Product documentation and detailed changelog', 'formorbit')),
+            __('Included in both editions', 'formorbit') => array(__('Every field type, calculations, groups, repeaters, signatures and post fields', 'formorbit'), __('All presets, typography, layout, custom CSS and saved themes', 'formorbit'), __('Templates, public-form import and JSON, CSV and XML export', 'formorbit'), __('Save & Continue, access limits, visitor emails and PDF attachments', 'formorbit')),
+            __('Pro: Payments', 'formorbit') => array(__('Stripe, PayPal and Square hosted checkout', 'formorbit'), __('Bank transfer instructions and payment workflows', 'formorbit')),
+            __('Pro: Email and CRM', 'formorbit') => array(__('Mailchimp, AWeber, Brevo, ActiveCampaign, Kit and GetResponse', 'formorbit'), __('LeadConnector / GoHighLevel routing', 'formorbit')),
+            __('Pro: Messaging and automation', 'formorbit') => array(__('Twilio, Vonage, MessageBird and Telnyx SMS', 'formorbit'), __('Zapier and webhooks', 'formorbit'), __('Google Calendar, Outlook, Calendly, Cal.com, Acuity and Apple calendar connections', 'formorbit')),
         );
         $plans = array(
             array('name' => __('Pro Annual', 'formorbit'), 'price' => '$19.99', 'term' => __('per year', 'formorbit'), 'sites' => __('1 website', 'formorbit'), 'url' => $this->upgrade_url('plans-single'), 'featured' => false),

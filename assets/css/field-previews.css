@@ -64,6 +64,16 @@
     font-style: normal;
 }
 
+.webform-preview-options.webform-preview-choices {
+    display: grid;
+    width: 100%;
+}
+
+.webform-preview-options.webform-choice-columns-1 { grid-template-columns: 1fr; }
+.webform-preview-options.webform-choice-columns-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.webform-preview-options.webform-choice-columns-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.webform-preview-options.webform-choice-columns-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
 .webform-preview-rating {
     color: #e2a900;
     font-size: 25px;
@@ -74,15 +84,23 @@
     gap: 8px;
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+.webform-preview-name-1{grid-template-columns:1fr}.webform-preview-name-3{grid-template-columns:repeat(3,minmax(0,1fr))}
 
 .webform-preview-name i {
+    align-items: center;
     background: #fff;
     border: 1px solid #c7c9cc;
     border-radius: 6px;
+    box-sizing: border-box;
     color: #8c8f94;
     font-size: 12px;
+    display: flex;
     font-style: normal;
+    height: 38px;
+    line-height: 18px;
+    max-height: 38px;
     min-height: 38px;
+    overflow: hidden;
     padding: 9px 11px;
 }
 

@@ -1,0 +1,503 @@
+.webform-pro-wrap{max-width:1050px}.webform-pro-card{background:#fff;border:1px solid #dcdcde;border-radius:10px;margin:20px 0;padding:24px;position:relative}.webform-pro-card label{display:block;font-weight:600;margin:0 0 14px}.webform-pro-card input,.webform-pro-card select,.webform-pro-card textarea{display:block;margin-top:5px;width:100%}.webform-pro-grid{display:grid;gap:18px;grid-template-columns:1fr 1fr}.webform-pro-grid fieldset{border:1px solid #dcdcde;border-radius:8px;padding:18px}.webform-pro-grid legend{font-size:16px;font-weight:700;padding:0 6px}.webform-pro-card.is-locked form{filter:grayscale(1);opacity:.55;pointer-events:none}.webform-pro-lock{background:#fff8df;border:1px solid #e8d189;border-radius:6px;margin-bottom:15px;padding:12px}.is-valid{color:#19733a}.is-invalid{color:#b42318}@media(max-width:782px){.webform-pro-grid{grid-template-columns:1fr}}
+.webform-pro-wrap>h1{background:linear-gradient(135deg,#241943,#7554db);border-radius:12px;color:#fff;font-size:30px;margin-top:22px;padding:28px}.webform-pro-card{box-shadow:0 4px 18px rgba(34,23,70,.06)}.webform-pro-card .button-primary{background:#6548c7;border-color:#6548c7}.webform-pro-card legend{color:#493591}
+.webform-pro-license-notice p{align-items:center;display:flex;gap:8px}.webform-pro-license-notice .button{margin-left:6px}
+.webform-integration-filter{background:#f6f3ff;border:1px solid #dcd3f5;border-radius:10px;display:grid;gap:16px;grid-template-columns:1fr 1fr;margin-bottom:20px;padding:18px}.webform-integration-filter label{margin:0}.webform-pro-grid fieldset[hidden]{display:none}.webform-pro-grid fieldset:not([hidden]){background:linear-gradient(145deg,#fff,#faf8ff);border-color:#cfc3ee;box-shadow:0 8px 24px rgba(70,45,140,.08);grid-column:1/-1}.webform-pro-dashboard{display:grid;gap:14px;grid-template-columns:repeat(4,1fr);margin:20px 0}.webform-pro-dashboard article{background:#fff;border:1px solid #ddd5f2;border-radius:10px;box-shadow:0 4px 18px rgba(34,23,70,.05);display:flex;flex-direction:column;gap:7px;padding:18px}.webform-pro-dashboard .dashicons{color:#6548c7;font-size:25px;height:28px;width:28px}.webform-pro-dashboard strong{font-size:14px}.webform-pro-dashboard small{color:#646970;line-height:1.4}@media(max-width:900px){.webform-pro-dashboard{grid-template-columns:1fr 1fr}}@media(max-width:600px){.webform-integration-filter,.webform-pro-dashboard{grid-template-columns:1fr}}
+#webform-canvas{align-items:flex-start;column-gap:2%;display:flex;flex-wrap:wrap}.webform-field-card{box-sizing:border-box;flex:0 0 var(--preview-width,100%);max-width:var(--preview-width,100%);width:var(--preview-width,100%)}.webform-pro-access-grid{display:grid;gap:0;grid-template-columns:minmax(0,1fr)}.webform-pro-access-grid label,.webform-pro-access-grid input[type=datetime-local]{box-sizing:border-box;max-width:100%;min-width:0;width:100%}.webform-role-controls{border-top:1px solid #dcdcde;margin:4px 0 16px;padding-top:14px}.webform-role-list{display:grid;gap:6px;margin-top:9px}.webform-role-list label{align-items:center;display:flex;font-weight:400;margin:0}.webform-role-list input{margin:0 7px 0 0}.webform-role-controls.is-disabled{opacity:.5}.webform-role-controls small{display:block;margin-top:8px}
+.webform-field-card.is-width-auto{flex:1 1 280px;max-width:100%;min-width:240px;width:auto}.webform-row-break{flex-basis:100%;height:0;width:0}.webform-field-card{min-width:0;padding-bottom:42px;padding-top:22px;position:relative}.webform-field-card.is-selected{padding-bottom:54px}.webform-field-card .webform-field-preview{box-sizing:border-box;min-width:0;width:100%}.webform-field-card .webform-field-preview>*{box-sizing:border-box;max-width:100%}.webform-field-card .webform-field-preview>strong{padding-right:58px}.webform-card-widths{align-items:center;background:#f3f1f8;border:1px solid #e3dff0;border-radius:8px;bottom:10px;display:flex;gap:2px;left:16px;padding:2px;position:absolute;z-index:2}.webform-card-widths button{align-items:center;background:transparent;border:0;border-radius:6px;color:#646970;cursor:pointer;display:flex;font-size:11px;font-weight:600;gap:4px;line-height:1;padding:6px 8px}.webform-card-widths button:first-child{font-size:16px;padding:3px 8px}.webform-card-widths button:hover,.webform-card-widths button:focus-visible{background:#e2dcf5;color:#493591;outline:0}.webform-card-widths button.is-active{background:#6548c7;color:#fff}.webform-card-widths .dashicons{font-size:14px;height:14px;width:14px}.webform-field-card .webform-remove-field{margin:0;position:absolute;right:14px;top:13px}.webform-field-card .webform-type{bottom:13px;margin:0;position:absolute;right:14px}.webform-field-card .webform-drag{left:auto;margin:0;position:absolute;right:46px;top:16px}.webform-sort-placeholder{background:rgba(101,72,199,.08);box-sizing:border-box;flex-shrink:0;min-height:90px}.webform-canvas.is-sorting{box-shadow:inset 0 0 0 3px rgba(101,72,199,.1)}.webform-canvas.is-sorting:after{background:#6548c7;border-radius:14px;bottom:12px;color:#fff;content:"Drop at the left edge to begin a new row";font-size:11px;left:50%;padding:6px 12px;pointer-events:none;position:sticky;transform:translateX(-50%);z-index:20}
+.webform-canvas>.webform-drop-empty{box-sizing:border-box;flex:0 0 100%;max-width:100%;width:100%}
+.webform-confirmation-section{margin-top:18px}.webform-confirmation-section h3{align-items:center;display:flex;gap:7px;margin:16px 0 12px}.webform-confirmation-options{transition:opacity .15s}.webform-confirmation-options.is-disabled,.webform-confirmation-section .webform-pro-access-grid.is-disabled{opacity:.48}.webform-confirmation-options .wp-editor-wrap{margin:6px 0 12px}.webform-confirmation-options .wp-editor-container{border-color:#dcdcde}.webform-confirmation-options .mce-toolbar .mce-btn button{padding:2px 3px}.webform-confirmation-options table{max-width:100%}
+.webform-icon-property{margin-bottom:16px}.webform-icon-property>label{display:block;font-weight:600;margin-bottom:6px}.webform-open-icon-gallery{align-items:center;background:#fff;border:1px solid #8c8f94;border-radius:4px;box-sizing:border-box;cursor:pointer;display:flex;gap:9px;min-height:40px;padding:7px 10px;text-align:left;width:100%}.webform-open-icon-gallery>span:nth-child(2){flex:1}.webform-open-icon-gallery:hover,.webform-open-icon-gallery:focus{border-color:#6548c7;box-shadow:0 0 0 1px #6548c7;outline:0}.webform-icon-gallery{display:none;inset:0;position:fixed;z-index:100100}.webform-icon-gallery.is-open{align-items:center;display:flex;justify-content:center}.webform-icon-gallery-backdrop{background:rgba(18,14,31,.64);border:0;inset:0;position:absolute}.webform-icon-gallery-dialog{background:#fff;border-radius:14px;box-shadow:0 24px 80px rgba(15,10,30,.3);box-sizing:border-box;max-height:min(720px,88vh);max-width:760px;overflow:auto;padding:22px;position:relative;width:calc(100% - 36px)}.webform-icon-gallery-head{align-items:flex-start;border-bottom:1px solid #e3e1e8;display:flex;justify-content:space-between;margin-bottom:16px;padding-bottom:14px}.webform-icon-gallery-head h2{font-size:20px;margin:0 0 4px}.webform-icon-gallery-head p{color:#646970;margin:0}.webform-icon-gallery-close{background:transparent;border:0;color:#646970;cursor:pointer;font-size:28px;line-height:1;padding:0 4px}.webform-icon-gallery-search{align-items:center;border:1px solid #c3c4c7;border-radius:7px;display:flex;margin-bottom:16px;padding:0 10px}.webform-icon-gallery-search input{border:0;box-shadow:none;min-height:40px;width:100%}.webform-icon-gallery-search input:focus{box-shadow:none;outline:0}.webform-icon-gallery-grid{display:grid;gap:8px;grid-template-columns:repeat(6,minmax(0,1fr))}.webform-icon-gallery-grid button{align-items:center;background:#faf9fc;border:1px solid #dedbe7;border-radius:8px;color:#3c434a;cursor:pointer;display:flex;flex-direction:column;gap:7px;justify-content:center;min-height:82px;padding:9px 5px}.webform-icon-gallery-grid button .dashicons{color:#6548c7;font-size:24px;height:24px;width:24px}.webform-icon-gallery-grid button>span:last-child{font-size:11px}.webform-icon-gallery-grid button:hover,.webform-icon-gallery-grid button:focus-visible{background:#f0ecfb;border-color:#6548c7;outline:0}.webform-icon-gallery-grid button.is-selected{background:#6548c7;border-color:#6548c7;color:#fff}.webform-icon-gallery-grid button.is-selected .dashicons{color:#fff}.webform-icon-gallery-empty{color:#646970;padding:25px;text-align:center}@media(max-width:700px){.webform-icon-gallery-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* Standalone Pro settings pages. */
+.webform-pro-wrap{box-sizing:border-box;max-width:1180px;padding:8px 20px 40px 0}.webform-pro-page-head{background:linear-gradient(135deg,#241943 0%,#5436b1 55%,#7c5ce0 100%);border-radius:18px;box-shadow:0 16px 38px rgba(48,31,98,.16);color:#fff;margin:18px 0 24px;overflow:hidden;padding:34px 38px;position:relative}.webform-pro-page-head:after{background:radial-gradient(circle,rgba(255,255,255,.22),transparent 68%);content:"";height:260px;position:absolute;right:-65px;top:-125px;width:260px}.webform-pro-page-head .webform-pro-eyebrow{font-size:11px;font-weight:800;letter-spacing:.16em;opacity:.8}.webform-pro-page-head h1{color:#fff;font-size:32px;line-height:1.15;margin:8px 0}.webform-pro-page-head p{color:rgba(255,255,255,.82);font-size:15px;margin:0;max-width:680px}.webform-pro-wrap>.webform-pro-card{border:1px solid #e1dcec;border-radius:16px;box-shadow:0 12px 36px rgba(30,22,51,.08);box-sizing:border-box;margin:0 0 20px;padding:28px 30px}.webform-license-summary{align-items:flex-start;display:grid;gap:18px;grid-template-columns:auto 1fr}.webform-license-summary h2{font-size:20px;margin:1px 0 5px}.webform-license-summary p{color:#5c6470;font-size:14px;margin:0}.webform-license-status{align-items:center;border-radius:999px;display:inline-flex;font-size:12px;font-weight:750;gap:6px;line-height:1;padding:9px 12px;white-space:nowrap}.webform-license-status .dashicons{font-size:16px;height:16px;width:16px}.webform-license-status.is-valid{background:#e8f7ed;color:#14733c}.webform-license-status.is-warning{background:#fff5d6;color:#805900}.webform-license-status.is-invalid{background:#fdebea;color:#ad2b22}.webform-license-alert{background:#fff8e5;border:1px solid #efd994;border-radius:9px;color:#684f12;margin:20px 0 0;padding:11px 13px}.webform-license-meta{border-bottom:1px solid #ece9f2;border-top:1px solid #ece9f2;display:grid;gap:16px;grid-template-columns:repeat(3,minmax(0,1fr));margin:24px 0;padding:18px 0}.webform-license-meta span{color:#4f5660;display:flex;flex-direction:column;gap:5px;min-width:0}.webform-license-meta strong{color:#20242a;font-size:11px;letter-spacing:.04em;text-transform:uppercase}.webform-license-form{margin:0}.webform-license-key{align-items:center;background:#f7f5fb;border:1px solid #e4deef;border-radius:12px;display:flex;gap:18px;justify-content:space-between;margin-bottom:16px;padding:14px 16px}.webform-license-key span{display:flex;flex-direction:column;gap:6px}.webform-license-key small{color:#646970;font-size:11px;font-weight:700;text-transform:uppercase}.webform-license-key code{background:transparent;color:#2f2547;font-size:15px;font-weight:700;letter-spacing:.06em;padding:0}.webform-license-actions{display:flex;flex-wrap:wrap;gap:9px}.webform-license-input{max-width:620px}.webform-license-input input{font-family:monospace;letter-spacing:.04em;min-height:44px}.webform-pro-wrap .button{border-radius:7px;min-height:38px;padding:4px 16px}.webform-pro-wrap .button-primary{background:#6548c7;border-color:#6548c7}.webform-pro-wrap .button-primary:focus,.webform-pro-wrap .button-primary:hover{background:#5135ae;border-color:#5135ae}.webform-pro-wrap>.webform-pro-dashboard{gap:16px;grid-template-columns:repeat(4,minmax(0,1fr));margin:20px 0}.webform-pro-dashboard article{border-color:#e2dcef;border-radius:14px;box-shadow:0 8px 28px rgba(30,22,51,.06);min-width:0;padding:20px}.webform-pro-dashboard strong{font-size:14px}.webform-pro-dashboard small{font-size:12px}
+.webform-pro-wrap .webform-integration-filter{align-items:end;background:#f8f6fc;border-color:#e2dcef;border-radius:12px;grid-template-columns:repeat(2,minmax(0,1fr));padding:20px}.webform-pro-wrap .webform-integration-filter label{color:#333842;display:flex;flex-direction:column;font-size:12px;gap:7px;text-transform:uppercase}.webform-pro-wrap .webform-integration-filter select{font-size:14px;margin:0;max-width:none;min-height:42px;text-transform:none;width:100%}.webform-pro-wrap .webform-pro-grid{display:block}.webform-pro-wrap .webform-pro-grid fieldset{background:linear-gradient(145deg,#fff,#faf9fd);border:1px solid #dcd5eb;border-radius:14px;box-shadow:none;box-sizing:border-box;margin:0 0 20px;padding:22px 24px}.webform-pro-wrap .webform-pro-grid legend{color:#3e2c76;font-size:19px;padding:0 8px}.webform-pro-wrap .webform-pro-grid label{color:#343942;display:flex;flex-direction:column;font-size:13px;gap:7px;margin:0 0 16px;max-width:720px}.webform-pro-wrap .webform-pro-grid input,.webform-pro-wrap .webform-pro-grid select,.webform-pro-wrap .webform-pro-grid textarea{box-sizing:border-box;font-size:14px;margin:0;max-width:720px;min-height:42px;width:100%}.webform-pro-wrap .webform-pro-grid textarea{min-height:120px}.webform-pro-wrap .webform-pro-grid .description{color:#646970;line-height:1.55;max-width:760px}.webform-pro-wrap .webform-pro-grid code{display:inline-block;max-width:100%;overflow-wrap:anywhere;white-space:normal}.webform-pro-wrap .webform-pro-card.is-locked form{filter:grayscale(1);opacity:.55;pointer-events:none}
+.webform-payment-method-setting{background:#f8f6fc;border:1px solid #ddd6ef;border-radius:10px;box-sizing:border-box;margin:16px 0;padding:15px}.webform-payment-method-setting label{display:flex;flex-direction:column;font-weight:650;gap:6px;margin:0}.webform-payment-method-setting select{box-sizing:border-box;max-width:100%;width:100%}.webform-payment-method-setting .description{line-height:1.5;margin:9px 0 12px}.webform-payment-method-setting option:disabled{color:#8c8f94}
+.webform-notification-workflows{background:#faf8ff;border:1px solid #ded7f2;border-radius:10px;margin-top:18px;padding:0 14px 14px}.webform-followup-grid{display:grid;gap:12px;grid-template-columns:1fr 1fr}.webform-followup-grid label span{align-items:center;display:flex;gap:7px}.webform-followup-grid input{max-width:120px}@media(max-width:782px){.webform-followup-grid{grid-template-columns:1fr}}
+.webform-license-card{overflow:hidden}.webform-license-card:before{background:linear-gradient(90deg,#4c31a5,#8061e6);content:"";height:5px;left:0;position:absolute;right:0;top:0}.webform-license-form{position:relative}.webform-license-form.is-loading:after{background:rgba(255,255,255,.72);border-radius:10px;content:"";inset:-8px;position:absolute;z-index:5}.webform-license-form.is-loading:before{animation:formorbit-license-spin .75s linear infinite;border:3px solid #d9d1ef;border-radius:50%;border-top-color:#6548c7;content:"";height:24px;left:50%;margin:-15px 0 0 -15px;position:absolute;top:50%;width:24px;z-index:6}.webform-license-live-message{color:#4f5660;font-size:13px;margin:12px 0 0;min-height:18px}.webform-license-meta{grid-template-columns:repeat(2,minmax(0,1fr))}.webform-license-key .button{flex:0 0 auto}.webform-license-actions .button{min-width:150px}@keyframes formorbit-license-spin{to{transform:rotate(360deg)}}
+@media(max-width:900px){.webform-pro-wrap>.webform-pro-dashboard{grid-template-columns:repeat(2,minmax(0,1fr))}.webform-license-meta{grid-template-columns:1fr 1fr}}@media(max-width:782px){.webform-pro-wrap{padding-right:10px}.webform-pro-page-head{border-radius:14px;padding:28px 24px}.webform-pro-page-head h1{font-size:26px}.webform-pro-wrap>.webform-pro-card{padding:22px 18px}.webform-license-summary{grid-template-columns:1fr}.webform-license-meta,.webform-pro-wrap .webform-integration-filter{grid-template-columns:1fr}.webform-license-key{align-items:flex-start;flex-direction:column}.webform-pro-wrap>.webform-pro-dashboard{grid-template-columns:1fr}}
+.webform-support-layout{align-items:start;display:grid;gap:20px;grid-template-columns:minmax(0,1.45fr) minmax(320px,.75fr)}.webform-support-layout .webform-pro-card{background:#fff;border:1px solid #e1dcec;border-radius:16px;box-shadow:0 12px 36px rgba(30,22,51,.08);box-sizing:border-box;margin:0;padding:26px}.webform-support-card-head{align-items:flex-start;border-bottom:1px solid #ebe8f2;display:flex;gap:14px;margin-bottom:22px;padding-bottom:18px}.webform-support-card-head>.dashicons{align-items:center;background:#eee9ff;border-radius:11px;color:#5e42bd;display:flex;font-size:24px;height:46px;justify-content:center;width:46px}.webform-support-card-head h2,.webform-support-data-card h2{font-size:20px;margin:0 0 5px}.webform-support-card-head p,.webform-support-data-card>p{color:#646970;margin:0}.webform-support-form-card label{color:#303640;display:flex;flex-direction:column;font-size:13px;font-weight:650;gap:7px;margin-bottom:17px}.webform-support-form-card input,.webform-support-form-card select,.webform-support-form-card textarea{box-sizing:border-box;margin:0;max-width:none;width:100%}.webform-support-form-card input,.webform-support-form-card select{min-height:42px}.webform-support-form-card textarea{min-height:190px;resize:vertical}.webform-support-form-card label small{color:#737983;font-size:11px;font-weight:400}.webform-support-grid{display:grid;gap:14px;grid-template-columns:1fr 1fr}.webform-support-character-count{align-self:flex-end}.webform-support-consent{background:#faf7eb;border:1px solid #eadca7;border-radius:10px;margin:6px 0 18px;padding:13px 14px}.webform-support-consent label{display:block;font-weight:500;line-height:1.5;margin:0}.webform-support-consent input{height:auto;margin:0 7px 0 0;min-height:0;width:auto}.webform-support-actions{align-items:center;display:flex;gap:14px}.webform-support-actions .button{align-items:center;display:inline-flex;gap:6px;min-width:165px}.webform-support-actions .dashicons{font-size:17px;height:17px;width:17px}.webform-support-status{color:#646970;font-size:12px;line-height:1.45}.webform-support-status.is-success{color:#14733c}.webform-support-status.is-error{color:#b42318}.webform-support-sidebar{display:grid;gap:16px}.webform-support-data-card .webform-pro-badge{display:inline-block;margin-bottom:13px}.webform-support-data-card dl{border:1px solid #ebe7f2;border-radius:11px;margin:18px 0;max-height:460px;overflow:auto}.webform-support-data-card dl>div{border-bottom:1px solid #efedf4;display:grid;gap:8px;grid-template-columns:125px minmax(0,1fr);padding:10px 12px}.webform-support-data-card dl>div:last-child{border-bottom:0}.webform-support-data-card dt{color:#646970;font-size:10px;font-weight:750;letter-spacing:.04em;text-transform:uppercase}.webform-support-data-card dd{color:#343942;font-size:11px;margin:0;overflow-wrap:anywhere}.webform-support-data-card .description{font-size:11px;line-height:1.5}.webform-support-delivery-card{align-items:flex-start;display:flex;gap:12px}.webform-support-delivery-card>.dashicons{color:#6548c7;font-size:23px;height:23px;width:23px}.webform-support-delivery-card strong{font-size:14px}.webform-support-delivery-card p{color:#646970;font-size:12px;line-height:1.5;margin:5px 0}.webform-support-delivery-card a{font-size:12px;font-weight:650}.webform-support-form-card form.is-sending{opacity:.72;pointer-events:none}@media(max-width:980px){.webform-support-layout{grid-template-columns:1fr}.webform-support-sidebar{grid-template-columns:1fr 1fr}}@media(max-width:782px){.webform-support-grid,.webform-support-sidebar{grid-template-columns:1fr}.webform-support-layout .webform-pro-card{padding:20px 18px}.webform-support-actions{align-items:flex-start;flex-direction:column}.webform-support-data-card dl>div{grid-template-columns:1fr}}
+.webform-support-captcha{align-items:center;background:#f5f2ff;border:1px solid #dcd2fb;border-radius:12px;display:grid;gap:16px;grid-template-columns:minmax(0,1fr) 110px;margin:0 0 18px;padding:14px}.webform-support-captcha>div{align-items:center;display:flex;gap:11px}.webform-support-captcha .dashicons{align-items:center;background:#fff;border-radius:8px;color:#6548c7;display:flex;flex:0 0 34px;height:34px;justify-content:center;width:34px}.webform-support-captcha label{gap:2px;margin:0}.webform-support-captcha label small{color:#4d3d7e;font-size:13px;font-weight:750}.webform-support-captcha input[type=number]{background:#fff;font-size:17px;font-weight:750;min-height:44px;text-align:center}@media(max-width:480px){.webform-support-captcha{grid-template-columns:1fr}.webform-support-captcha input[type=number]{text-align:left}}
+.webform-contact-routing{background:#f8f6fc;border:1px solid #e2dcef;border-radius:10px;box-sizing:border-box;margin:14px 0;max-width:100%;min-width:0;padding:14px}.webform-contact-routing h3{margin:0 0 12px}.webform-contact-route{align-items:center;border-top:1px solid #e7e2ef;display:grid;gap:10px;grid-template-columns:minmax(130px,.8fr) minmax(0,1.2fr);min-width:0;padding:11px 0}.webform-contact-route:first-of-type{border-top:0}.webform-contact-route label{box-sizing:border-box;margin:0;max-width:100%;min-width:0}.webform-contact-destination select{box-sizing:border-box;max-width:100%;min-width:0;width:100%}.webform-property-panel .webform-contact-route{align-items:stretch;grid-template-columns:1fr}.webform-property-panel .webform-contact-routing{padding:11px}@media(max-width:600px){.webform-contact-route{grid-template-columns:1fr}}
+.webform-preset-preview-form .webform-actions{justify-content:var(--wf-submit-align,flex-end)}.webform-preset-preview-form .webform-actions .webform-submit{background:var(--wf-submit-bg,var(--wf-accent));border:var(--wf-submit-border,0);color:var(--wf-submit-text,#fff);font-size:var(--wf-submit-font-size,16px);font-weight:var(--wf-submit-font-weight,600);padding:var(--wf-submit-padding,var(--wf-button-padding));width:var(--wf-submit-width,auto)}
+.webform-create-button .dashicons{color:#fff!important;font-family:dashicons!important;opacity:1!important;visibility:visible!important}.webform-integration-panel-head{align-items:center;background:#f7f5fc;border:1px solid #e2dcef;border-radius:10px;display:flex;gap:10px;justify-content:space-between;margin-bottom:14px;padding:11px 12px}.webform-integration-panel-head div{display:flex;flex-direction:column;min-width:0}.webform-integration-panel-head small{color:#646970;font-size:10px;margin-top:2px}.webform-integration-panel-head a{font-size:11px;font-weight:700}.webform-connected-integrations{border:1px solid #ddd7ea;border-radius:9px;margin:13px 0;overflow:hidden}.webform-connected-integrations summary{background:#f8f6fc;cursor:pointer;font-size:12px;font-weight:700;padding:11px 12px}.webform-connected-integrations .webform-integration-list{grid-template-columns:1fr 1fr;margin:0;padding:9px}.webform-connected-integrations .webform-integration-list>div{border-radius:7px;padding:8px}.webform-connected-integrations .webform-integration-list em{display:none}.webform-integrations-empty{align-items:center;background:#faf9fc;border:1px dashed #d7d0e7;border-radius:10px;color:#646970;display:grid;gap:2px 9px;grid-template-columns:30px 1fr;margin:13px 0;padding:13px}.webform-integrations-empty .dashicons{color:#6548c7;grid-row:1/3}.webform-integrations-empty strong{color:#343942;font-size:12px}.webform-integrations-empty small{font-size:10px}.webform-configure-integrations{box-sizing:border-box;text-align:center;width:100%}.webform-editor-settings-section{border:1px solid #ddd7ea;border-radius:10px;margin:12px 0;overflow:hidden}.webform-editor-settings-section>summary{background:#f8f6fc;cursor:pointer;font-size:12px;font-weight:700;padding:12px 13px}.webform-editor-settings-section[open]>summary{border-bottom:1px solid #e6e1ee;color:#5135ae}.webform-editor-settings-body{padding:13px}.webform-editor-settings-body>h2:first-child,.webform-editor-settings-body>hr:first-child,.webform-editor-settings-body>h3:first-of-type{display:none}.webform-editor-settings-body .webform-confirmation-section{margin:0}.webform-editor-settings-body .webform-confirmation-section>hr,.webform-editor-settings-body .webform-confirmation-section>h3,.webform-confirmation-workflow>.webform-confirmation-section>hr,.webform-confirmation-workflow>.webform-confirmation-section>h3{display:none}.webform-confirmation-workflow>.webform-confirmation-section{padding:13px}@media(max-width:600px){.webform-connected-integrations .webform-integration-list{grid-template-columns:1fr}}
+
+/* Form editor navigation and settings workspace. */
+.webform-builder {
+    grid-template-columns: minmax(520px, 1fr) minmax(330px, 370px);
+}
+
+.webform-properties {
+    background: #fbfaff;
+    border-left-color: #ddd7eb;
+    box-sizing: border-box;
+    min-width: 0;
+    padding: 18px;
+}
+
+.webform-property-tabs {
+    background: #eeebf7;
+    border: 1px solid #ddd7eb;
+    border-radius: 12px;
+    gap: 5px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 0 0 20px;
+    padding: 5px;
+}
+
+.webform-property-tabs button {
+    align-items: center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: #565b63;
+    display: flex;
+    font-size: 12px;
+    font-weight: 700;
+    justify-content: center;
+    min-height: 40px;
+    padding: 8px 10px;
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+}
+
+.webform-property-tabs button:hover {
+    background: rgba(255, 255, 255, 0.72);
+    border-color: #d4cdea;
+    color: #4e359d;
+}
+
+.webform-property-tabs button:focus-visible {
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #6548c7;
+    outline: 0;
+}
+
+.webform-property-tabs button.is-active,
+.webform-property-tabs button[aria-selected="true"] {
+    background: #fff;
+    border-color: #d4cbea;
+    box-shadow: 0 3px 10px rgba(55, 38, 105, 0.12);
+    color: #5135ae;
+}
+
+.webform-property-panel[hidden] {
+    display: none !important;
+}
+
+.webform-property-panel > h2:first-child {
+    border-bottom: 1px solid #e7e3ef;
+    color: #302844;
+    font-size: 14px;
+    letter-spacing: 0.045em;
+    margin: 0 0 16px;
+    padding: 0 2px 12px;
+}
+
+.webform-property-panel > .description:first-of-type {
+    color: #6b7078;
+    line-height: 1.5;
+    margin: -7px 2px 17px;
+}
+
+.webform-editor-settings-section {
+    background: #fff;
+    border-color: #dfdaeb;
+    border-radius: 11px;
+    box-shadow: 0 2px 8px rgba(42, 30, 78, 0.035);
+    margin: 10px 0;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    scroll-margin-top: 52px;
+}
+
+.webform-editor-settings-section:hover {
+    border-color: #cfc5e7;
+}
+
+.webform-editor-settings-section[open] {
+    border-color: #b9aae0;
+    box-shadow: 0 7px 20px rgba(52, 35, 106, 0.09);
+}
+
+.webform-editor-settings-section > summary {
+    align-items: center;
+    background: #fff;
+    color: #3f3b49;
+    display: flex;
+    font-size: 12px;
+    font-weight: 750;
+    justify-content: space-between;
+    list-style: none;
+    min-height: 22px;
+    padding: 13px 14px;
+}
+
+.webform-editor-settings-section > summary::-webkit-details-marker {
+    display: none;
+}
+
+.webform-editor-settings-section > summary::after {
+    color: #755bc4;
+    content: "+";
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1;
+}
+
+.webform-editor-settings-section[open] > summary {
+    background: #f8f6fd;
+    border-bottom-color: #e3deee;
+    color: #5135ae;
+}
+
+.webform-editor-settings-section[open] > summary::after {
+    content: "−";
+}
+
+.webform-editor-settings-section > summary:focus-visible {
+    box-shadow: inset 0 0 0 2px #6548c7;
+    outline: 0;
+}
+
+.webform-editor-settings-body,
+.webform-confirmation-workflow > .webform-confirmation-section {
+    padding: 16px;
+}
+
+.webform-role-controls {
+    background: #faf9fc;
+    border: 1px solid #e1dceb;
+    border-radius: 10px;
+    margin: 14px 0 16px;
+    padding: 14px;
+    transition: background-color .16s ease, border-color .16s ease, opacity .16s ease;
+}
+
+.webform-role-controls:not(.is-disabled) {
+    background: #f8f6fd;
+    border-color: #cfc3ea;
+    opacity: 1;
+}
+
+.webform-role-controls.is-disabled {
+    opacity: .58;
+}
+
+.webform-role-controls.is-disabled .webform-role-list {
+    cursor: not-allowed;
+}
+
+.webform-role-controls.is-disabled input {
+    pointer-events: none;
+}
+
+.webform-theme-actions {
+    display: grid;
+    gap: 9px;
+}
+
+.webform-theme-actions > select {
+    margin: 0;
+    width: 100%;
+}
+
+.webform-theme-buttons {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.webform-theme-buttons .button {
+    align-items: center;
+    display: inline-flex;
+    gap: 6px;
+    height: 36px;
+    justify-content: center;
+    margin: 0;
+    min-width: 0;
+    padding: 0 10px;
+    white-space: nowrap;
+}
+
+.webform-theme-buttons .dashicons {
+    font-size: 16px;
+    height: 16px;
+    width: 16px;
+}
+
+.webform-theme-buttons .webform-theme-delete {
+    border-color: #dca6aa;
+    color: #b32d2e;
+    grid-column: 1 / -1;
+}
+
+.webform-theme-buttons .webform-theme-delete:hover,
+.webform-theme-buttons .webform-theme-delete:focus {
+    background: #fff5f5;
+    border-color: #b32d2e;
+    color: #8f1f20;
+}
+
+.webform-style-color-grid {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.webform-color-setting {
+    align-items: center;
+    background: #faf9fc;
+    border: 1px solid #e3deeb;
+    border-radius: 9px;
+    box-sizing: border-box;
+    display: flex !important;
+    gap: 10px;
+    justify-content: space-between;
+    margin: 0 !important;
+    min-width: 0;
+    padding: 9px 10px;
+}
+
+.webform-color-control {
+    align-items: center;
+    display: inline-flex;
+    flex: 0 0 auto;
+    gap: 7px;
+}
+
+.webform-color-setting input[type="color"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    height: 32px;
+    margin: 0;
+    padding: 0;
+    width: 38px;
+}
+
+.webform-color-setting input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 2px;
+}
+
+.webform-color-setting input[type="color"]::-webkit-color-swatch,
+.webform-color-setting input[type="color"]::-moz-color-swatch {
+    border: 1px solid #b8b3c2;
+    border-radius: 6px;
+}
+
+.webform-color-value {
+    background: transparent;
+    color: #646970;
+    font-size: 10px;
+    padding: 0;
+}
+
+@media (max-width: 520px) {
+    .webform-style-color-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.webform-confirmation-options,
+.webform-dependent-options,
+.webform-confirmation-section .webform-pro-access-grid {
+    background: transparent;
+    border-radius: 9px;
+    opacity: 1;
+    transition: background-color .16s ease, opacity .16s ease;
+}
+
+.webform-confirmation-options:not(.is-disabled),
+.webform-dependent-options:not(.is-disabled),
+.webform-confirmation-section .webform-pro-access-grid:not(.is-disabled) {
+    box-shadow: none;
+    filter: none;
+    opacity: 1;
+}
+
+.webform-confirmation-options.is-disabled,
+.webform-dependent-options.is-disabled,
+.webform-confirmation-section .webform-pro-access-grid.is-disabled {
+    background: #f5f5f6;
+    opacity: .52;
+}
+
+.webform-notification-workflows label.is-disabled {
+    opacity: .52;
+}
+
+.webform-sms-defaults {
+    background: #f7f5fc;
+    border-top: 1px solid #ded8eb;
+    margin: 22px -24px -22px;
+    padding: 18px 24px 6px;
+}
+
+.webform-sms-defaults h3 {
+    color: #493582;
+    font-size: 14px;
+    margin: 0 0 4px;
+}
+
+.formorbit-pro-screen #wpbody-content > .notice:not(.webform-pro-license-notice):not(.webform-pro-own-notice),
+.formorbit-pro-screen #wpbody-content > .updated:not(.webform-pro-own-notice),
+.formorbit-pro-screen #wpbody-content > .error:not(.webform-pro-own-notice) {
+    display: none !important;
+}
+
+.webform-property-panel label {
+    color: #3d4148;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.webform-property-panel input[type="text"],
+.webform-property-panel input[type="email"],
+.webform-property-panel input[type="url"],
+.webform-property-panel input[type="number"],
+.webform-property-panel input[type="datetime-local"],
+.webform-property-panel select,
+.webform-property-panel textarea {
+    border-color: #c8c3d2;
+    border-radius: 7px;
+    box-sizing: border-box;
+    margin-top: 6px;
+    max-width: 100%;
+    min-height: 40px;
+    width: 100%;
+}
+
+.webform-property-panel input:focus,
+.webform-property-panel select:focus,
+.webform-property-panel textarea:focus {
+    border-color: #6548c7;
+    box-shadow: 0 0 0 1px #6548c7;
+}
+
+@media (max-width: 1050px) {
+    .webform-builder {
+        grid-template-columns: 1fr;
+    }
+
+    .webform-properties {
+        border-left: 0;
+        border-top: 1px solid #ddd7eb;
+    }
+
+    .webform-property-tabs {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .webform-property-tabs {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .webform-properties {
+        padding: 14px 10px;
+    }
+}
+
+/* Restored visual builder productivity controls. */
+.webform-field-card .webform-duplicate-field {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    color: #777c84;
+    cursor: pointer;
+    display: flex;
+    height: 28px;
+    justify-content: center;
+    padding: 0;
+    position: absolute;
+    right: 72px;
+    top: 11px;
+    width: 28px;
+}
+
+.webform-field-card .webform-duplicate-field:hover,
+.webform-field-card .webform-duplicate-field:focus-visible {
+    color: #5135ae;
+    outline: 0;
+}
+
+.webform-field-card .webform-duplicate-field .dashicons {
+    font-size: 17px;
+    height: 17px;
+    width: 17px;
+}
+
+.webform-field-preview > strong .webform-field-icon {
+    color: #6548c7;
+    font-size: 16px;
+    height: 16px;
+    margin: 1px 7px 0 0;
+    vertical-align: text-top;
+    width: 16px;
+}
+
+.webform-pro-container-preview {
+    background: #f8f6fd;
+    border: 1px dashed #bcaee1;
+    border-radius: 8px;
+    display: block;
+    padding: 11px;
+}
+
+.webform-pro-container-preview > b {
+    color: #5135ae;
+    display: block;
+    font-size: 11px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.webform-pro-container-preview > span {
+    display: grid;
+    gap: 6px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.webform-pro-container-preview i {
+    background: #fff;
+    border: 1px solid #ded8ec;
+    border-radius: 5px;
+    color: #60656d;
+    font-size: 10px;
+    font-style: normal;
+    overflow: hidden;
+    padding: 7px 8px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.webform-palette-item[data-type="calculation"] .dashicons,
+.webform-palette-item[data-type="field_group"] .dashicons,
+.webform-palette-item[data-type="signature"] .dashicons,
+.webform-palette-item[data-type="repeater"] .dashicons,
+.webform-palette-item[data-type="appointment"] .dashicons,
+.webform-palette-item[data-type="product"] .dashicons,
+.webform-palette-item[data-type="donation"] .dashicons,
+.webform-palette-item[data-type="total"] .dashicons {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Builder interaction and nested-container refinements. */
+.webform-field-card .webform-field-preview > strong{display:block;padding-left:30px;padding-right:72px}
+.webform-field-card .webform-drag{cursor:grab;left:14px!important;right:auto!important;top:16px}.webform-field-card .webform-drag:active{cursor:grabbing}
+.webform-field-card .webform-remove-field{right:12px!important}.webform-field-card .webform-duplicate-field{border:0!important;box-shadow:none!important;right:42px!important}
+.webform-sort-placeholder{background:rgba(101,72,199,.08)!important;border:2px dashed #8f77d4;border-radius:10px}
+.webform-sort-placeholder.is-column-preview{background:rgba(42,150,95,.1)!important;border-color:#2a965f;flex:0 0 49%!important;max-width:49%!important}.webform-canvas.is-column-sorting{background-image:linear-gradient(90deg,transparent 49.5%,rgba(101,72,199,.14) 49.5%,rgba(101,72,199,.14) 50.5%,transparent 50.5%)}
+.webform-canvas.is-sorting:after{content:"Drop near either side to create a column · drop at the far left to start a row"!important}
+.webform-pro-container-preview > b{align-items:center;display:flex;justify-content:space-between}.webform-pro-container-preview > b small{color:#746b89;font-size:10px;font-weight:500;text-transform:none}
+.webform-pro-container-preview .webform-nested-dropzone{border:1px dashed transparent;border-radius:7px;display:flex;flex-wrap:wrap;gap:6px;min-height:42px;padding:5px;transition:background .15s,border-color .15s}
+.webform-pro-container-preview .webform-nested-dropzone.is-drop-ready{background:#eee9ff;border-color:#6548c7;box-shadow:inset 0 0 0 2px rgba(101,72,199,.12)}
+.webform-pro-container-preview .webform-nested-dropzone > em{align-items:center;color:#746b89;display:flex;font-size:10px;font-style:normal;justify-content:center;min-height:36px;width:100%}
+.webform-pro-container-preview .webform-nested-child{box-sizing:border-box;cursor:grab;flex:0 0 calc(var(--child-width,100%) - 6px);max-width:100%}.webform-pro-container-preview .webform-nested-child .dashicons{font-size:12px;height:12px;margin-right:4px;width:12px}
+.webform-nested-placeholder{background:#e8e1fb;border:1px dashed #6548c7;border-radius:5px;min-height:30px;width:48%}
+.webform-pro-guide,.webform-formula-help{background:#f4f1fc;border-left:3px solid #6548c7;border-radius:6px;margin:0 0 16px;padding:11px 12px}.webform-pro-guide p,.webform-formula-help p{font-size:12px;line-height:1.5;margin:4px 0 0}.webform-formula-help code,.webform-pro-guide code{background:#fff;border-radius:3px;padding:1px 4px}
+.webform-formula-examples,.webform-formula-tokens{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.webform-formula-examples button,.webform-formula-tokens button{background:#fff;border:1px solid #cfc6e5;border-radius:15px;color:#5135ae;cursor:pointer;font-size:11px;padding:5px 9px}.webform-formula-examples button:hover,.webform-formula-tokens button:hover{border-color:#6548c7;box-shadow:0 0 0 1px #6548c7}.webform-formula-token-label{font-weight:600;margin-top:12px!important}
+.webform-pro-child-list{display:grid;gap:9px;margin-bottom:12px}.webform-pro-child{background:#fff;border:1px solid #d8d2e5;border-radius:10px;box-shadow:0 2px 7px rgba(40,28,71,.04);overflow:hidden;padding:0}.webform-pro-child[open]{border-color:#b9ace0;box-shadow:0 5px 16px rgba(58,39,111,.08)}
+.webform-pro-child-head{align-items:center;background:#faf9fc;cursor:pointer;display:grid;gap:8px;grid-template-columns:24px minmax(0,1fr) 30px;list-style:none;margin:0;padding:11px 10px}.webform-pro-child-head::-webkit-details-marker{display:none}.webform-pro-child[open]>.webform-pro-child-head{background:#f3effc;border-bottom:1px solid #ded7ee}.webform-pro-child-head>span:nth-child(2){display:flex;flex-direction:column;min-width:0}.webform-pro-child-head strong{font-size:12px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.webform-pro-child-head small{color:#77707f;font-size:10px;font-weight:400;margin-top:2px}.webform-pro-child-drag{align-items:center;color:#78727f;cursor:grab;display:flex;height:24px;justify-content:center;margin:0!important}.webform-remove-pro-child{align-items:center;background:transparent;border:0;border-radius:5px;color:#a22b25;cursor:pointer;display:flex;height:28px;justify-content:center;padding:0;width:28px}.webform-remove-pro-child:hover{background:#fbe9e8;color:#8a1f1a}.webform-remove-pro-child .dashicons{font-size:16px;height:16px;width:16px}
+.webform-pro-child-body{display:grid;gap:12px;padding:12px}.webform-pro-child-body>label,.webform-pro-child-row>label{align-items:stretch!important;display:flex!important;flex-direction:column!important;font-size:11px!important;font-weight:650!important;gap:6px;margin:0!important}.webform-pro-child-body input:not([type=checkbox]),.webform-pro-child-body select,.webform-pro-child-body textarea{box-sizing:border-box!important;margin:0!important;max-width:none!important;min-height:38px;width:100%!important}.webform-pro-child-body textarea{min-height:82px;resize:vertical}.webform-pro-child-body label>small{color:#77707f;font-weight:400}.webform-pro-child-row{align-items:end;display:grid;gap:10px;grid-template-columns:minmax(0,1fr) auto}.webform-pro-child-check{align-items:center!important;align-self:end;display:flex!important;flex-direction:row!important;gap:6px;min-height:38px!important;padding-bottom:1px;white-space:nowrap}.webform-pro-child-check input{margin:0!important;width:auto!important}.webform-pro-children{margin-top:18px}.webform-pro-children>h3{align-items:center;display:flex;font-size:14px;justify-content:space-between;margin:18px 0 10px}.webform-pro-children>h3 small{background:#ece7f8;border-radius:999px;color:#6047aa;font-size:10px;padding:3px 8px}.webform-pro-children>.webform-add-pro-child{align-items:center;border-color:#6548c7;color:#5135ae;display:flex;justify-content:center;width:100%}
