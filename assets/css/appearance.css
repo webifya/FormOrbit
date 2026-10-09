@@ -38,6 +38,11 @@
 .webform-pro-child{display:block!important;min-width:0;width:100%;box-sizing:border-box}
 .webform-pro-child>label{display:flex;flex-direction:column;gap:5px;margin:10px 0}
 .webform-pro-child-head{display:flex;align-items:center;gap:8px;cursor:pointer}
+.formorbit-field-typography,.formorbit-field-design{margin-top:18px;padding:18px;border:1px solid #ded8ef;border-radius:12px;background:#fff}
+.formorbit-field-typography summary,.formorbit-field-design summary{cursor:pointer;font-weight:600;margin-bottom:12px}
+.webform-pro-layout-settings>label,.webform-style-control-grid>label{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;min-width:0}
+.webform-pro-layout-settings input,.webform-style-control-grid input,.webform-style-control-grid select{width:100%;max-width:100%;box-sizing:border-box;min-height:38px;border-radius:6px}
+.webform-field-preview>strong,.webform-live-preview-field>label{font-family:inherit;font-size:inherit;font-style:inherit}
 .webform-pro-child-head>span:nth-child(2){flex:1;min-width:0}
 .webform-pro-child-head small{display:block;color:#646970}
 .webform-field-preview>strong,.webform-live-preview-field>label{color:var(--local-label,inherit)!important}

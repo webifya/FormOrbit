@@ -380,7 +380,7 @@ class Webform_Admin {
                             echo '</div></section>';
                         }
                         $pro_types = array_diff(array_keys($fields), $rendered_types);
-                        if ($pro_types) {
+                        if ($pro_types && defined('WEBFORM_PRO_FILE')) {
                             $pro_groups = array(
                                 __('Advanced forms', 'formorbit') => array('calculation', 'field_group', 'repeater', 'signature', 'rich_text', 'divider', 'address', 'appointment', 'nps'),
                                 __('Commerce and payments', 'formorbit') => array('currency', 'product', 'price', 'quantity', 'product_option', 'shipping', 'donation', 'total'),

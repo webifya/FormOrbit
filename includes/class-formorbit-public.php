@@ -258,7 +258,6 @@ class Webform_Public {
                         </select>
                     <?php else : ?>
                         <input type="hidden" name="<?php echo esc_attr($name . '[country]'); ?>" value="<?php echo esc_attr($default_country); ?>">
-                        <span class="webform-phone-prefix"><?php echo esc_html($countries[$default_country]); ?></span>
                     <?php endif; ?>
                     <input type="tel" id="<?php echo esc_attr($id); ?>" class="webform-phone-number" name="<?php echo esc_attr($name . '[number]'); ?>" maxlength="24" autocomplete="tel-national" inputmode="tel" aria-describedby="<?php echo esc_attr($describedby); ?>" placeholder="<?php echo esc_attr($field['placeholder']); ?>"<?php echo $required; ?>>
                 </div>

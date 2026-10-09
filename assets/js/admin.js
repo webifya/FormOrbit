@@ -481,6 +481,10 @@
         const style = field.style || {};
         if (!style.customized) return '';
         let css = '';
+        if (Number(style.font_size)) css += 'font-size:' + Math.min(96, Math.max(10, Number(style.font_size))) + 'px;';
+        if (['Arial,sans-serif','Georgia,serif','Verdana,sans-serif','monospace'].includes(style.font_family)) css += 'font-family:' + style.font_family + ';';
+        if (['400','500','600','700','800'].includes(String(style.font_weight))) css += 'font-weight:' + style.font_weight + ';';
+        if (style.font_style === 'italic') css += 'font-style:italic;';
         for (const [key, name] of Object.entries({label_color:'label',text_color:'text',background_color:'background'})) {
             if (/^#[0-9a-f]{3}([0-9a-f]{3})?$/i.test(style[key] || '')) css += '--local-'+name+':'+style[key]+';';
         }
@@ -498,7 +502,7 @@
         const stage = schema[livePreviewStage];
         const preset = $('#webform-style-preset').val() || 'modern';
         const palette = (WebformAdmin.stylePalettes || {})[preset] || {};
-        const color = (id, key, fallback) => { const raw=$(id).val(); return !raw || (preset !== 'modern' && raw.toLowerCase() === fallback) ? (palette[key] || fallback) : raw; };
+        const color = (id, key, fallback) => $(id).val() || palette[key] || fallback;
         const accent = color('#webform-accent-color','accent_color','#6c4bd4');
         const background = color('#webform-form-background','form_background','#ffffff');
         const text = color('#webform-text-color','text_color','#1d2327');
@@ -556,6 +560,11 @@
         Object.entries(controls).forEach(([key, selector]) => { if (palette[key] && $(selector).length) $(selector).val(palette[key]); });
         $('#webform-submit-background,#webform-submit-hover-background').val(palette.accent_color);
         $('#webform-submit-text-color').val(palette.button_text_color);
+        const preset = $(this).val();
+        const square = ['minimal','classic','orbit-paper','orbit-terminal','orbit-editorial','orbit-brutalist'].includes(preset);
+        const serif = ['elegant','classic','earthy','luxury','orbit-paper','orbit-editorial'].includes(preset);
+        const defaults = {'font-family': serif ? 'Georgia,serif' : (preset === 'orbit-terminal' ? '"Courier New",monospace' : 'inherit'), 'base-font-size':16, 'label-font-size':14, 'heading-font-size':26, 'line-height':1.5, 'label-weight':600, 'form-padding':24, 'form-radius':square ? 0 : 16, 'field-radius':square ? 0 : 7, 'button-radius':square ? 0 : 7, 'control-padding':12, 'field-spacing':20};
+        Object.entries(defaults).forEach(([key,value]) => $('#webform-' + key).val(value));
         $('input[type=color]').trigger('input');
         renderLivePreview();
     });

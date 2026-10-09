@@ -28,6 +28,8 @@ add_action('webform_before_form_markup', function ($form_id, $settings) {
     $scope = '#webform-' . absint($form_id);
     $align = array('left' => 'flex-start', 'center' => 'center', 'right' => 'flex-end', 'full' => 'stretch');
     $css = $scope . ' .webform-actions{justify-content:' . ($align[$settings['submit_alignment'] ?? 'center'] ?? 'center') . ';}';
+    $css .= $scope . '{background:var(--wf-form-bg);color:var(--wf-text);}';
+    $css .= $scope . ' input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=hidden]),' . $scope . ' textarea,' . $scope . ' select{background:var(--wf-field-bg);color:var(--wf-text);border-color:var(--wf-border);border-radius:var(--wf-field-radius);}';
     $css .= $scope . '{padding:var(--wf-form-padding,24px);border-radius:var(--wf-form-radius,12px);line-height:var(--wf-line-height,1.5);font-size:var(--wf-font-size,16px);font-family:var(--wf-font,inherit);}';
     $css .= $scope . ' .webform-field>label,' . $scope . ' .webform-field>legend{font-size:var(--wf-label-size,14px);font-weight:var(--wf-label-weight,600);}';
     $css .= $scope . ' .webform-heading{font-size:var(--wf-heading-size,26px);}';

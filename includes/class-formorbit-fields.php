@@ -20,7 +20,7 @@ class FormOrbit_Fields {
         add_filter('webform_templates', array($this, 'templates'));
         add_filter('webform_admin_script_data', array($this, 'admin_script_data'));
         add_action('webform_builder_style_controls', array($this, 'style_controls'));
-        add_action('webform_before_form_markup', array($this, 'custom_css'), 10, 2);
+        add_action('webform_before_form_markup', array($this, 'custom_css'), 100, 2);
         add_action('wp_enqueue_scripts', array($this, 'public_assets'));
         add_action('wp_enqueue_scripts', array($this, 'google_font'));
         add_action('webform_after_submission', array($this, 'create_post_from_submission'), 30, 4);
@@ -146,7 +146,7 @@ class FormOrbit_Fields {
         $palette = $palettes[$preset] ?? $palettes['modern'];
         $defaults = array('text_color' => '#1d2327', 'form_background' => '#ffffff', 'field_background' => '#ffffff', 'border_color' => '#dfe1e6', 'accent_color' => '#6c4bd4', 'button_text_color' => '#ffffff');
         foreach ($defaults as $key => $default) {
-            if (empty($settings[$key]) || ($preset !== 'modern' && strtolower($settings[$key]) === strtolower($default))) $settings[$key] = $palette[$key];
+            if (empty($settings[$key])) $settings[$key] = $palette[$key];
         }
         $alignment = $settings['submit_alignment'] ?? 'center';
         return array_merge($variables, array('--wf-font' => $settings['font_family'] ?? 'inherit', '--wf-font-size' => absint($settings['base_font_size'] ?? 16) . 'px', '--wf-label-size' => absint($settings['label_font_size'] ?? 14) . 'px', '--wf-text' => $settings['text_color'], '--wf-form-bg' => $settings['form_background'], '--wf-field-bg' => $settings['field_background'], '--wf-border' => $settings['border_color'], '--wf-accent' => $settings['accent_color'], '--wf-button-text' => $settings['button_text_color'], '--wf-max-width' => absint($settings['form_max_width'] ?? 720) . 'px', '--wf-field-space' => absint($settings['field_spacing'] ?? 20) . 'px', '--wf-field-radius' => absint($settings['field_radius'] ?? 7) . 'px', '--wf-button-radius' => absint($settings['button_radius'] ?? 7) . 'px', '--wf-button-padding' => absint($settings['button_padding'] ?? 11) . 'px ' . max(12, absint($settings['button_padding'] ?? 11) * 2) . 'px', '--wf-submit-align' => $alignment === 'left' ? 'flex-start' : ($alignment === 'center' ? 'center' : 'flex-end'), '--wf-submit-width' => $alignment === 'full' ? '100%' : 'auto', '--wf-submit-bg' => $settings['submit_background'] ?? $settings['accent_color'], '--wf-submit-hover' => $settings['submit_hover_background'] ?? '#5235b1', '--wf-submit-text' => $settings['submit_text_color'] ?? '#ffffff', '--wf-submit-font-size' => absint($settings['submit_font_size'] ?? 16) . 'px', '--wf-submit-font-weight' => absint($settings['submit_font_weight'] ?? 600), '--wf-submit-padding' => absint($settings['submit_padding_y'] ?? 12) . 'px ' . absint($settings['submit_padding_x'] ?? 24) . 'px', '--wf-submit-border' => absint($settings['submit_border_width'] ?? 0) . 'px solid ' . ($settings['submit_border_color'] ?? '#6c4bd4')));
@@ -222,10 +222,14 @@ class FormOrbit_Fields {
                     ? $selector . '{box-sizing:border-box;flex:1 1 260px;min-width:220px;width:auto;}'
                     : $selector . '{box-sizing:border-box;flex:0 0 ' . ($render_width[$requested_width] ?? '100%') . ';width:' . ($render_width[$requested_width] ?? '100%') . ';}';
                 if (!empty($style['customized'])) {
+                    $typography = 'font-family:' . (in_array($style['font_family'] ?? '', array('Arial,sans-serif', 'Georgia,serif', 'Verdana,sans-serif', 'monospace'), true) ? $style['font_family'] : 'inherit') . ';font-style:' . (($style['font_style'] ?? '') === 'italic' ? 'italic' : 'normal') . ';';
+                    if (!empty($style['font_size'])) $typography .= 'font-size:' . min(96, max(10, absint($style['font_size']))) . 'px;';
+                    if (in_array((string) ($style['font_weight'] ?? ''), array('400','500','600','700','800'), true)) $typography .= 'font-weight:' . $style['font_weight'] . ';';
+                    $css .= $selector . ',' . $selector . '>label,' . $selector . '>legend,' . $selector . ' input,' . $selector . ' select,' . $selector . ' textarea{' . $typography . '}';
                     $css .= $selector . '>label,' . $selector . '>legend,' . $selector . '>.webform-price-label{color:' . $label_color . ';}';
                     $css .= $selector . ' input,' . $selector . ' select,' . $selector . ' textarea,' . $selector . ' canvas{background-color:' . $background_color . ';color:' . $text_color . ';border-radius:' . $radius . 'px;}';
                     $css .= $selector . ' .webform-choices label,' . $selector . ' .webform-product-options label>span{background-color:' . $background_color . ';color:' . $text_color . ';border-radius:' . $radius . 'px;}';
-                    if (($field['type'] ?? '') === 'heading') $css .= $selector . '{background-color:' . $background_color . ';border-radius:' . $radius . 'px;color:' . $label_color . ';padding:10px 12px;}';
+                    if (($field['type'] ?? '') === 'heading') $css .= $selector . '{color:' . $label_color . ';}';
                     if (($field['type'] ?? '') === 'html') $css .= $selector . '{background-color:' . $background_color . ';border-radius:' . $radius . 'px;color:' . $text_color . ';padding:10px 12px;}';
                     if (($field['type'] ?? '') === 'price') $css .= $selector . '{background-color:' . $background_color . ';border-radius:' . $radius . 'px;color:' . $text_color . ';}';
                     if (($field['type'] ?? '') === 'rich_text') {
@@ -380,6 +384,10 @@ class FormOrbit_Fields {
             'radius' => min(40, absint($raw['style']['radius'] ?? 7)),
             'css_class' => sanitize_html_class($raw['style']['css_class'] ?? ''),
             'customized' => !empty($raw['style']['customized']),
+            'font_size' => empty($raw['style']['font_size']) ? 0 : min(96, max(10, absint($raw['style']['font_size']))),
+            'font_family' => in_array($raw['style']['font_family'] ?? '', array('inherit', 'Arial,sans-serif', 'Georgia,serif', 'Verdana,sans-serif', 'monospace'), true) ? $raw['style']['font_family'] : 'inherit',
+            'font_style' => ($raw['style']['font_style'] ?? '') === 'italic' ? 'italic' : 'normal',
+            'font_weight' => in_array((string) ($raw['style']['font_weight'] ?? ''), array('inherit', '400', '500', '600', '700', '800'), true) ? (string) $raw['style']['font_weight'] : 'inherit',
         );
         $clean['row_start'] = !empty($raw['row_start']);
         if (($clean['type'] ?? '') === 'divider') {

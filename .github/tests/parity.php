@@ -53,6 +53,17 @@ $html=$public->shortcode(['id'=>1]);check(str_contains($html,'Edit this form'),'
 $admin=false;$html=$public->shortcode(['id'=>1]);check(!str_contains($html,'Edit this form'),'Visitor cannot see admin edit link');
 $fn=new ReflectionMethod(FormOrbit_Drafts::class,'sanitize_draft_value');$fn->setAccessible(true);check($fn->invoke($drafts,[['name'=>'<b>A</b>']])[0]['name']==='A','Nested draft values retained and sanitized');
 check(!apply_filters('formorbit_integrations_enabled',false),'Free does not activate Pro connectors');
+$styled = $sanitize->invoke($editor,[['fields'=>[['id'=>'title','type'=>'heading','label'=>'Heading','style'=>['customized'=>true,'font_size'=>48,'font_family'=>'Georgia,serif','font_style'=>'italic','font_weight'=>'700']]]]]);
+check($styled[0]['fields'][0]['style']['font_size']===48 && $styled[0]['fields'][0]['style']['font_family']==='Georgia,serif','Field typography survives saving');
+$meta[2]=['_webform_schema'=>$styled,'_webform_settings'=>$settings];
+ob_start();$fields->custom_css(2,$settings);$typography=ob_get_clean();
+check(str_contains($typography,'font-size:48px') && str_contains($typography,'font-style:italic'),'Public heading typography emitted');
+$vars=$fields->style_variables([],['style_preset'=>'luxury','text_color'=>'#1d2327','form_background'=>'#ffffff']);
+check($vars['--wf-text']==='#1d2327' && $vars['--wf-form-bg']==='#ffffff','Preset preserves explicit customer colors');
+$phone=$sanitize->invoke($editor,[['fields'=>[['id'=>'phone','type'=>'phone','label'=>'Phone','phone_country'=>'US','phone_country_selector'=>false]]]]);
+$meta[3]=['_webform_schema'=>$phone,'_webform_settings'=>$settings];
+$phoneHtml=$public->shortcode(['id'=>3]);
+check(!str_contains($phoneHtml,'class="webform-phone-prefix"') && !str_contains($phoneHtml,'class="webform-phone-country"') && str_contains($phoneHtml,'data-default-country="US"'),'National phone display hides calling code');
 if (is_file(dirname(WEBFORM_PATH).'/includes/class-formorbit-pro-admin.php')) {
     require dirname(WEBFORM_PATH).'/includes/class-formorbit-pro-admin.php';
     $license=new class {public $valid=false;public function is_valid(){return $this->valid;}};

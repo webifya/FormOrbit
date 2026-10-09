@@ -289,6 +289,10 @@
                 (textField ? '<label>Text color<input data-pro-style="text_color" placeholder="#RRGGBB" value="' + escape(field.style.customized ? field.style.text_color : '') + '"></label><label>Background<input data-pro-style="background_color" placeholder="#RRGGBB" value="' + escape(field.style.customized ? field.style.background_color : '') + '"></label>' : '') +
                 '<label>Corner radius<input type="number" data-pro-style="radius" min="0" max="40" value="' + Number(field.style.radius || 0) + '"></label></div></details>');
         }
+        if (!panel.querySelector('.formorbit-field-typography') && !['hidden', 'divider', 'captcha'].includes(field.type)) {
+            const options = (key, values) => values.map(([value, label]) => `<option value="${value}" ${String(field.style[key] || 'inherit') === value ? 'selected' : ''}>${label}</option>`).join('');
+            panel.insertAdjacentHTML('beforeend', `<details class="formorbit-field-typography" open><summary>Typography</summary><div class="webform-style-control-grid"><label>Font family<select data-pro-style="font_family">${options('font_family', [['inherit','Form default'],['Arial,sans-serif','Arial'],['Georgia,serif','Georgia'],['Verdana,sans-serif','Verdana'],['monospace','Monospace']])}</select></label><label>Font size (px)<input data-pro-style="font_size" type="number" min="10" max="96" placeholder="Form default" value="${Number(field.style.font_size) || ''}"></label><label>Font weight<select data-pro-style="font_weight">${options('font_weight', [['inherit','Form default'],['400','Regular'],['500','Medium'],['600','Semibold'],['700','Bold'],['800','Extra bold']])}</select></label><label>Font style<select data-pro-style="font_style">${options('font_style', [['normal','Normal'],['italic','Italic']])}</select></label></div></details>`);
+        }
         window.setTimeout(initializeContainerInteractions, 0);
     });
 
