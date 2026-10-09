@@ -4,7 +4,7 @@ Tags: form, form builder, drag and drop, multi-step form, contact form
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 6.0.1
+Stable tag: 6.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -110,6 +110,10 @@ No. FormOrbit Pro includes the shared builder and can run by itself. If both edi
 5. Copy the generated `[formorbit id="123"]` shortcode into any post or page.
 
 == Changelog ==
+
+= 6.0.2 =
+* Rename editor stages to pages, preserving custom names.
+* Page tabs and newly added pages scroll to their editor section with keyboard focus and reduced-motion support.
 
 = 6.0.1 =
 * Hide the Pro field catalog in Free while preserving existing saved fields.

@@ -15,7 +15,7 @@ add_filter('webform_style_presets', function ($presets) {
     return array_merge($presets, array('orbit-paper' => __('Paper', 'formorbit'), 'orbit-night' => __('Night sky', 'formorbit'), 'orbit-terminal' => __('Terminal', 'formorbit'), 'orbit-editorial' => __('Editorial', 'formorbit'), 'orbit-ocean' => __('Ocean', 'formorbit'), 'orbit-brutalist' => __('Bold blocks', 'formorbit'), 'orbit-glass' => __('Glass', 'formorbit')));
 });
 add_action('webform_builder_style_controls', function ($settings) {
-    echo '<label>' . esc_html__('Stage heading size (px)', 'formorbit') . '<input id="formorbit-stage-font-size" type="number" min="12" max="72" value="' . esc_attr($settings['stage_font_size'] ?? 24) . '"></label><label><input type="checkbox" id="formorbit-hide-stage-name" ' . checked(!empty($settings['hide_stage_name']), true, false) . '> ' . esc_html__('Hide stage names on public form', 'formorbit') . '</label>';
+    echo '<label>' . esc_html__('Page heading size (px)', 'formorbit') . '<input id="formorbit-stage-font-size" type="number" min="12" max="72" value="' . esc_attr($settings['stage_font_size'] ?? 24) . '"></label><label><input type="checkbox" id="formorbit-hide-stage-name" ' . checked(!empty($settings['hide_stage_name']), true, false) . '> ' . esc_html__('Hide page names on public form', 'formorbit') . '</label>';
 });
 add_filter('webform_sanitize_form_settings', function ($clean, $settings) {
     $clean['stage_font_size'] = max(12, min(72, absint($settings['stage_font_size'] ?? 24)));

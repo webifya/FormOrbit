@@ -103,8 +103,9 @@
             schema = [];
         }
         if (!Array.isArray(schema) || !schema.length) {
-            schema = [{ id: uid('stage'), title: 'Stage 1', fields: [] }];
+            schema = [{ id: uid('stage'), title: 'Page 1', fields: [] }];
         }
+        schema.forEach(page => { if (/^Stage \d+$/.test(page.title || '')) page.title = page.title.replace(/^Stage /, 'Page '); });
         pushHistory();
         render();
     }
@@ -191,7 +192,7 @@
     function render() {
         if (activeStage >= schema.length) activeStage = schema.length - 1;
         $('#webform-stage-tabs').html(schema.map((stage, index) =>
-            `<button type="button" class="webform-stage-tab ${index === activeStage ? 'is-active' : ''}" data-stage="${index}"><span>${escapeHtml(stage.title)}</span><span class="dashicons dashicons-edit webform-edit-stage" title="Rename stage"></span>${schema.length > 1 ? '<span class="webform-remove-stage" title="Remove stage">×</span>' : ''}</button>`
+            `<button type="button" class="webform-stage-tab ${index === activeStage ? 'is-active' : ''}" data-stage="${index}"><span>${escapeHtml(stage.title)}</span><span class="dashicons dashicons-edit webform-edit-stage" title="Rename page"></span>${schema.length > 1 ? '<span class="webform-remove-stage" title="Remove page">×</span>' : ''}</button>`
         ).join(''));
         $('#webform-canvas').html(schema.map((stage, index) => '<section class="formorbit-builder-stage" data-stage="' + index + '"><h3>' + escapeHtml(stage.title) + '</h3><div class="formorbit-stage-fields" data-stage="' + index + '">' + (stage.fields || []).map(fieldCard).join('') + '</div><button type="button" class="button formorbit-stage-add" data-stage="' + index + '">Add field</button></section>').join(''));
         $('.formorbit-stage-fields').sortable({
@@ -335,7 +336,7 @@
 
     function addField(type) {
         if (type === 'page_break') {
-            schema.push({ id: uid('stage'), title: `Stage ${schema.length + 1}`, fields: [] });
+            schema.push({ id: uid('stage'), title: `Page ${schema.length + 1}`, fields: [] });
             activeStage = schema.length - 1;
             selectedId = null;
         } else if (fieldLabels[type]) {
@@ -412,10 +413,20 @@
         pushHistory();
         render();
     });
-    $(document).on('click', '.webform-stage-tab', function () { activeStage = Number($(this).data('stage')); selectedId = null; render(); });
-    $(document).on('click', '.webform-edit-stage', function (event) { event.stopPropagation(); const index = Number($(this).closest('.webform-stage-tab').data('stage')); const title = window.prompt('Stage name', schema[index].title); if (title) { schema[index].title = title.trim(); dirty = true; pushHistory(); render(); } });
-    $(document).on('click', '.webform-remove-stage', function (event) { event.stopPropagation(); const index = Number($(this).closest('.webform-stage-tab').data('stage')); if (schema.length > 1 && window.confirm('Remove this stage and its fields?')) { schema.splice(index, 1); activeStage = Math.max(0, activeStage - 1); selectedId = null; dirty = true; pushHistory(); render(); } });
-    $('#webform-add-stage').on('click', function (event) { event.preventDefault(); schema.push({ id: uid('stage'), title: `Stage ${schema.length + 1}`, fields: [] }); activeStage = schema.length - 1; selectedId = null; dirty = true; pushHistory(); render(); });
+    function scrollToPage() {
+        const section = document.querySelector('.formorbit-builder-stage[data-stage="' + activeStage + '"]');
+        if (!section) return;
+        const toolbar = document.querySelector('.webform-stage-tabs');
+        const adminbar = document.getElementById('wpadminbar');
+        section.style.scrollMarginTop = ((toolbar ? toolbar.getBoundingClientRect().height : 0) + (adminbar ? adminbar.getBoundingClientRect().height : 0) + 24) + 'px';
+        section.setAttribute('tabindex', '-1');
+        section.focus({ preventScroll: true });
+        section.scrollIntoView({ behavior: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    }
+    $(document).on('click', '.webform-stage-tab', function () { activeStage = Number($(this).data('stage')); selectedId = null; render(); scrollToPage(); });
+    $(document).on('click', '.webform-edit-stage', function (event) { event.stopPropagation(); const index = Number($(this).closest('.webform-stage-tab').data('stage')); const title = window.prompt('Page name', schema[index].title); if (title) { schema[index].title = title.trim(); dirty = true; pushHistory(); render(); } });
+    $(document).on('click', '.webform-remove-stage', function (event) { event.stopPropagation(); const index = Number($(this).closest('.webform-stage-tab').data('stage')); if (schema.length > 1 && window.confirm('Remove this page and its fields?')) { schema.splice(index, 1); activeStage = Math.max(0, activeStage - 1); selectedId = null; dirty = true; pushHistory(); render(); } });
+    $('#webform-add-stage').on('click', function (event) { event.preventDefault(); schema.push({ id: uid('stage'), title: `Page ${schema.length + 1}`, fields: [] }); activeStage = schema.length - 1; selectedId = null; dirty = true; pushHistory(); render(); scrollToPage(); });
     $(document).on('change', '[data-field-type]', function () { const field = selectedField(); const type = String($(this).val()); if (!field || !compatibleFieldTypes(field.type).includes(type)) return; field.type = type; if (choiceTypes.includes(type) && !(field.options || []).length) field.options = ['Option 1', 'Option 2']; dirty = true; pushHistory(); render(); });
     $(document).on('input change', '#webform-field-settings [data-prop]', function (event) { const field = selectedField(); if (!field) return; const prop = String($(this).data('prop')); if (['required', 'hide_label', 'row_start', 'phone_country_selector', 'address_country_enabled'].includes(prop)) field[prop] = $(this).is(':checked'); else if (prop === 'options') field[prop] = String($(this).val()).split('\n').map((value) => value.trim()).filter(Boolean); else field[prop] = $(this).val(); dirty = true; scheduleHistory(); if (event.type === 'change') render(); });
     $(document).on('input change', '#webform-field-settings [data-condition-prop]', function (event) {
@@ -513,7 +524,7 @@
         const steps = schema.length > 1 && !hideStages ? `<ol class="webform-live-preview-steps">${schema.map((item, index) => `<li class="${index === livePreviewStage ? 'is-active' : index < livePreviewStage ? 'is-complete' : ''}">${escapeHtml(item.title)}</li>`).join('')}</ol>` : '';
         const actions = `<div class="webform-live-preview-actions">${livePreviewStage > 0 ? '<button type="button" data-live-preview-stage="prev">Back</button>' : ''}${livePreviewStage < schema.length - 1 ? '<button type="button" data-live-preview-stage="next">Continue</button>' : `<button type="button" class="is-submit">${escapeHtml(submitText)}</button>`}</div>`;
         $('#webform-live-preview-title').text($('#webform-name').val() || 'Untitled form');
-        $('#webform-live-preview-form').attr('class', `webform-live-preview-form webform-style-${escapeHtml($('#webform-style-preset').val() || 'modern')}`).css({ '--live-accent': accent, '--live-background': background, '--live-text': text, '--live-field-background': fieldBackground, '--live-border': border, fontFamily: $('#webform-font-family').val() || 'inherit', fontSize: ($('#webform-base-font-size').val() || 16) + 'px', lineHeight: $('#webform-line-height').val() || 1.5, padding: ($('#webform-form-padding').val() || 0) + 'px', borderRadius: ($('#webform-form-radius').val() || 0) + 'px' }).html(`${steps}${hideStages ? '' : `<h3 style="font-size:${Number($('#formorbit-stage-font-size').val() || 24)}px">${escapeHtml(stage.title)}</h3>`}<div class="webform-live-preview-fields">${(stage.fields || []).map(livePreviewField).join('') || '<p>This stage has no fields.</p>'}</div>${actions}`);
+        $('#webform-live-preview-form').attr('class', `webform-live-preview-form webform-style-${escapeHtml($('#webform-style-preset').val() || 'modern')}`).css({ '--live-accent': accent, '--live-background': background, '--live-text': text, '--live-field-background': fieldBackground, '--live-border': border, fontFamily: $('#webform-font-family').val() || 'inherit', fontSize: ($('#webform-base-font-size').val() || 16) + 'px', lineHeight: $('#webform-line-height').val() || 1.5, padding: ($('#webform-form-padding').val() || 0) + 'px', borderRadius: ($('#webform-form-radius').val() || 0) + 'px' }).html(`${steps}${hideStages ? '' : `<h3 style="font-size:${Number($('#formorbit-stage-font-size').val() || 24)}px">${escapeHtml(stage.title)}</h3>`}<div class="webform-live-preview-fields">${(stage.fields || []).map(livePreviewField).join('') || '<p>This page has no fields.</p>'}</div>${actions}`);
         $('#webform-live-preview-form .webform-live-preview-field>label').css({fontSize: ($('#webform-label-font-size').val() || 14) + 'px', fontWeight: $('#webform-label-weight').val() || 600});
         $('#webform-live-preview-form .webform-live-preview-actions').css('justify-content', {left:'flex-start',center:'center',right:'flex-end'}[$('#webform-submit-alignment').val()] || 'center');
         $('#webform-live-preview-form .is-submit').css({background:$('#webform-submit-background').val() || accent,color:$('#webform-submit-text-color').val() || '#fff',fontSize:($('#webform-submit-font-size').val() || 16)+'px',fontWeight:$('#webform-submit-font-weight').val() || 600,borderRadius:($('#webform-button-radius').val() || 7)+'px',padding:($('#webform-submit-padding-y').val() || 12)+'px '+($('#webform-submit-padding-x').val() || 24)+'px',width:$('#webform-submit-alignment').val()==='full'?'100%':'auto'});

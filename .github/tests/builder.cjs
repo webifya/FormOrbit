@@ -14,6 +14,13 @@ async function run(base){
  await new Promise(r=>w.setTimeout(r,30));
  const builder=w.FormOrbitBuilder;
  assert.equal($('.formorbit-stage-fields').length,2);
+ let scrolledPage;
+ w.HTMLElement.prototype.scrollIntoView=function(){scrolledPage=this.dataset.stage;};
+ $('.webform-stage-tab[data-stage="1"]').trigger('click');
+ assert.equal(scrolledPage,'1','Page tab scrolls to its section');
+ assert.equal(w.document.activeElement.dataset.stage,'1','Page section receives keyboard focus');
+ assert.equal(builder.getSchema()[0].title,'Your details','Custom page title preserved');
+ $('.webform-stage-tab[data-stage="0"]').trigger('click');
  $('.webform-field-card[data-id=name]').trigger('click');$('.webform-duplicate-field').trigger('click');assert.equal(builder.getSchema()[0].fields.length,4,'Duplicate field available in Free');
  const source=$('.formorbit-stage-fields').first(),target=$('.formorbit-stage-fields').last(),item=source.children('[data-id=name]');
  source.sortable('option','start').call(source[0],{pageX:20,pageY:20},{item,placeholder:$('<div>')});target.append(item);
