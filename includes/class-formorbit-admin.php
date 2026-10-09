@@ -71,9 +71,7 @@ class Webform_Admin {
             update_option('formorbit_activated_at', time(), false);
             return;
         }
-        $form_count = wp_count_posts('webform_form');
-        $published = absint($form_count->publish ?? 0) + absint($form_count->draft ?? 0);
-        if ($published < 2 && time() - $activated < 7 * DAY_IN_SECONDS) return;
+        if (time() - $activated < 30 * DAY_IN_SECONDS) return;
         $dismiss = wp_nonce_url(admin_url('admin-post.php?action=formorbit_dismiss_review'), 'formorbit_dismiss_review');
         echo '<div class="notice notice-info is-dismissible webform-review-notice"><p><strong>' . esc_html__('Enjoying FormOrbit?', 'formorbit') . '</strong> ' . esc_html__('A short WordPress.org review helps other site owners discover the free form builder.', 'formorbit') . '</p><p><a class="button button-primary" target="_blank" rel="noopener noreferrer" href="https://wordpress.org/support/plugin/formorbit/reviews/#new-post">' . esc_html__('Leave a review', 'formorbit') . '</a> <a class="button" href="' . esc_url($dismiss) . '">' . esc_html__('Maybe later', 'formorbit') . '</a></p></div>';
     }
